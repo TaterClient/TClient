@@ -3431,6 +3431,60 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			NewValue = (int)(UI()->DoScrollbarH(&g_Config.m_ClIndicatorMaxDistance, &Button, (NewValue - 10) / 130.0f) * 130.0f) + 10;
 			g_Config.m_ClIndicatorMaxDistance = NewValue * 50;
 		}
+        
+        MainView.HSplitTop(10.0f, 0x0, &MainView);
+
+		// ***** VOTES ***** //
+
+		MainView = Column;
+
+		MainView.HSplitTop(30.0f, &Section, &MainView);
+		UI()->DoLabel(&Section, Localize("Auto Votes"), 20.0f, TEXTALIGN_LEFT);
+		MainView.VSplitLeft(5.0f, 0x0, &MainView);
+		MainView.HSplitTop(5.0f, 0x0, &MainView);
+
+		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClVoteAuto, ("Enables Auto Votes"), &g_Config.m_ClVoteAuto, &MainView, LineMargin);
+
+        {
+            CUIRect Button, Label;
+            MainView.HSplitTop(5.0f, &Button, &MainView);
+            MainView.HSplitTop(20.0f, &Button, &MainView);
+            Button.VSplitLeft(150.0f, &Label, &Button);
+            char aBuf[64];
+            str_format(aBuf, sizeof(aBuf), "%s: %s%s", "Default vote", g_Config.m_ClVoteAutoDefault == 0 ? "f3": "", g_Config.m_ClVoteAutoDefault == 1 ? "f4": "");
+            UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+            g_Config.m_ClVoteAutoDefault = (int)(UI()->DoScrollbarH(&g_Config.m_ClVoteAutoDefault, &Button, (g_Config.m_ClVoteAutoDefault - 0) / 1.0f) * 1.0f) + 0;
+        }
+        {
+            CUIRect Button, Label;
+            MainView.HSplitTop(5.0f, &Button, &MainView);
+            MainView.HSplitTop(20.0f, &Button, &MainView);
+            Button.VSplitLeft(150.0f, &Label, &Button);
+            char aBuf[64];
+            str_format(aBuf, sizeof(aBuf), "%s: %s%s%s ", "Default Vote for friends", g_Config.m_ClVoteAutoFriends == 0 ? "Disable": "", g_Config.m_ClVoteAutoFriends == 1 ? "f3     ": "", g_Config.m_ClVoteAutoFriends == 2 ? "f4     ": "");
+            UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+            g_Config.m_ClVoteAutoFriends = (int)(UI()->DoScrollbarH(&g_Config.m_ClVoteAutoFriends, &Button, (g_Config.m_ClVoteAutoFriends - 0) / 2.0f) * 2.0f) + 0;
+        }
+        {
+            CUIRect Button, Label;
+            MainView.HSplitTop(5.0f, &Button, &MainView);
+            MainView.HSplitTop(20.0f, &Button, &MainView);
+            Button.VSplitLeft(150.0f, &Label, &Button);
+            char aBuf[64];
+            str_format(aBuf, sizeof(aBuf), "%s: %s%s%s ", "Default Vote for Teams", g_Config.m_ClVoteAutoTeam == 0 ? "Disable": "", g_Config.m_ClVoteAutoTeam == 1 ? "f3     ": "", g_Config.m_ClVoteAutoTeam == 2 ? "f4     ": "");
+            UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+            g_Config.m_ClVoteAutoTeam = (int)(UI()->DoScrollbarH(&g_Config.m_ClVoteAutoTeam, &Button, (g_Config.m_ClVoteAutoTeam - 0) / 2.0f) * 2.0f) + 0;
+        }
+        {
+            CUIRect Button, Label;
+            MainView.HSplitTop(5.0f, &Button, &MainView);
+            MainView.HSplitTop(20.0f, &Button, &MainView);
+            Button.VSplitLeft(150.0f, &Label, &Button);
+            char aBuf[64];
+            str_format(aBuf, sizeof(aBuf), "%s: %i ", "Delay till Seconds left", g_Config.m_ClVoteAutoTime);
+            UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+            g_Config.m_ClVoteAutoTime = (int)(UI()->DoScrollbarH(&g_Config.m_ClVoteAutoTime, &Button, (g_Config.m_ClVoteAutoTime - 0) / 25.0f) * 25.0f) + 0;
+        }
 	}
 
 	if(s_CurCustomTab == TCLIENT_TAB_BINDWHEEL)

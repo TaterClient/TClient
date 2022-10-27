@@ -300,6 +300,93 @@ void CVoting::OnMessage(int MsgType, void *pRawMsg)
 
 void CVoting::OnRender()
 {
+    if(IsVoting())
+	{
+		bool kickvote = str_startswith(m_aDescription, "Kick ") != 0 ? true : false;
+		bool specvote = str_startswith(m_aDescription, "Pause ") != 0 ? true : false;
+		bool mapvote = !kickvote && !specvote;
+
+		if(g_Config.m_ClVoteAuto)
+		{
+			if(m_Voted)
+			{
+				return;
+			}
+
+			// check if timer is up
+			if(!(g_Config.m_ClVoteAutoTime == 0))
+			{
+				if(SecondsLeft() > g_Config.m_ClVoteAutoTime)
+				{
+					return;
+				}
+			}
+
+			if(!mapvote)
+			{
+				// find the player who got voted
+				CGameClient::CClientData *player = nullptr;
+				const char *p, *t;
+				const char *pLookFor = "'";
+				if((p = str_find(m_aDescription, pLookFor)))
+				{
+					char aName[MAX_NAME_LENGTH];
+					p += str_length(pLookFor);
+					t = str_rchr(p, '\'');
+
+					if(t <= p)
+						return;
+					str_utf8_truncate(aName, sizeof(aName), p, t - p);
+
+					for(int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if(!m_pClient->m_aStats[i].IsActive())
+							continue;
+
+						if(str_comp(m_pClient->m_aClients[i].m_aName, aName) == 0)
+						{
+							player = &m_pClient->m_aClients[i];
+						}
+					}
+				}
+
+				// check if player exists
+				if(!player)
+					return;
+
+				// check if player is a friend
+				bool isFriend = player->m_Friend;
+				bool SameTeam = m_pClient->m_Teams.Team(m_pClient->m_Snap.m_LocalClientID) == player->m_Team;
+
+				// vote if friend is checked and player is a friend
+				if(!m_Voted && g_Config.m_ClVoteAutoFriends && isFriend)
+				{
+					int voice = g_Config.m_ClVoteAutoFriends == 1 ? 1 : -1;
+					Vote(voice);
+					return;
+				}
+
+				// vote if same team is checked and player is on the same team
+				if(!m_Voted && g_Config.m_ClVoteAutoTeam && SameTeam)
+				{
+					int voice = g_Config.m_ClVoteAutoTeam == 1 ? 1 : -1;
+					Vote(voice);
+					return;
+				}
+			}
+
+			// its not a player vote.. here is only default vote options
+
+			// vote default if no other vote was made and default is checked
+			if(!m_Voted && g_Config.m_ClVoteAutoDefault)
+			{
+				dbg_msg("voting", "voting default");
+				int voice = g_Config.m_ClVoteAutoDefault == 1 ? 1 : -1;
+				Vote(voice);
+				return;
+			}
+		}
+	}
 }
 
 void CVoting::RenderBars(CUIRect Bars, bool Text)

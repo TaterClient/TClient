@@ -82,12 +82,12 @@ MACRO_CONFIG_INT(ClApplyProfileFlag, tc_profile_flag, 0, 0, 1, CFGFLAG_CLIENT | 
 MACRO_CONFIG_INT(ClApplyProfileColors, tc_profile_colors, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Apply colors in profiles")
 MACRO_CONFIG_INT(ClApplyProfileEmote, tc_profile_emote, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Apply emote in profiles")
 
-// Voting 
+// voting
 MACRO_CONFIG_INT(ClVoteAuto, tc_vote_auto, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Activate auto vote")
-MACRO_CONFIG_INT(ClVoteDefaultAll, tc_vote_default, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Default vote everybody (0:yes,1:no)")
-MACRO_CONFIG_INT(ClVoteDefaultFriend, tc_vote_default, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Default vote friends (0:yes,1:no,3:Default)")
-MACRO_CONFIG_INT(ClVoteDontShow, tc_vote_show, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show only votes where your vote counts")
-MACRO_CONFIG_INT(ClVoteDontShowFriends, tc_vote_show_friends, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show only votes where your vote counts exclude friends")
+MACRO_CONFIG_INT(ClVoteAutoTime, tc_vote_auto_time, 0, 0, 25, CFGFLAG_CLIENT | CFGFLAG_SAVE, "wait with vote till seconds left")
+MACRO_CONFIG_INT(ClVoteAutoDefault, tc_vote_default, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Default vote everybody (0:yes,1:no)")
+MACRO_CONFIG_INT(ClVoteAutoFriends, tc_vote_friends, 0, 0, 2, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Default vote friends (0:off,1:f3,2:f4)")
+MACRO_CONFIG_INT(ClVoteAutoTeam, tc_vote_team, 0, 0, 2, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Default vote team (0:off,1:f3,2:f4)")
 
 //AAAAAAA
 MACRO_CONFIG_INT(ClAmIFrozen, EEEfrz, 0, 0, 1, CFGFLAG_CLIENT, "")
