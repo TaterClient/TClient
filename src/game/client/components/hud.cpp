@@ -779,18 +779,71 @@ void CHud::RenderTeambalanceWarning()
 
 void CHud::RenderVoting()
 {
-	bool kickvote = str_startswith(m_pClient->m_Voting.VoteDescription(), "Kick ") != 0 ? true : false;
-	bool specvote = str_startswith(m_pClient->m_Voting.VoteDescription(), "Pause ") != 0 ? true : false;
-
-	if(g_Config.m_ClVoteDontShow && (kickvote || specvote))
-	{ // only show votes
-		// check if the is a playervote and if he is in your team.
-	}
-
 	if((!g_Config.m_ClShowVotesAfterVoting && !m_pClient->m_Scoreboard.Active() && m_pClient->m_Voting.TakenChoice()) || !m_pClient->m_Voting.IsVoting() || Client()->State() == IClient::STATE_DEMOPLAYBACK)
 		return;
 
-	Graphics()->DrawRect(-10, 60 - 2, 100 + 10 + 4 + 5, 46, ColorRGBA(0.0f, 0.0f, 0.0f, 0.4f), IGraphics::CORNER_ALL, 5.0f);
+    // Tater: Custom voting
+    if(g_Config.m_ClShowVotes)
+    {
+        dbg_msg("vote", "%s", m_pClient->m_Voting.VoteDescription());
+        dbg_msg("vote", "%s", m_pClient->m_Voting.m_pFirst);
+        //check if delay is set
+        if(g_Config.m_ClVotesDelay != 0)
+        {
+            // delay is set, check if we should show the vote
+            if((25 - m_pClient->m_Voting.SecondsLeft()) > g_Config.m_ClVotesDelay && !m_pClient->m_Scoreboard.Active() )
+                return;
+        }
+        else {
+            bool kickvote = str_startswith(m_pClient->m_Voting.VoteDescription(), "Kick ") != 0 ? true : false;
+    		bool specvote = str_startswith(m_pClient->m_Voting.VoteDescription(), "Pause ") != 0 ? true : false;
+    		bool mapvote = !kickvote && !specvote;
+    		// find the player who got voted
+    		CGameClient::CClientData *player = nullptr;
+    		const char *p, *t;
+    		const char *pLookFor = "'";
+    		if((p = str_find(m_pClient->m_Voting.VoteDescription(), pLookFor)))
+    		{
+    			char aName[MAX_NAME_LENGTH];
+    			p += str_length(pLookFor);
+    			t = str_rchr(p, '\'');
+    			if(t <= p)
+    				return;
+    			str_utf8_truncate(aName, sizeof(aName), p, t - p);
+    			for(int i = 0; i < MAX_CLIENTS; i++)
+    			{
+    				if(!m_pClient->m_aStats[i].IsActive())
+    					continue;
+    				if(str_comp(m_pClient->m_aClients[i].m_aName, aName) == 0)
+    				{
+    					player = &m_pClient->m_aClients[i];
+    				}
+    			}
+    		}
+    		// check if player exists
+    		if(!player)
+    			return;
+    		// check if player is a friend
+    		bool isFriend = player->m_Friend;
+    		bool SameTeam = m_pClient->m_Teams.Team(m_pClient->m_Snap.m_LocalClientID) == player->m_Team;
+    		// Check if team vote is set
+    		if(g_Config.m_ClVotesCount)
+    		{
+    			// check if someone in same Team got voted or if its a kick vote
+    			if(!SameTeam && !kickvote && !m_pClient->m_Scoreboard.Active() )
+    				return;
+    		}
+    		// check if friend vote is set
+    		if(g_Config.m_ClVotesFriends)
+    		{
+    			// check if player is a friend
+    			if(!isFriend && !m_pClient->m_Scoreboard.Active() )
+    				return;
+    		}
+    	}
+    }
+	
+    Graphics()->DrawRect(-10, 60 - 2, 100 + 10 + 4 + 5, 46, ColorRGBA(0.0f, 0.0f, 0.0f, 0.4f), IGraphics::CORNER_ALL, 5.0f);
 
 	TextRender()->TextColor(1, 1, 1, 1);
 
