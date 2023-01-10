@@ -962,7 +962,7 @@ void CCharacter::DDRaceTick()
 			m_Input.m_Hook = 0;
 		}
 		if(m_FreezeTime == 1)
-			UnFreeze();
+			UnFreeze();		
 	}
 
 	HandleTuneLayer();

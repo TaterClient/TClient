@@ -15,9 +15,11 @@ public:
 	virtual void Reset() = 0;
 	virtual void Reset(const char *pScriptName) = 0;
 	virtual bool Save() = 0;
+	virtual bool TSave() = 0;
 	virtual class CConfig *Values() = 0;
 
 	virtual void RegisterCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) = 0;
+	virtual void RegisterTCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) = 0;
 
 	virtual void WriteLine(const char *pLine) = 0;
 };

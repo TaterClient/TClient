@@ -54,9 +54,7 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 		Graphics()->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 		Graphics()->QuadsSetRotation(0);
 
-		const float ShowDirectionImgSize = 22.0f;
-		YOffset -= ShowDirectionImgSize;
-		vec2 ShowDirectionPos = vec2(Position.x - 11.0f, YOffset);
+		vec2 ShowDirectionPos = vec2(Position.x - 11.0f, YOffset - FontSize - 15.0f);
 
 		if(m_pClient->m_Snap.m_aCharacters[pPlayerInfo->m_ClientID].m_Cur.m_Direction == -1)
 		{
@@ -166,6 +164,16 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 		if(m_aNamePlates[ClientID].m_NameTextContainerIndex != -1)
 		{
 			YOffset -= FontSize;
+			if((g_Config.m_ClPingNameCircle || (m_pClient->m_Scoreboard.Active() && !pPlayerInfo->m_Local)) && !(Client()->State() == IClient::STATE_DEMOPLAYBACK))
+			{
+				Graphics()->TextureClear();
+				Graphics()->QuadsBegin();
+				ColorRGBA rgb = color_cast<ColorRGBA>(ColorHSLA((300.0f - clamp(m_pClient->m_Snap.m_apPlayerInfos[ClientID]->m_Latency, 0, 300)) / 1000.0f, 1.0f, 0.5f, 0.8f));
+				Graphics()->SetColor(rgb);
+				float CircleSize = 7.0f;
+				Graphics()->DrawCircle(Position.x - tw / 2.0f - CircleSize, YOffset + FontSize / 2.0f + 1.4f, CircleSize, 24);
+				Graphics()->QuadsEnd();
+			}
 			TextRender()->RenderTextContainer(m_aNamePlates[ClientID].m_NameTextContainerIndex, TColor, TOutlineColor, Position.x - tw / 2.0f, YOffset);
 		}
 
@@ -174,6 +182,16 @@ void CNamePlates::RenderNameplatePos(vec2 Position, const CNetObj_PlayerInfo *pP
 			YOffset -= FontSizeClan;
 			if(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex != -1)
 				TextRender()->RenderTextContainer(m_aNamePlates[ClientID].m_ClanNameTextContainerIndex, TColor, TOutlineColor, Position.x - m_aNamePlates[ClientID].m_ClanNameTextWidth / 2.0f, YOffset);
+		}
+
+		if(g_Config.m_ClShowSkinName)
+		{
+			YOffset -= FontSizeClan;
+			char aBuf[128];
+			str_format(aBuf, sizeof(aBuf), "%s", m_pClient->m_aClients[pPlayerInfo->m_ClientID].m_aSkinName);
+			float XOffset = TextRender()->TextWidth(0, FontSize, aBuf, -1, -1.0f) / 2.0f;
+			TextRender()->TextColor(rgb);
+			TextRender()->Text(0, Position.x - XOffset, YOffset, FontSize, aBuf, -1.0f);
 		}
 
 		if(g_Config.m_ClNameplatesFriendMark && m_pClient->m_aClients[ClientID].m_Friend)
@@ -293,18 +311,18 @@ void CNamePlates::OnRender()
 				RenderNameplatePos(m_pClient->m_aClients[i].m_SpecChar, pInfo, 0.4f, true);
 			}
 		}
-		if(m_pClient->m_Snap.m_aCharacters[i].m_Active)
+		if(!m_pClient->m_Snap.m_aCharacters[i].m_Active)
 		{
-			// Only render nameplates for active characters
-			pRenderPos = &m_pClient->m_aClients[i].m_RenderPos;
-			// don't render offscreen
-			if(!(pRenderPos->x < ScreenX0) && !(pRenderPos->x > ScreenX1) && !(pRenderPos->y < ScreenY0) && !(pRenderPos->y > ScreenY1))
-			{
-				RenderNameplate(
-					&m_pClient->m_Snap.m_aCharacters[i].m_Prev,
-					&m_pClient->m_Snap.m_aCharacters[i].m_Cur,
-					pInfo);
-			}
+			continue;
+		}
+
+		else if(m_pClient->m_Snap.m_aCharacters[i].m_Active)
+		{
+			// only render nameplates for active characters
+			RenderNameplate(
+				&m_pClient->m_Snap.m_aCharacters[i].m_Prev,
+				&m_pClient->m_Snap.m_aCharacters[i].m_Cur,
+				pInfo);
 		}
 	}
 }

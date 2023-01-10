@@ -59,7 +59,9 @@
 #include "components/menus.h"
 #include "components/motd.h"
 #include "components/nameplates.h"
+#include "components/outlines.h"
 #include "components/particles.h"
+#include "components/player_indicator.h"
 #include "components/players.h"
 #include "components/race_demo.h"
 #include "components/scoreboard.h"
@@ -108,6 +110,7 @@ void CGameClient::OnConsoleInit()
 					      &m_CountryFlags,
 					      &m_MapImages,
 					      &m_Effects, // doesn't render anything, just updates effects
+					      &m_SkinProfiles,
 					      &m_Binds,
 					      &m_Binds.m_SpecialBinds,
 					      &m_Controls,
@@ -124,12 +127,15 @@ void CGameClient::OnConsoleInit()
 					      &m_Players,
 					      &m_Ghost,
 					      &m_MapLayersForeGround,
+					      &m_Outlines,
 					      &m_Particles.m_RenderExplosions,
 					      &m_NamePlates,
 					      &m_Particles.m_RenderExtra,
 					      &m_Particles.m_RenderGeneral,
 					      &m_FreezeBars,
 					      &m_DamageInd,
+					      &m_PlayerIndicator,
+                          &m_Bindwheel,
 					      &m_Hud,
 					      &m_Spectator,
 					      &m_Emoticon,
@@ -154,6 +160,7 @@ void CGameClient::OnConsoleInit()
 						  &m_Motd, // for pressing esc to remove it
 						  &m_Menus,
 						  &m_Spectator,
+                          &m_Bindwheel,
 						  &m_Emoticon,
 						  &m_Controls,
 						  &m_Binds});
@@ -229,7 +236,7 @@ void CGameClient::OnInit()
 
 	// propagate pointers
 	m_UI.Init(Kernel());
-	m_RenderTools.Init(Graphics(), TextRender());
+	m_RenderTools.Init(Graphics(), TextRender(), this);
 
 	int64_t Start = time_get();
 
@@ -277,6 +284,9 @@ void CGameClient::OnInit()
 		}
 		++CompCounter;
 	}
+
+
+
 
 	char aBuf[256];
 
@@ -1786,6 +1796,7 @@ void CGameClient::OnPredict()
 		pDummyChar = m_PredictedWorld.GetCharacterByID(m_PredictedDummyID);
 
 	// predict
+	// prediction actually happens here
 	for(int Tick = Client()->GameTick(g_Config.m_ClDummy) + 1; Tick <= Client()->PredGameTick(g_Config.m_ClDummy); Tick++)
 	{
 		// fetch the previous characters
@@ -2478,6 +2489,8 @@ void CGameClient::UpdateRenderedCharacters()
 				vec2(m_aClients[i].m_RenderPrev.m_X, m_aClients[i].m_RenderPrev.m_Y),
 				vec2(m_aClients[i].m_RenderCur.m_X, m_aClients[i].m_RenderCur.m_Y),
 				m_aClients[i].m_IsPredicted ? Client()->PredIntraGameTick(g_Config.m_ClDummy) : Client()->IntraGameTick(g_Config.m_ClDummy));
+			if(g_Config.m_ClRemoveAnti)
+				Pos = GetFreezePos(i);
 
 			if(i == m_Snap.m_LocalClientID)
 			{
@@ -2489,6 +2502,15 @@ void CGameClient::UpdateRenderedCharacters()
 					if(m_Snap.m_aCharacters[i].m_Cur.m_Weapon != WEAPON_NINJA && !(pChar->m_NinjaJetpack && pChar->Core()->m_ActiveWeapon == WEAPON_GUN))
 						m_aClients[i].m_RenderCur.m_Weapon = m_aClients[i].m_Predicted.m_ActiveWeapon;
 				}
+				if(pChar && pChar->m_FreezeTime > 0)
+				{
+					g_Config.m_ClAmIFrozen = 1;
+				}
+				else
+				{
+					g_Config.m_ClAmIFrozen = 0;
+					g_Config.m_ClFreezeTick = Client()->GameTick(g_Config.m_ClDummy);
+				}
 			}
 			else
 			{
@@ -2498,6 +2520,8 @@ void CGameClient::UpdateRenderedCharacters()
 
 				if(g_Config.m_ClAntiPingSmooth)
 					Pos = GetSmoothPos(i);
+				if(g_Config.m_ClRemoveAnti && g_Config.m_ClAmIFrozen)
+					Pos = GetFreezePos(i);
 			}
 		}
 		m_Snap.m_aCharacters[i].m_Position = Pos;
@@ -2614,6 +2638,32 @@ vec2 CGameClient::GetSmoothPos(int ClientID)
 	return Pos;
 }
 
+vec2 CGameClient::GetFreezePos(int ClientID)
+{
+	vec2 Pos = mix(m_aClients[ClientID].m_PrevPredicted.m_Pos, m_aClients[ClientID].m_Predicted.m_Pos, Client()->PredIntraGameTick(g_Config.m_ClDummy));
+	int64_t Now = time_get();
+	for(int i = 0; i < 2; i++)
+	{
+		//int64_t Len = clamp(m_aClients[ClientID].m_SmoothLen[i], (int64_t)1, time_freq());
+		//int64_t TimePassed = Now - m_aClients[ClientID].m_SmoothStart[i];
+		float MixAmount = 0.0f;
+		int SmoothTick;
+		float SmoothIntra;
+		int TicksFrozen = Client()->GameTick(g_Config.m_ClDummy) - g_Config.m_ClFreezeTick;
+		if(g_Config.m_ClAmIFrozen && g_Config.m_ClRemoveAnti)
+		{
+			MixAmount = mix(0.0f, 1.0f, 1.0f - (float)std::min(TicksFrozen, g_Config.m_ClUnfreezeLagDelayTicks) / (float)g_Config.m_ClUnfreezeLagDelayTicks);
+		}
+		else
+		{
+			MixAmount = 1.0f;
+		}
+		Client()->GetSmoothFreezeTick(&SmoothTick, &SmoothIntra, MixAmount);
+		if(SmoothTick > 0 && m_aClients[ClientID].m_aPredTick[(SmoothTick - 1) % 200] >= Client()->PrevGameTick(g_Config.m_ClDummy) && m_aClients[ClientID].m_aPredTick[SmoothTick % 200] <= Client()->PredGameTick(g_Config.m_ClDummy))
+			Pos[i] = mix(m_aClients[ClientID].m_aPredPos[(SmoothTick - 1) % 200][i], m_aClients[ClientID].m_aPredPos[SmoothTick % 200][i], SmoothIntra);
+	}
+	return Pos;
+}
 void CGameClient::Echo(const char *pString)
 {
 	m_Chat.Echo(pString);

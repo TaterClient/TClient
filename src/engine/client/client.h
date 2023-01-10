@@ -179,7 +179,8 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	char m_aCurrentMapPath[IO_MAX_PATH_LENGTH];
 
 	char m_aTimeoutCodes[NUM_DUMMIES][32];
-	bool m_aCodeRunAfterJoin[NUM_DUMMIES];
+	bool m_CodeRunAfterJoin[NUM_DUMMIES];
+	bool m_CodeRunAfterJoinConsole[NUM_DUMMIES];
 	bool m_GenerateTimeoutSeed;
 
 	//
@@ -540,6 +541,7 @@ public:
 
 	IFriends *Foes() override { return &m_Foes; }
 
+    void GetSmoothFreezeTick(int *pSmoothTick, float *pSmoothIntraTick, float MixAmount);
 	void GetSmoothTick(int *pSmoothTick, float *pSmoothIntraTick, float MixAmount) override;
 
 	SWarning *GetCurWarning() override;

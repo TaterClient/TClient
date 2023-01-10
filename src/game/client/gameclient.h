@@ -44,6 +44,9 @@
 #include "components/motd.h"
 #include "components/nameplates.h"
 #include "components/particles.h"
+#include "components/player_indicator.h"
+#include "components/bindwheel.h"
+#include "components/outlines.h"
 #include "components/players.h"
 #include "components/race_demo.h"
 #include "components/scoreboard.h"
@@ -53,6 +56,8 @@
 #include "components/statboard.h"
 #include "components/tooltips.h"
 #include "components/voting.h"
+#include "components/skinprofiles.h"
+
 
 class CGameInfo
 {
@@ -117,6 +122,7 @@ public:
 	CBroadcast m_Broadcast;
 	CGameConsole m_GameConsole;
 	CBinds m_Binds;
+	CSkinProfiles m_SkinProfiles;
 	CParticles m_Particles;
 	CMenus m_Menus;
 	CSkins m_Skins;
@@ -130,11 +136,14 @@ public:
 	CStatboard m_Statboard;
 	CSounds m_Sounds;
 	CEmoticon m_Emoticon;
+    CBindWheel m_Bindwheel;
 	CDamageInd m_DamageInd;
 	CVoting m_Voting;
 	CSpectator m_Spectator;
 
 	CPlayers m_Players;
+	CPlayerIndicator m_PlayerIndicator;
+	COutlines m_Outlines;
 	CNamePlates m_NamePlates;
 	CFreezeBars m_FreezeBars;
 	CItems m_Items;
@@ -194,7 +203,6 @@ private:
 	int m_aCheckInfo[NUM_DUMMIES];
 
 	char m_aDDNetVersionStr[64];
-
 	static void ConTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConKill(IConsole::IResult *pResult, void *pUserData);
 
@@ -710,6 +718,7 @@ private:
 	void UpdateRenderedCharacters();
 	void DetectStrongHook();
 	vec2 GetSmoothPos(int ClientID);
+	vec2 GetFreezePos(int ClientID);
 
 	int m_PredictedDummyID;
 	int m_IsDummySwapping;

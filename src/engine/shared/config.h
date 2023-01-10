@@ -9,6 +9,7 @@
 // include protocol for MAX_CLIENT used in config_variables
 #include <engine/shared/protocol.h>
 
+#define TCONFIG_FILE "settings_tclient.cfg"
 #define CONFIG_FILE "settings_ddnet.cfg"
 #define AUTOEXEC_FILE "autoexec.cfg"
 #define AUTOEXEC_CLIENT_FILE "autoexec_client.cfg"
@@ -70,7 +71,11 @@ class CConfigManager : public IConfigManager
 	IOHANDLE m_ConfigFile;
 	bool m_Failed;
 	CCallback m_aCallbacks[MAX_CALLBACKS];
+
 	int m_NumCallbacks;
+
+	CCallback m_aTCallbacks[MAX_CALLBACKS];
+	int m_NumTCallbacks;
 
 public:
 	CConfigManager();
@@ -79,9 +84,12 @@ public:
 	void Reset() override;
 	void Reset(const char *pScriptName) override;
 	bool Save() override;
+	bool TSave() override;
+
 	CConfig *Values() override { return &g_Config; }
 
 	void RegisterCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) override;
+	void RegisterTCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) override;
 
 	void WriteLine(const char *pLine) override;
 };
