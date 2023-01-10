@@ -1,0 +1,1697 @@
+##### authors #####
+#originally created by:
+#	Learath2
+#modified by:
+#	Learath2		2011-06-27 18:54:08
+#	Learath2		2011-08-21 00:12:50
+#	Learath2		2011-09-07 15:59:20
+#	Learath2		2012-01-01 22:54:29
+#	ardadem			2020-08-20 00:00:00
+#	ardadem			2020-08-22 00:00:00
+##### /authors #####
+
+##### translated strings #####
+
+%ds left
+== %ds kaldı
+
+%i minute left
+== %i dakika kaldı
+
+%i minutes left
+== %i dakika kaldı
+
+%i second left
+== %i saniye kaldı
+
+%i seconds left
+== %i saniye kaldı
+
+%s wins!
+== %s kazandı!
+
+-Page %d-
+== -Sayfa %d-
+
+Abort
+== İptal
+
+Add
+== Ekle
+
+Add Friend
+== Arkadaş Ekle
+
+Address
+== Adres
+
+All
+== Hepsi
+
+Are you sure that you want to quit?
+== Çıkmak istediğinize emin misiniz?
+
+Automatically record demos
+== Demoları otomatik olarak kaydet
+
+Automatically take game over screenshot
+== Otomatik olarak oyun bitişinde ekran görüntüsü al
+
+Blue team
+== Mavi takım
+
+Blue team wins!
+== Mavi takım kazandı!
+
+Body
+== Gövde
+
+Call vote
+== Oylama
+
+Change settings
+== Ayarları değiştir
+
+Chat
+== Sohbet
+
+Clan
+== Klan
+
+Client
+== İstemci
+
+Close
+== Kapat
+
+Connect
+== Bağlan
+
+Connecting to
+== Bağlanılıyor
+
+Connection Problems...
+== Bağlantı Hataları...
+
+Console
+== Konsol
+
+Controls
+== Kontroller
+
+Count players only
+== Sadece oyuncuları say
+
+Current
+== Şimdiki
+
+Custom colors
+== Özel renkler
+
+Delete
+== Sil
+
+Delete demo
+== Demoyu sil
+
+Demo details
+== Demo ayrıntıları
+
+Demofile: %s
+== Demo dosyası: %s
+
+Demos
+== Demolar
+
+Disconnect
+== Bağlantıyı kes
+
+Disconnected
+== Bağlantı kesildi
+
+Downloading map
+== Harita yükleniyor
+
+Draw!
+== Berabere!
+
+Dynamic Camera
+== Dinamik Kamera
+
+Emoticon
+== Yüz ifadesi
+
+Error
+== Hata
+
+Error loading demo
+== Demo yüklenirken hata oluştu
+
+Favorite
+== Favori
+
+Favorites
+== Favoriler
+
+Feet
+== Ayak
+
+Filter
+== Filtre
+
+Fire
+== Ateş
+
+Folder
+== Dosya
+
+Force vote
+== Oylamayı zorla
+
+Free-View
+== Serbest Bakış
+
+Friends
+== Arkadaşlar
+
+Fullscreen
+== Tam ekran
+
+Game
+== Oyun
+
+Game info
+== Oyun bilgisi
+
+Game over
+== Oyun sonu
+
+Game type
+== Oyun türü
+
+Game types:
+== Oyun türleri:
+
+General
+== Genel
+
+Graphics
+== Grafik
+
+Grenade
+== El bombası
+
+Hammer
+== Çekiç
+
+Has people playing
+== Oyuncu bulunduran
+
+High Detail
+== Yüksek Detay
+
+Hook
+== Kanca
+
+Invalid Demo
+== Geçersiz Demo
+
+Join blue
+== Maviye katıl
+
+Join red
+== Kırmızıya katıl
+
+Jump
+== Zıpla
+
+Kick player
+== Oyuncuyu At
+
+Language
+== Dil
+
+MOTD
+== MOTD
+
+Map
+== Harita
+
+Move left
+== Sola git
+
+Move player to spectators
+== Seyircilere katıl
+
+Move right
+== Sağa git
+
+Movement
+== Hareket
+
+Mute when not active
+== Aktif değilken sessizleştir
+
+Name
+== Takma ad
+
+Next weapon
+== Sonraki silah
+
+Nickname
+== Takma ad
+
+No
+== Hayır
+
+No password
+== Şifresiz
+
+No servers found
+== Sunucu bulunamadı
+
+No servers match your filter criteria
+== Filtre kriterlerinize uygun sunucu bulunamadı
+
+Ok
+== Tamam
+
+Open
+== Aç
+
+Parent Folder
+== Üst dizin
+
+Password
+== Şifre
+
+Password incorrect
+== Hatalı şifre
+
+Ping
+== Ping
+
+Pistol
+== Tabanca
+
+[Demo browser]
+Play
+== Oynat
+
+Play background music
+== Arkaplan müziğini çal
+
+Player
+== Oyuncu
+
+Player options
+== Oyuncu ayarları
+
+Players
+== Oyuncu
+
+Please balance teams!
+== Takımları dengeleyin!
+
+Prev. weapon
+== Önceki silah
+
+Quit
+== Çıkış
+
+Reason:
+== Neden:
+
+Red team
+== Kırmızı takım
+
+Red team wins!
+== Kırmızı takım kazandı!
+
+Refresh
+== Yenile
+
+Remote console
+== Uzak Konsol
+
+Remove
+== Çıkar
+
+Remove friend
+== Arkadaşı sil
+
+Rename
+== Yeniden isimlendir
+
+Rename demo
+== Demonun adını değiştir
+
+Reset filter
+== Filtreleri sıfırla
+
+Sample rate
+== Örnekleme hızı
+
+Score
+== Skor
+
+Score limit
+== Skor limiti
+
+Scoreboard
+== Skor tahtası
+
+Screenshot
+== Ekran görüntüsü
+
+Server address:
+== Sunucu adresi:
+
+Server details
+== Sunucucu detayları
+
+Server filter
+== Filtreler
+
+Server info
+== Hakkında
+
+Server not full
+== Sunucu dolu değil
+
+Shotgun
+== Tüfek
+
+Show chat
+== Sohbeti göster
+
+Show friends only
+== Sadece arkadaşları göster
+
+Show ingame HUD
+== Oyun içi arayüzünü göster
+
+Show name plates
+== Oyuncu isimlerini göster
+
+Skins
+== Skinler
+
+Sound
+== Ses
+
+Sound error
+== Ses hatası
+
+Spectate
+== İzle
+
+Spectate next
+== Sıradakini izle
+
+Spectate previous
+== Öncekini izle
+
+Spectator mode
+== İzleyici modu
+
+Spectators
+== İzleyiciler
+
+Stop record
+== Kaydı durdur
+
+Strict gametype filter
+== Sıkı oyun türü filtresi
+
+Sudden Death
+== Ani ölüm
+
+Switch weapon on pickup
+== Silah alındığıda yeni silahı kullan
+
+Team
+== Takım
+
+Team chat
+== Takım sohbeti
+
+The audio device couldn't be initialised.
+== Ses donanımı başlatılamadı.
+
+The server is running a non-standard tuning on a pure game type.
+== Bu sunucu standart olmayan bir ayarı saf bir oyun türünde kullanıyor.
+
+There's an unsaved map in the editor, you might want to save it before you quit the game.
+== Editörde kaydedilmemiş bir harita var, kapatmadan önce kaydetmek isteyebilirsiniz.
+
+Time limit
+== Süre limiti
+
+Time limit: %d min
+== Süre limiti: %d dakika
+
+Try again
+== Tekrar dene
+
+Type
+== Tür
+
+Unable to rename the demo
+== Demonun ismi değiştirilemiyor
+
+Use sounds
+== Sesleri kullan
+
+Use team colors for name plates
+== İsim etiketlerinde takım renklerini kullan
+
+V-Sync
+== V-Sync
+
+Version
+== Sürüm
+
+Vote command:
+== Komut:
+
+Vote description:
+== Açıklama:
+
+Vote no
+== Olumsuz
+
+Vote yes
+== Olumlu
+
+Voting
+== Oylama
+
+Warmup
+== Isınma
+
+Weapon
+== Silah
+
+Yes
+== Evet
+
+You must restart the game for all settings to take effect.
+== Bütün ayarların aktif olması için oyunu yeniden başlatmalısınız.
+
+New name:
+== Yeni isim :
+
+Sat.
+== Doygunluk
+
+Miscellaneous
+== Çeşitli
+
+Internet
+== Internet
+
+Max demos
+== Maksimum Demo Sayısı
+
+News
+== Haber
+
+Join game
+== Oyuna katıl
+
+FSAA samples
+== FSAA örnekleri
+
+Sound volume
+== Ses seviyesi
+
+Created:
+== Oluşturuldu:
+
+Max Screenshots
+== Maksimum Ekran Görüntüsü Sayısı
+
+Length:
+== Uzunluk:
+
+Laser
+== Lazer
+
+Netversion:
+== Netversion :
+
+Map:
+== Harita:
+
+Info
+== Bilgi
+
+Hue
+== Renk
+
+Record demo
+== Demo kaydet
+
+Your skin
+== Sizin görünüşünüz
+
+Size:
+== Boyut:
+
+##### translated strings #####
+
+Reset to defaults
+== Varsayılanlara getir
+
+Quit anyway?
+== Çıkmak istediğinize emin misiniz?
+
+Display Modes
+== Çözünürlük
+
+Version:
+== Versiyon :
+
+Round
+== Raund
+
+Lht.
+== Parlaklık
+
+UI Color
+== Menü rengi
+
+Crc:
+== Crc:
+
+Alpha
+== Şeffaflık
+
+LAN
+== LAN
+
+Name plates size
+== Boyut
+
+Type:
+== Tür:
+
+Successfully saved the replay!
+== Başarıyla kaydedildi!
+
+Replay feature is disabled!
+== Yeniden oynatma özelliği devre dışı!
+
+Game paused
+== Oyun durduruldu
+
+Server best:
+== Sunucu en iyi:
+
+Personal best:
+== Bireysel en iyi:
+
+Learn
+== Öğren
+
+Browser
+== Sunucular
+
+Ghost
+== Hayalet
+
+Loading DDNet Client
+== DDNet Client yükleniyor
+
+Reconnect in %d sec
+== %d saniye içinde yeniden bağlanılacak
+
+Render demo
+== Render demo
+
+Replace video
+== Video üzerine yaz
+
+File already exists, do you want to overwrite it?
+== Dosya halihazırda mevcut, üzerine yazılsın mı?
+
+Are you sure that you want to disconnect?
+== Ayrılmak istediğinizden emin misiniz?
+
+Disconnect Dummy
+== Dummy Ayrıl
+
+Are you sure that you want to disconnect your dummy?
+== Dummy bağlantısını koparmak istediğinizden emin misiniz?
+
+Welcome to DDNet
+== DDNet e hoşgeldiniz
+
+DDraceNetwork is a cooperative online game where the goal is for you and your group of tees to reach the finish line of the map. As a newcomer you should start on Novice servers, which host the easiest maps. Consider the ping to choose a server close to you.
+== DDRaceNetwork bitiş çizgisine en kısa sürede ulaşmayı amaçlayan oyunculardan oluşan, çevrimiçi bir takım oyunudur. Çaylak olarak ilk önce kolay haritalardan yani Novice sunuculardan oynamaya başlamanı öneririz. Herhangi bir sunucu seçmeden önce sana yakın olan sunucuyu seçmek için ping'i dikkate al.
+
+Use k key to kill (restart), q to pause and watch other players. See settings for other key binds.
+== İntihar etmek (yeniden başlamak) için k tuşu, oyunu durdurup diğer oyuncuları izlemek için q tuşunu kullanabilirsin. Diğer kontrollere ayarlardan bakabilirsin.
+
+It's recommended that you check the settings to adjust them to your liking before joining a server.
+== Sunuculara bağlanmadan önce ayarları kontrol edip kendine göre düzenlemeni öneriyoruz.
+
+Please enter your nickname below.
+== Lütfen takma adı girin.
+
+Video name:
+== Video ismi:
+
+Show DDNet map finishes in server browser
+== Tamamlanan DDNet haritalarını sunucu listesinde göster
+
+transmits your player name to info.ddnet.org
+== oyuncu adını info.ddnet.org ile paylaşır
+
+Search
+== Ara
+
+Exclude
+== Hariç
+
+Player country:
+== Oyuncu ülkesi
+
+Filter connecting players
+== Bağlanan oyuncuları sayma
+
+Indicate map finish
+== Tamamlanmış haritaları göster
+
+Unfinished map
+== Tamamlanmamış harita
+
+Countries
+== Ülkeler
+
+Types
+== Türler
+
+DDNet %s is out!
+== DDNet %s yayınlandı!
+
+Downloading %s:
+== İndiriliyor %s:
+
+Update failed! Check log...
+== Güncelleme sırasında hata oluştu!
+
+DDNet Client updated!
+== DDNet Client güncellendi!
+
+Update now
+== Güncelle
+
+Restart
+== Yeniden başlat
+
+Select a name
+== Takma ad seç
+
+Please use a different name
+== Lütfen farklı takma ad kullanın
+
+Remove chat
+== Sohbeti kaldır
+
+Markers:
+== İşaretler:
+
+%.2f MiB
+== %.2f MiB
+
+%.2f KiB
+== %.2f KiB
+
+Demo
+== Demo
+
+Markers
+== İşaretler
+
+Length
+== Uzunluk
+
+Date
+== Tarih
+
+Fetch Info
+== Bilgileri göster
+
+Render
+== Render
+
+Connecting dummy
+== Dummy bağlanıyor
+
+Connect Dummy
+== Dummy Katıl
+
+Reload
+== Yenile
+
+Deactivate
+== Devre dışı bırak
+
+Activate
+== Etkinleştir
+
+Save
+== Kaydet
+
+Switch weapon when out of ammo
+== Mermi kalmadığında silahı değiştir
+
+Show only chat messages from friends
+== Sadece arkadaşlardan gelen mesajları göster
+
+Show clan above name plates
+== Oyuncu isimlerinin üstünde klanı göster
+
+Clan plates size
+== Boyut
+
+Refresh Rate
+== Yenileme Hızı
+
+Automatically take statboard screenshot
+== Otomatik olarak stat tahtası ekran görüntüsü al
+
+Automatically create statboard csv
+== Otomatik olarak stat tahtası csv oluştur
+
+Max CSVs
+== Max CSVs
+
+Dummy settings
+== Dummy ayarları
+
+Vanilla skins only
+== Sadece vanilla skinleri
+
+Fat skins (DDFat)
+== Şişko skinler (DDFat)
+
+Skin prefix
+== Skin sıfatı
+
+Hook collisions
+== Kanca çizgisi
+
+Pause
+== Durdur
+
+Kill
+== İntihar et
+
+Zoom in
+== Yakınlaştır
+
+Zoom out
+== Uzaklaştır
+
+Default zoom
+== Varsayılan zoom
+
+Show others
+== Diğerlerini göster
+
+Show all
+== Herkesi göster
+
+Toggle dyncam
+== Dinamik kamera
+
+Toggle dummy
+== Dummy kullan
+
+Toggle ghost
+== Hayaleti göster
+
+Dummy copy
+== Dummy copy
+
+Hammerfly dummy
+== Hammerfly dummy
+
+Converse
+== Konuşma
+
+Statboard
+== Stat tahtası
+
+Lock team
+== Takımı kilitle
+
+Show entities
+== Yapıları göster
+
+Show HUD
+== Arayüzü göster
+
+may cause delay
+== gecikmelere sebep olabilir
+
+Screen
+== Ekran
+
+Use high DPI
+== Yüksek DPI kullan
+
+Enable game sounds
+== Oyun sesini etkinleştir
+
+Enable gun sound
+== Silah sesini etkinleştir
+
+Enable long pain sound (used when shooting in freeze)
+== Uzun ağlama sesini etkinleştir (freeze iken ateş edince kullanılır)
+
+Enable server message sound
+== Sunucu mesaj sesini etkinleştir
+
+Enable regular chat sound
+== Genel mesaj sesini etkinleştir
+
+Enable team chat sound
+== Takım mesajı sesini etkinleştir
+
+Enable highlighted chat sound
+== Vurgulanmış mesaj sesini etkinleştir
+
+Threaded sound loading
+== Threaded ses yükleme
+
+Map sound volume
+== Harita ses seviyesi
+
+HUD
+== Arayüz
+
+DDNet
+== DDNet
+
+DDNet Client needs to be restarted to complete update!
+== Güncellemenin tamamlanabilmesi için istemcinin yeniden başlatılması gerek!
+
+Use DDRace Scoreboard
+== DDRace Skor Tahtası kulan
+
+Show score
+== Skoru göster
+
+Show names in chat in team colors
+== Sohbetde isimleri takım rengiyle göster
+
+Show kill messages
+== Ölüm mesajlarını göster
+
+Show votes window after voting
+== Oyladıktan sonra oylama ekranını göstermeye devam et
+
+Messages
+== Mesajlar
+
+System message
+== Sistem mesajı
+
+Reset
+== Sıfırla
+
+Highlighted message
+== Vurgulanmış mesaj
+
+Team message
+== Takım mesajı
+
+Friend message
+== Arkadaş mesajı
+
+Normal message
+== Normal mesaj
+
+Client message
+== İstemci mesajı
+
+Save the best demo of each race
+== Her yarış için en iyi demoyu kaydet
+
+Default length: %d
+== Uzunluk: %d
+
+Enable replays
+== Tekrar oynatmaları etkinleştir
+
+Show ghost
+== Hayaleti göster
+
+Save ghost
+== Hayaleti kaydet
+
+Gameplay
+== Oyun içi
+
+Overlay entities
+== Üst katman yapıları
+
+Size
+== Boyut
+
+Show text entities
+== Yazı yapılarını göster
+
+Show others (own team only)
+== Diğerlerini göster (sadece kendi takımın)
+
+Show quads
+== Dörtgen yapıları göster
+
+AntiPing
+== AntiPing
+
+AntiPing: predict other players
+== AntiPing: diğer oyuncuları tahmin et
+
+AntiPing: predict weapons
+== AntiPing: silahları tahmin et
+
+AntiPing: predict grenade paths
+== AntiPing: el bombası yolunu tahmin et
+
+Show other players' hook collision lines
+== Diğer oyuncuların kanca çizgisini göster
+
+Show other players' key presses
+== Diğer oyuncuların tuş basışlarını göster
+
+Old mouse mode
+== Eski mouse modu
+
+Show tiles layers from BG map
+== Yapı katmanlarını göster
+
+DDNet %s is available:
+== DDNet %s yayınlandı:
+
+Updating...
+== Güncelleniyor...
+
+No updates available
+== Güncelleme mevcut değil
+
+Check now
+== Kontrol et
+
+New random timeout code
+== Yeni rastgele zaman aşımı kodu
+
+Time
+== Süre
+
+Follow
+== Takip et
+
+Frags
+== Frags
+
+Deaths
+== Ölümler
+
+Suicides
+== İntiharlar
+
+Ratio
+== Oran
+
+Net
+== Net
+
+FPM
+== FPM
+
+Spree
+== Spree
+
+Best
+== En iyi
+
+Grabs
+== Grabs
+
+1 new mention
+== 1 yeni bildirim
+
+%d new mentions
+== %d yeni bildirim
+
+9+ new mentions
+== 9+ yeni bildirim
+
+Manual
+== Manual
+
+Race
+== Yarış
+
+Auto
+== Otomatik
+
+Replay
+== Yeniden oynatma
+
+https://wiki.ddnet.org/
+== https://wiki.ddnet.org/wiki/Main_Page/tr
+
+[Graphics error]
+
+[Graphics error]
+Failed during initialization. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== 
+
+[Graphics error]
+Out of VRAM. Try removing custom assets (skins, entities, etc.), especially those with high resolution.
+== 
+
+[Graphics error]
+An error during command recording occurred. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+A render command failed. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+Submitting the render commands failed. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+Failed to swap framebuffers. Try to update your GPU drivers.
+== 
+
+[Graphics error]
+Unknown error. Try to change gfx_backend to OpenGL or Vulkan in settings_ddnet.cfg in the config directory and try again.
+== 
+
+[Graphics error]
+Could not initialize the given graphics backend, reverting to the default backend now.
+== 
+
+Saving ddnet-settings.cfg failed
+== 
+
+The width of texture %s is not divisible by %d, or the height is not divisible by %d, which might cause visual bugs.
+== 
+
+The format of texture %s is not RGBA which will cause visual bugs.
+== 
+
+Preparing demo playback
+== 
+
+Connected
+== 
+
+Loading map file from storage
+== 
+
+Why are you slowmo replaying to read this?
+== 
+
+Initializing components
+== 
+
+Initializing assets
+== 
+
+Initializing map logic
+== 
+
+Sending initial client info
+== 
+
+Warning
+== 
+
+Debug mode enabled. Press Ctrl+Shift+D to disable debug mode.
+== 
+
+Position:
+== 
+
+Speed:
+== 
+
+Angle:
+== 
+
+Uploading map data to GPU
+== 
+
+Trying to determine UDP connectivity...
+== 
+
+UDP seems to be filtered.
+== 
+
+UDP and TCP IP addresses seem to be different. Try disabling VPN, proxy or network accelerators.
+== 
+
+No answer from server yet.
+== 
+
+Getting game info
+== 
+
+Requesting to join the game
+== 
+
+Existing Player
+== 
+
+Your nickname '%s' is already used (%d points). Do you still want to use it?
+== 
+
+Checking for existing player with your name
+== 
+
+Country / Region
+== 
+
+Cancel
+== 
+
+File '%s' already exists, do you want to overwrite it?
+== 
+
+Speed
+== 
+
+Join Tutorial Server
+== 
+
+Skip Tutorial
+== 
+
+Theme
+== 
+
+Loading menu images
+== 
+
+AFR
+== 
+
+ASI
+== 
+
+AUS
+== 
+
+EUR
+== 
+
+NA
+== 
+
+SA
+== 
+
+CHN
+== 
+
+Getting server list from master server
+== 
+
+%d of %d servers
+== 
+
+%d of %d server
+== 
+
+%d players
+== 
+
+%d player
+== 
+
+Refreshing...
+== 
+
+Are you sure that you want to disconnect and switch to a different server?
+== 
+
+Leak IP
+== 
+
+Are you sure that you want to remove the player '%s' from your friends list?
+== 
+
+Are you sure that you want to remove the clan '%s' from your friends list?
+== 
+
+Play the current demo
+== 
+
+Pause the current demo
+== 
+
+Stop the current demo
+== 
+
+Go back one tick
+== 
+
+Go forward one tick
+== 
+
+Slow down the demo
+== 
+
+Speed up the demo
+== 
+
+Mark the beginning of a cut
+== 
+
+Mark the end of a cut
+== 
+
+Export cut as a separate demo
+== 
+
+Go back one marker
+== 
+
+Go forward one marker
+== 
+
+Toggle keyboard shortcuts
+== 
+
+Loading demo files
+== 
+
+Demos directory
+== 
+
+Open the directory that contains the demo files
+== 
+
+Are you sure that you want to delete the demo '%s'?
+== 
+
+Unable to delete the demo '%s'
+== 
+
+Loading ghost files
+== 
+
+Menu opened. Press Esc key again to close menu.
+== 
+
+Smooth Dynamic Camera
+== 
+
+Skip the main menu
+== 
+
+Save power by lowering refresh rate (higher input latency)
+== 
+
+Settings file
+== 
+
+Open the settings file
+== 
+
+Config directory
+== 
+
+Open the directory that contains the configuration and user files
+== 
+
+Themes directory
+== 
+
+Open the directory to add custom themes
+== 
+
+Loading skin files
+== 
+
+Toggle to edit your dummy settings
+== 
+
+Download skins
+== 
+
+Download community skins
+== 
+
+Choose default eyes when joining a server
+== 
+
+Skin Database
+== 
+
+Skins directory
+== 
+
+Open the directory to add custom skins
+== 
+
+Chat command
+== 
+
+Enable controller
+== 
+
+Controller %d: %s
+== 
+
+Click to cycle through all available controllers.
+== 
+
+[Ingame controller mode]
+Relative
+== 
+
+[Ingame controller mode]
+Absolute
+== 
+
+Ingame controller mode
+== 
+
+Ingame controller sens.
+== 
+
+UI controller sens.
+== 
+
+Controller jitter tolerance
+== 
+
+No controller found. Plug in a controller.
+== 
+
+Device
+== 
+
+Status
+== 
+
+Aim bind
+== 
+
+Controller Axis #%d
+== 
+
+Mouse
+== 
+
+Ingame mouse sens.
+== 
+
+UI mouse sens.
+== 
+
+Controller
+== 
+
+Reset controls
+== 
+
+Are you sure that you want to reset the controls to their defaults?
+== 
+
+Dummy
+== 
+
+Windowed
+== 
+
+Windowed borderless
+== 
+
+Windowed fullscreen
+== 
+
+Desktop fullscreen
+== 
+
+Allows maps to render with more detail
+== 
+
+Renderer
+== 
+
+default
+== 
+
+custom
+== 
+
+Graphics cards
+== 
+
+auto
+== 
+
+Game sound volume
+== 
+
+Chat sound volume
+== 
+
+Background music volume
+== 
+
+Appearance
+== 
+
+Assets
+== 
+
+Name Plate
+== 
+
+Hook Collisions
+== 
+
+Kill Messages
+== 
+
+Show health, shields and ammo
+== 
+
+DDRace HUD
+== 
+
+Show client IDs in scoreboard
+== 
+
+Show DDRace HUD
+== 
+
+Show jumps indicator
+== 
+
+Show dummy actions
+== 
+
+Show player position
+== 
+
+Show player speed
+== 
+
+Show player target angle
+== 
+
+Show freeze bars
+== 
+
+Opacity of freeze bars inside freeze
+== 
+
+Use old chat style
+== 
+
+Preview
+== 
+
+Show hook strength indicator
+== 
+
+Show local player's key presses
+== 
+
+Hook collision line
+== 
+
+Hook collision line width
+== 
+
+Hook collision line opacity
+== 
+
+Colors of the hook collision line, in case of a possible collision with:
+== 
+
+Your movements are not taken into account when calculating the line colors
+== 
+
+Nothing hookable
+== 
+
+Something hookable
+== 
+
+A Tee
+== 
+
+Normal Color
+== 
+
+Highlight Color
+== 
+
+Weapons
+== 
+
+Rifle Laser Outline Color
+== 
+
+Rifle Laser Inner Color
+== 
+
+Shotgun Laser Outline Color
+== 
+
+Shotgun Laser Inner Color
+== 
+
+Entities
+== 
+
+Door Laser Outline Color
+== 
+
+Door Laser Inner Color
+== 
+
+Freeze Laser Outline Color
+== 
+
+Freeze Laser Inner Color
+== 
+
+Set all to Rifle
+== 
+
+When you cross the start line, show a ghost tee replicating the movements of your best time
+== 
+
+Opacity
+== 
+
+Adjust the opacity of entities belonging to other teams, such as tees and nameplates
+== 
+
+Quads are used for background decoration
+== 
+
+Tries to predict other entities to give a feel of low latency
+== 
+
+Background
+== 
+
+Entities Background color
+== 
+
+Use current map as background
+== 
+
+Regular Background Color
+== 
+
+Run on join
+== 
+
+Chat command (e.g. showall 1)
+== 
+
+Unregister protocol and file extensions
+== 
+
+Emoticons
+== 
+
+Particles
+== 
+
+Extras
+== 
+
+Loading assets
+== 
+
+Assets directory
+== 
+
+Open the directory to add custom assets
+== 
+
+Discord
+== 
+
+https://ddnet.org/discord
+== 
+
+Tutorial
+== 
+
+Can't find a Tutorial server
+== 
+
+Website
+== 
+
+Settings
+== 
+
+Stop server
+== 
+
+Run server
+== 
+
+Server executable not found, can't run server
+== 
+
+Editor
+== 
+
+[Start menu]
+Play
+== 
+
+Loading race demo files
+== 
+
+Super
+== 
+
+Team %d
+== 
+
+Loading sound files
+== 
