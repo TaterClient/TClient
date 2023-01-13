@@ -1,4 +1,4 @@
-[![DDraceNetwork](https://ddnet.tw/ddnet-small.png)](https://ddnet.tw) 
+[![DDraceNetwork](https://user-images.githubusercontent.com/55141362/212435433-55e4e969-64ed-4ab2-8652-91901d2314a9.png)](https://ddnet.tw) 
 
 ### Taters custom ddnet client with some small modifications
 Not guarenteed to be bug free, but I will try to fix them. 
@@ -7,7 +7,8 @@ If ddnet devs are reading this and want to steal my changes please feel free.
 
 # Installation:
 
-Download the exe from https://github.com/sjrc6/ddnet/releases/, or build it using the build instuctions from the main repository. 
+
+Download the exe from https://github.com/danielkempf/TaterClient-ddnet/releases, or build it using the build instuctions from the main repository. 
 
 # Settings Page: 
 ![image](https://user-images.githubusercontent.com/22122579/182528606-cfb47e19-fb99-47c8-887f-43115ecf1f3e.png)
