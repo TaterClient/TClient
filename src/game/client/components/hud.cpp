@@ -653,18 +653,14 @@ void CHud::RenderTextInfo()
 		if(g_Config.m_ClShowFrozenHud > 0 && !m_pClient->m_Scoreboard.Active() && !(LocalTeamID == 0 && g_Config.m_ClFrozenHudTeamOnly))
 		{
 			CTeeRenderInfo FreezeInfo;
-			int Skin = m_pClient->m_Skins.Find("x_ninja");
-			if(Skin != -1)
-			{
-				const CSkin *pSkin = m_pClient->m_Skins.Get(Skin);
-				FreezeInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
-				FreezeInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;
-				FreezeInfo.m_BloodColor = pSkin->m_BloodColor;
-				FreezeInfo.m_SkinMetrics = pSkin->m_Metrics;
-				FreezeInfo.m_ColorBody = ColorRGBA(1, 1, 1);
-				FreezeInfo.m_ColorFeet = ColorRGBA(1, 1, 1);
-				FreezeInfo.m_CustomColoredSkin = false;
-			}
+			const CSkin *pSkin = m_pClient->m_Skins.Find("x_ninja");
+			FreezeInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
+			FreezeInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;
+			FreezeInfo.m_BloodColor = pSkin->m_BloodColor;
+			FreezeInfo.m_SkinMetrics = pSkin->m_Metrics;
+			FreezeInfo.m_ColorBody = ColorRGBA(1, 1, 1);
+			FreezeInfo.m_ColorFeet = ColorRGBA(1, 1, 1);
+			FreezeInfo.m_CustomColoredSkin = false;
 
 			float progressiveOffset = 0.0f;
 			float TeeSize = g_Config.m_ClFrozenHudTeeSize;

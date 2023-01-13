@@ -698,7 +698,6 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 				g_Config.m_ClPlayerColorFeet = ColorHSLA((std::rand() % 100) / 100.0f, (std::rand() % 100) / 100.0f, (std::rand() % 100) / 100.0f, 1).Pack(false);
 			}
 			SetNeedSendInfo();
-			m_DoubleClickIndex = -1;
 		}
 	}
 	MainView.HSplitTop(5.0f, 0, &MainView);
@@ -3368,7 +3367,6 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 				{
 					dbg_msg("menus", "couldn't open link");
 				}
-				m_DoubleClickIndex = -1;
 			}
 		}
 
@@ -3744,7 +3742,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 	// skin info
 	CTeeRenderInfo OwnSkinInfo;
-	const CSkin *pSkin = m_pClient->m_Skins.Get(m_pClient->m_Skins.Find(pSkinName));
+	const CSkin *pSkin = m_pClient->m_Skins.Find(pSkinName);
 	OwnSkinInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
 	OwnSkinInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;
 	OwnSkinInfo.m_SkinMetrics = pSkin->m_Metrics;
@@ -3824,7 +3822,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 		if(doSkin && strlen(LoadProfile.SkinName) != 0)
 		{
-			const CSkin *pLoadSkin = m_pClient->m_Skins.Get(m_pClient->m_Skins.Find(LoadProfile.SkinName));
+			const CSkin *pLoadSkin = m_pClient->m_Skins.Find(LoadProfile.SkinName);
 			OwnSkinInfo.m_OriginalRenderSkin = pLoadSkin->m_OriginalSkin;
 			OwnSkinInfo.m_ColorableRenderSkin = pLoadSkin->m_ColorableSkin;
 			OwnSkinInfo.m_SkinMetrics = pLoadSkin->m_Metrics;
@@ -3956,7 +3954,6 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 			}
 		}
 		SetNeedSendInfo();
-		m_DoubleClickIndex = -1;
 	}
 	LabelRight.HSplitTop(5.0f, 0, &LabelRight);
 
@@ -3973,7 +3970,6 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 			doName ? aName : "",
 			doClan ? aClan : "");
 		GameClient()->m_SkinProfiles.SaveProfiles();
-		m_DoubleClickIndex = -1;
 	}
 	LabelRight.HSplitTop(5.0f, 0, &LabelRight);
 
@@ -3992,7 +3988,6 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 				GameClient()->m_SkinProfiles.m_Profiles.erase(GameClient()->m_SkinProfiles.m_Profiles.begin() + SelectedProfile);
 				GameClient()->m_SkinProfiles.SaveProfiles();
 			}
-			m_DoubleClickIndex = -1;
 		}
 		LabelRight.HSplitTop(5.0f, 0, &LabelRight);
 
@@ -4012,12 +4007,11 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 					doClan ? aClan : "");
 				GameClient()->m_SkinProfiles.SaveProfiles();
 			}
-			m_DoubleClickIndex = -1;
 		}
 	}
 
 	//---RENDER THE SELECTOR---
-	CUIRect SelectorRect;
+	CUIRect SelectorRect;;
 	MainView.HSplitTop(50, 0, &SelectorRect);
 	SelectorRect.HSplitBottom(15.0, &SelectorRect, 0);
 	std::vector<CProfile> *pProfileList = &GameClient()->m_SkinProfiles.m_Profiles;
@@ -4025,7 +4019,10 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	static int s_ProfileList;
 	static float s_ProfileScroll = 0.0f;
 
-	UiDoListboxStart(&s_ProfileList, &SelectorRect, 50.0f, Localize("Profiles"), "", pProfileList->size(), 4, SelectedProfile, s_ProfileScroll);
+    static bool s_ListBoxUsed = false;
+	static CListBox s_ListBox;
+    s_ListBox.DoStart(50.0f, pProfileList->size(), 4, 3, SelectedProfile, &SelectorRect, true, &s_ListBoxUsed);
+	//UiDoListboxStart(&s_ProfileList, &SelectorRect, 50.0f, Localize("Profiles"), "", pProfileList->size(), 4, SelectedProfile, s_ProfileScroll);
 	static bool s_Indexs[1024];
 	static bool s_ToolTips[1024];
 
@@ -4039,9 +4036,13 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 		else
 			str_copy(RenderSkin, CurrentProfile.SkinName, sizeof(RenderSkin));
 
-		const CSkin *pSkinToBeDraw = m_pClient->m_Skins.Get(m_pClient->m_Skins.Find(RenderSkin));
+		const CSkin *pSkinToBeDraw = m_pClient->m_Skins.Find(RenderSkin);
 
-		CListboxItem Item = UiDoListboxNextItem(&s_Indexs[i], SelectedProfile >= 0 && SelectedProfile == i);
+        CListboxItem Item = s_ListBox.DoNextItem(&s_Indexs[i], SelectedProfile >= 0 && (size_t)SelectedProfile == i, &s_ListBoxUsed);
+
+		if(!Item.m_Visible)
+			continue;
+		//CListboxItem Item = UiDoListboxNextItem(&s_Indexs[i], SelectedProfile >= 0 && SelectedProfile == i);
 		if(Item.m_Visible)
 		{
 			CTeeRenderInfo Info;
@@ -4064,8 +4065,10 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 			int RenderEmote = CurrentProfile.Emote == -1 ? Emote : CurrentProfile.Emote;
 			vec2 TeeRenderPos = vec2(Item.m_Rect.x + 30, Item.m_Rect.y + Item.m_Rect.h / 2 + OffsetToMid.y);
 
-			Item.m_Rect.VSplitLeft(60.0f, 0, &Item.m_Rect);
+			 Item.m_Rect.VSplitLeft(60.0f, 0, &Item.m_Rect);
 			CUIRect FlagRect, PlayerRect, ClanRect, FeetColorSquare, BodyColorSquare;
+
+			Item.m_Rect.VSplitLeft(60.0f, 0, &BodyColorSquare);
 
 			Item.m_Rect.VSplitRight(60.0, &BodyColorSquare, &FlagRect);
 			BodyColorSquare.x -= 11.0;
@@ -4115,8 +4118,8 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 			}
 		}
 	}
-
-	const int NewSelected = UiDoListboxEnd(&s_ProfileScroll, 0);
+    const int NewSelected = s_ListBox.DoEnd();
+	//const int NewSelected = UiDoListboxEnd(&s_ProfileScroll, 0);
 	if(SelectedProfile != NewSelected)
 	{
 		SelectedProfile = NewSelected;
