@@ -544,6 +544,7 @@ int CServer::Init()
 	m_CurrentGameTick = MIN_TICK;
 
 	m_AnnouncementLastLine = 0;
+	m_aAnnouncementFile[0] = '\0';
 	mem_zero(m_aPrevStates, sizeof(m_aPrevStates));
 
 	return 0;
@@ -2174,6 +2175,15 @@ void CServer::GetServerInfoSixup(CPacker *pPacker, int Token, bool SendClients)
 	pPacker->AddRaw(FirstChunk.m_vData.data(), FirstChunk.m_vData.size());
 }
 
+void CServer::FillAntibot(CAntibotRoundData *pData)
+{
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		CAntibotPlayerData *pPlayer = &pData->m_aPlayers[i];
+		net_addr_str(m_NetServer.ClientAddr(i), pPlayer->m_aAddress, sizeof(pPlayer->m_aAddress), true);
+	}
+}
+
 void CServer::ExpireServerInfo()
 {
 	m_ServerInfoNeedsUpdate = true;
@@ -3732,46 +3742,50 @@ void CServer::GetClientAddr(int ClientID, NETADDR *pAddr) const
 
 const char *CServer::GetAnnouncementLine(char const *pFileName)
 {
-	IOHANDLE File = m_pStorage->OpenFile(pFileName, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorage::TYPE_ALL);
-	if(!File)
-		return 0;
+	if(str_comp(pFileName, m_aAnnouncementFile) != 0)
+	{
+		str_copy(m_aAnnouncementFile, pFileName);
+		m_vAnnouncements.clear();
 
-	std::vector<char *> vpLines;
-	char *pLine;
-	CLineReader Reader;
-	Reader.Init(File);
-	while((pLine = Reader.Get()))
-		if(str_length(pLine))
-			if(pLine[0] != '#')
-				vpLines.push_back(pLine);
+		IOHANDLE File = m_pStorage->OpenFile(pFileName, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorage::TYPE_ALL);
+		if(!File)
+			return 0;
 
-	if(vpLines.empty())
+		char *pLine;
+		CLineReader Reader;
+		Reader.Init(File);
+		while((pLine = Reader.Get()))
+			if(str_length(pLine) && pLine[0] != '#')
+				m_vAnnouncements.emplace_back(pLine);
+
+		io_close(File);
+	}
+
+	if(m_vAnnouncements.empty())
 	{
 		return 0;
 	}
-	else if(vpLines.size() == 1)
+	else if(m_vAnnouncements.size() == 1)
 	{
 		m_AnnouncementLastLine = 0;
 	}
 	else if(!Config()->m_SvAnnouncementRandom)
 	{
-		if(++m_AnnouncementLastLine >= vpLines.size())
-			m_AnnouncementLastLine %= vpLines.size();
+		if(++m_AnnouncementLastLine >= m_vAnnouncements.size())
+			m_AnnouncementLastLine %= m_vAnnouncements.size();
 	}
 	else
 	{
 		unsigned Rand;
 		do
 		{
-			Rand = rand() % vpLines.size();
+			Rand = rand() % m_vAnnouncements.size();
 		} while(Rand == m_AnnouncementLastLine);
 
 		m_AnnouncementLastLine = Rand;
 	}
 
-	io_close(File);
-
-	return vpLines[m_AnnouncementLastLine];
+	return m_vAnnouncements[m_AnnouncementLastLine].c_str();
 }
 
 int *CServer::GetIdMap(int ClientID)

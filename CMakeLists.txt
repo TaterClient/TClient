@@ -2706,6 +2706,7 @@ if(GTEST_FOUND OR DOWNLOAD_GTEST)
     io.cpp
     jobs.cpp
     json.cpp
+    linereader.cpp
     mapbugs.cpp
     name_ban.cpp
     net.cpp
