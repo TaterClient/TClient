@@ -3427,6 +3427,19 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			NewValue = (int)(UI()->DoScrollbarH(&g_Config.m_ClIndicatorMaxDistance, &Button, (NewValue - 10) / 130.0f) * 130.0f) + 10;
 			g_Config.m_ClIndicatorMaxDistance = NewValue * 50;
 		}
+        
+        MainView.HSplitTop(10.0f, 0x0, &MainView);
+        MainView = Column;
+
+		MainView.HSplitTop(30.0f, &Section, &MainView);
+		UI()->DoLabel(&Section, Localize("Custom Votes"), 20.0f, TEXTALIGN_LEFT);
+		MainView.VSplitLeft(5.0f, 0x0, &MainView);
+		MainView.HSplitTop(5.0f, 0x0, &MainView);
+		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowVotes, ("Enables custom Votes"), &g_Config.m_ClShowVotes, &MainView, LineMargin);
+        DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClVotesCount, ("Show only votes where your vote care"), &g_Config.m_ClVotesCount, &MainView, LineMargin);
+        DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClVotesFriends, ("Show vote against Friends"), &g_Config.m_ClVotesFriends, &MainView, LineMargin);
+
+
 	}
 
 	if(s_CurCustomTab == TCLIENT_TAB_BINDWHEEL)
