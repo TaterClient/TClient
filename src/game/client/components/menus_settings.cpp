@@ -3083,15 +3083,16 @@ enum
 {
 	TCLIENT_TAB_PAGE1 = 0,
 	TCLIENT_TAB_PAGE2 = 1,
-	TCLIENT_TAB_BINDWHEEL = 2,
-	NUMBER_OF_TCLIENT_TABS = 3,
+	TCLIENT_TAB_CUSTOMCHAT = 2,
+	TCLIENT_TAB_BINDWHEEL = 3,
+	NUMBER_OF_TCLIENT_TABS = 4,
 };
 
 void CMenus::RenderSettingsTClient(CUIRect MainView)
 {
 	static int s_CurCustomTab = 0;
 
-	CUIRect Column, Section, TabBar, Page1Tab, Page2Tab, Page3Tab, Label;
+	CUIRect Column, Section, TabBar, Page1Tab, Page2Tab, Page3Tab, Page4Tab, Label, LeftView, RightView;
 
 	MainView.HMargin(-15.0f, &MainView);
 
@@ -3099,18 +3100,32 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 	float TabsW = Label.w;
 	Label.VSplitLeft(TabsW / NUMBER_OF_TCLIENT_TABS, &Page1Tab, &Page2Tab);
 	Page2Tab.VSplitLeft(TabsW / NUMBER_OF_TCLIENT_TABS, &Page2Tab, &Page3Tab);
+    Page3Tab.VSplitLeft(TabsW / NUMBER_OF_TCLIENT_TABS, &Page3Tab, &Page4Tab);
 
 	static CButtonContainer s_aPageTabs[NUMBER_OF_TCLIENT_TABS] = {};
 	if(DoButton_MenuTab(&s_aPageTabs[TCLIENT_TAB_PAGE1], Localize("Page 1"), s_CurCustomTab == TCLIENT_TAB_PAGE1, &Page1Tab, 5, NULL, NULL, NULL, NULL, 4))
 		s_CurCustomTab = TCLIENT_TAB_PAGE1;
 	if(DoButton_MenuTab(&s_aPageTabs[TCLIENT_TAB_PAGE2], Localize("Page 2"), s_CurCustomTab == TCLIENT_TAB_PAGE2, &Page2Tab, 0, NULL, NULL, NULL, NULL, 4))
 		s_CurCustomTab = TCLIENT_TAB_PAGE2;
-	if(DoButton_MenuTab(&s_aPageTabs[TCLIENT_TAB_BINDWHEEL], Localize("BindWheel"), s_CurCustomTab == TCLIENT_TAB_BINDWHEEL, &Page3Tab, 10, NULL, NULL, NULL, NULL, 4))
+	if(DoButton_MenuTab(&s_aPageTabs[TCLIENT_TAB_BINDWHEEL], Localize("BindWheel"), s_CurCustomTab == TCLIENT_TAB_BINDWHEEL, &Page3Tab, 0, NULL, NULL, NULL, NULL, 4))
 		s_CurCustomTab = TCLIENT_TAB_BINDWHEEL;
+    if(DoButton_MenuTab(&s_aPageTabs[TCLIENT_TAB_CUSTOMCHAT], Localize("CustomChat"), s_CurCustomTab == TCLIENT_TAB_CUSTOMCHAT, &Page4Tab, 10, NULL, NULL, NULL, NULL, 4))
+        s_CurCustomTab = TCLIENT_TAB_CUSTOMCHAT;
 
 	const float LineMargin = 20.0f;
 
 	// MainView.HSplitTop(10.0f, 0x0, &MainView);
+	const float LineSize = 20.0f;
+	const float ColorPickerLineSize = 25.0f;
+	const float SectionMargin = 5.0f;
+	const float SectionTotalMargin = 10.0f; // SectionMargin * 2;
+	const float HeadlineFontSize = 20.0f;
+	const float HeadlineAndVMargin = 30.0f; // HeadlineFontSize + SectionTotalMargin;
+	const float MarginToNextSection = 5.0f;
+	const float ColorPickerLabelSize = 13.0f;
+	const float ColorPickerLineSpacing = 5.0f;
+	const float LeftViewColorPickerPosition = 210.0f;
+
 	if(s_CurCustomTab == TCLIENT_TAB_PAGE1)
 	{
 		MainView.VSplitLeft(MainView.w * 0.5, &MainView, &Column);
@@ -3428,6 +3443,359 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			g_Config.m_ClIndicatorMaxDistance = NewValue * 50;
 		}
 	}
+
+    if(s_CurCustomTab == TCLIENT_TAB_CUSTOMCHAT)
+	{
+		MainView.VSplitMid(&LeftView, &RightView);
+		// ***** Chat ***** //
+		LeftView.HSplitTop(HeadlineAndVMargin, &Label, &LeftView);
+		UI()->DoLabel(&Label, Localize("Custom Chat"), HeadlineFontSize, TEXTALIGN_LEFT);
+		// General chat settings
+		LeftView.HSplitTop(SectionTotalMargin + 3 * LineSize, &Section, &LeftView);
+		Section.Margin(SectionMargin, &Section);
+		// ***** CUSTOM CHAT ***** //
+		// save all variables as copy to compare
+		int old_m_ClChatCustom = g_Config.m_ClChatCustom;
+		int old_ChatCustomFriends = g_Config.m_ClChatCustomFriends;
+		int old_ChatCustomTeam = g_Config.m_ClChatCustomTeam;
+		int old_ChatCustomGlobal = g_Config.m_ClChatCustomGlobal;
+		int old_ChatCustomServer = g_Config.m_ClChatCustomServer;
+		int old_ChatCustomWhisper = g_Config.m_ClChatCustomWhisper;
+		int old_ClChatCustomFontSize = g_Config.m_ClChatCustomFontSize;
+		int old_ClChatCustomRounding = g_Config.m_ClChatCustomRounding;
+		int old_ClChatCustomWidth = g_Config.m_ClChatCustomWidth;
+		int old_ClChatCustomHeight = g_Config.m_ClChatCustomHeight;
+		int old_ClChatCustomPaddingX = g_Config.m_ClChatCustomPaddingX;
+		int old_ClChatCustomPaddingY = g_Config.m_ClChatCustomPaddingY;
+		int old_ClChatCustomTeeSize = g_Config.m_ClChatCustomTeeSize;
+		int old_ClChatCustomTeePadding = g_Config.m_ClChatCustomTeePadding;
+		int old_ClChatCustomPosX = g_Config.m_ClChatCustomPosX;
+		int old_ClChatCustomPosY = g_Config.m_ClChatCustomPosY;
+		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatCustom, ("Enable custom chat"), &g_Config.m_ClChatCustom, &Section, LineMargin);
+		// select messages from chat
+		if(g_Config.m_ClChatCustom)
+		{
+			DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatCustomFriends, ("Hide messages from friends"), &g_Config.m_ClChatCustomFriends, &LeftView, LineMargin);
+			DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatCustomTeam, ("Hide messages from team"), &g_Config.m_ClChatCustomTeam, &LeftView, LineMargin);
+			DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatCustomWhisper, ("Hide messages from whisper"), &g_Config.m_ClChatCustomWhisper, &LeftView, LineMargin);
+			DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatCustomGlobal, ("Hide messages from global chat"), &g_Config.m_ClChatCustomGlobal, &LeftView, LineMargin);
+			DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatCustomServer, ("Hide messages from server"), &g_Config.m_ClChatCustomServer, &LeftView, LineMargin);
+		}
+		// select fontsize and rounding
+		if(g_Config.m_ClChatCustom)
+		{
+			// fontsize
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Font size", g_Config.m_ClChatCustomFontSize);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomFontSize = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomFontSize, &Button, (g_Config.m_ClChatCustomFontSize - 1) / 127.0f) * 127.0f) + 1;
+		}
+		if(g_Config.m_ClChatCustom)
+		{
+			// rounding
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Rounding", g_Config.m_ClChatCustomRounding);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomRounding = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomRounding, &Button, (g_Config.m_ClChatCustomRounding - 1) / 5.0f) * 5.0f) + 1;
+			// interact after change
+			//  FONT_SIZE + MESSAGE_PADDING_Y >= MESSAGE_ROUNDING * 2.0f
+			float fontsize = GameClient()->m_Chat.FONT_SIZE;
+			float padding = GameClient()->m_Chat.MESSAGE_PADDING_Y;
+			if(fontsize + padding < g_Config.m_ClChatCustomRounding * 2.0f)
+			{
+				g_Config.m_ClChatCustomRounding = (int)(fontsize + padding);
+			}
+		}
+		// select chat width
+		if(g_Config.m_ClChatCustom)
+		{
+			// width
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Chat width", g_Config.m_ClChatCustomWidth);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomWidth = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomWidth, &Button, (g_Config.m_ClChatCustomWidth - 1) / 999.0f) * 999.0f) + 1;
+		}
+		if(g_Config.m_ClChatCustom)
+		{
+			// height
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Chat height", g_Config.m_ClChatCustomHeight);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomHeight = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomHeight, &Button, (g_Config.m_ClChatCustomHeight - 1) / 999.0f) * 999.0f) + 1;
+		}
+		// select paddingX and paddingY
+		if(g_Config.m_ClChatCustom)
+		{
+			// padding X
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Padding X", g_Config.m_ClChatCustomPaddingX);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomPaddingX = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomPaddingX, &Button, (g_Config.m_ClChatCustomPaddingX - 0) / 100.0f) * 100.0f) + 0;
+		}
+		if(g_Config.m_ClChatCustom)
+		{
+			// padding Y
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Padding Y", g_Config.m_ClChatCustomPaddingY);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomPaddingY = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomPaddingY, &Button, (g_Config.m_ClChatCustomPaddingY - 0) / 100.0f) * 100.0f) + 0;
+		}
+		// select teesize and padding
+		if(g_Config.m_ClChatCustom)
+		{
+			// teesize
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Tee size", g_Config.m_ClChatCustomTeeSize);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomTeeSize = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomTeeSize, &Button, (g_Config.m_ClChatCustomTeeSize - 1) / 127.0f) * 127.0f) + 1;
+		}
+		if(g_Config.m_ClChatCustom)
+		{
+			// padding
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Tee padding", g_Config.m_ClChatCustomTeePadding);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomTeePadding = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomTeePadding, &Button, (g_Config.m_ClChatCustomTeePadding - 0) / 16.0f) * 16.0f) + 0;
+		}
+		// select Position X and Position Y
+		if(g_Config.m_ClChatCustom)
+		{
+			// Position X
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Position X", g_Config.m_ClChatCustomPosX);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomPosX = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomPosX, &Button, (g_Config.m_ClChatCustomPosX - 0) / 1000.0f) * 1000.0f) + 0;
+		}
+		if(g_Config.m_ClChatCustom)
+		{
+			// Position Y
+			CUIRect Button, Label;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			Button.VSplitLeft(150.0f, &Label, &Button);
+			char aBuf[64];
+			str_format(aBuf, sizeof(aBuf), "%s: %i ", "Position Y", g_Config.m_ClChatCustomPosY);
+			UI()->DoLabel(&Label, aBuf, 14.0f, TEXTALIGN_LEFT);
+			g_Config.m_ClChatCustomPosY = (int)(UI()->DoScrollbarH(&g_Config.m_ClChatCustomPosY, &Button, (g_Config.m_ClChatCustomPosY - 0) / 1000.0f) * 1000.0f) + 0;
+		}
+		// reset button for chat
+		if(g_Config.m_ClChatCustom)
+		{
+			CUIRect Button;
+			LeftView.HSplitTop(5.0f, &Button, &LeftView);
+			LeftView.HSplitTop(20.0f, &Button, &LeftView);
+			static CButtonContainer s_ButtonReset;
+			if(DoButton_Menu(&s_ButtonReset, Localize("Reset Custom chat"), 0, &Button))
+			{
+				bool IsScoreBoardOpen = GameClient()->m_Scoreboard.Active() && (Graphics()->ScreenAspect() > 1.7f);
+				float HeightLimit = IsScoreBoardOpen ? 180.0f : 50.0f;
+				g_Config.m_ClChatCustomFontSize = GameClient()->m_Chat.FONT_SIZE;
+				g_Config.m_ClChatCustomRounding = GameClient()->m_Chat.MESSAGE_ROUNDING;
+				g_Config.m_ClChatCustomWidth = 300.0f * Graphics()->ScreenAspect();
+				g_Config.m_ClChatCustomHeight = HeightLimit;
+				g_Config.m_ClChatCustomPaddingX = GameClient()->m_Chat.MESSAGE_PADDING_X;
+				g_Config.m_ClChatCustomPaddingY = GameClient()->m_Chat.MESSAGE_PADDING_Y;
+				g_Config.m_ClChatCustomTeeSize = GameClient()->m_Chat.MESSAGE_TEE_SIZE;
+				g_Config.m_ClChatCustomTeePadding = GameClient()->m_Chat.MESSAGE_TEE_PADDING_RIGHT;
+				g_Config.m_ClChatCustomPosX = 5.0f;
+				g_Config.m_ClChatCustomPosY = 300.0f - 28.0f;
+			}
+		}
+		// check if a value has changed
+		if(old_ClChatCustomFontSize != g_Config.m_ClChatCustomFontSize || old_ClChatCustomRounding != g_Config.m_ClChatCustomRounding || old_ClChatCustomWidth != g_Config.m_ClChatCustomWidth || old_ClChatCustomHeight != g_Config.m_ClChatCustomHeight || old_ClChatCustomPaddingX != g_Config.m_ClChatCustomPaddingX || old_ClChatCustomPaddingY != g_Config.m_ClChatCustomPaddingY || old_ClChatCustomTeeSize != g_Config.m_ClChatCustomTeeSize || old_ClChatCustomTeePadding != g_Config.m_ClChatCustomTeePadding || old_ClChatCustomPosX != g_Config.m_ClChatCustomPosX || old_ClChatCustomPosY != g_Config.m_ClChatCustomPosY || old_ChatCustomFriends != g_Config.m_ClChatCustomFriends || old_ChatCustomTeam != g_Config.m_ClChatCustomTeam || old_ChatCustomGlobal != g_Config.m_ClChatCustomGlobal || old_ChatCustomServer != g_Config.m_ClChatCustomServer || old_ChatCustomWhisper != g_Config.m_ClChatCustomWhisper)
+		{
+			GameClient()->m_Chat.RebuildChat();
+		}
+/* 
+		// ***** Chat Preview ***** //
+		RightView.HSplitTop(30.0f, &Label, &RightView);
+		UI()->DoLabel(&Label, Localize("Preview"), 14.0f, TEXTALIGN_LEFT);
+		// Use the rest of the view for preview
+		Section = RightView;
+		Section.Margin(14.0f, &Section);
+		Section.Draw(ColorRGBA(1, 1, 1, 0.1f), IGraphics::CORNER_ALL, 8.0f);
+		Section.HSplitTop(10.0f, 0x0, &Section); // Margin
+		{
+			char aBuf[64];
+			ColorRGBA SystemColor = color_cast<ColorRGBA, ColorHSLA>(ColorHSLA(g_Config.m_ClMessageSystemColor));
+			ColorRGBA HighlightedColor = color_cast<ColorRGBA, ColorHSLA>(ColorHSLA(g_Config.m_ClMessageHighlightColor));
+			ColorRGBA TeamColor = color_cast<ColorRGBA, ColorHSLA>(ColorHSLA(g_Config.m_ClMessageTeamColor));
+			ColorRGBA FriendColor = color_cast<ColorRGBA, ColorHSLA>(ColorHSLA(g_Config.m_ClMessageFriendColor));
+			ColorRGBA NormalColor = color_cast<ColorRGBA, ColorHSLA>(ColorHSLA(g_Config.m_ClMessageColor));
+			ColorRGBA ClientColor = color_cast<ColorRGBA, ColorHSLA>(ColorHSLA(g_Config.m_ClMessageClientColor));
+			ColorRGBA DefaultNameColor(0.8f, 0.8f, 0.8f, 1.0f);
+			float RealFontSize = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomFontSize * 2 : CChat::FONT_SIZE * 2;
+			float RealMsgPaddingX = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPaddingX * 2 : (!g_Config.m_ClChatOld ? CChat::MESSAGE_PADDING_X : 0) * 2;
+			float RealMsgPaddingY = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPaddingY * 2 : (!g_Config.m_ClChatOld ? CChat::MESSAGE_PADDING_Y : 0) * 2;
+			float RealMsgPaddingTee = g_Config.m_ClChatCustom ?g_Config.m_ClChatCustomTeePadding * 2 : (!g_Config.m_ClChatOld ? CChat::MESSAGE_TEE_SIZE + CChat::MESSAGE_TEE_PADDING_RIGHT : 0) * 2;
+			float RealOffsetY = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomFontSize + g_Config.m_ClChatCustomPaddingY :  RealFontSize + RealMsgPaddingY;
+			float X = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPosX + RealMsgPaddingX / 2.0f + RightView.x : 5.0f + RealMsgPaddingX / 2.0f + RightView.x;
+			float Y = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPosY : RightView.y;
+			CTextCursor Cursor;
+			TextRender()->SetCursor(&Cursor, X, Y, RealFontSize, TEXTFLAG_RENDER);
+			str_copy(aBuf, Client()->PlayerName());
+			CAnimState *pIdleState = CAnimState::GetIdle();
+			constexpr int PreviewTeeCount = 4;
+			constexpr float RealTeeSize = CChat::MESSAGE_TEE_SIZE * 2;
+			constexpr float RealTeeSizeHalved = CChat::MESSAGE_TEE_SIZE;
+			constexpr float TWSkinUnreliableOffset = -0.25f;
+			constexpr float OffsetTeeY = RealTeeSizeHalved;
+			const float FullHeightMinusTee = RealOffsetY - RealTeeSize;
+			CTeeRenderInfo aRenderInfo[PreviewTeeCount];
+			// Backgrounds first
+			if(!g_Config.m_ClChatOld)
+			{
+				Graphics()->TextureClear();
+				Graphics()->QuadsBegin();
+				Graphics()->SetColor(0, 0, 0, 0.12f);
+				char aLineBuilder[128];
+				float Width;
+				float TempY = Y;
+				constexpr float RealBackgroundRounding = CChat::MESSAGE_ROUNDING * 2.0f;
+				if(g_Config.m_ClShowChatSystem)
+				{
+					str_format(aLineBuilder, sizeof(aLineBuilder), "*** '%s' entered and joined the game", aBuf);
+					Width = TextRender()->TextWidth(0, RealFontSize, aLineBuilder, -1, -1);
+					Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
+					TempY += RealOffsetY;
+				}
+				str_format(aLineBuilder, sizeof(aLineBuilder), "%sRandom Tee: Hey, how are you %s?", g_Config.m_ClShowIDs ? " 7: " : "", aBuf);
+				Width = TextRender()->TextWidth(0, RealFontSize, aLineBuilder, -1, -1);
+				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
+				TempY += RealOffsetY;
+				str_format(aLineBuilder, sizeof(aLineBuilder), "%sYour Teammate: Let's speedrun this!", g_Config.m_ClShowIDs ? "11: " : "");
+				Width = TextRender()->TextWidth(0, RealFontSize, aLineBuilder, -1, -1);
+				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
+				TempY += RealOffsetY;
+				str_format(aLineBuilder, sizeof(aLineBuilder), "%s%sFriend: Hello there", g_Config.m_ClMessageFriend ? "♥ " : "", g_Config.m_ClShowIDs ? " 8: " : "");
+				Width = TextRender()->TextWidth(0, RealFontSize, aLineBuilder, -1, -1);
+				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
+				TempY += RealOffsetY;
+				str_format(aLineBuilder, sizeof(aLineBuilder), "%sSpammer [6]: Hey fools, I'm spamming here!", g_Config.m_ClShowIDs ? " 9: " : "");
+				Width = TextRender()->TextWidth(0, RealFontSize, aLineBuilder, -1, -1);
+				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
+				TempY += RealOffsetY;
+				Width = TextRender()->TextWidth(0, RealFontSize, "*** Echo command executed", -1, -1);
+				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
+				Graphics()->QuadsEnd();
+				// Load skins
+				int DefaultInd = GameClient()->m_Skins.Find("default");
+				for(auto &Info : aRenderInfo)
+				{
+					Info.m_Size = RealTeeSize;
+					Info.m_CustomColoredSkin = false;
+				}
+				int ind = -1;
+				int pos = 0;
+				aRenderInfo[pos++].m_OriginalRenderSkin = GameClient()->m_Skins.Get(DefaultInd)->m_OriginalSkin;
+				aRenderInfo[pos++].m_OriginalRenderSkin = (ind = GameClient()->m_Skins.Find("pinky")) != -1 ? GameClient()->m_Skins.Get(ind)->m_OriginalSkin : aRenderInfo[0].m_OriginalRenderSkin;
+				aRenderInfo[pos++].m_OriginalRenderSkin = (ind = GameClient()->m_Skins.Find("cammostripes")) != -1 ? GameClient()->m_Skins.Get(ind)->m_OriginalSkin : aRenderInfo[0].m_OriginalRenderSkin;
+				aRenderInfo[pos++].m_OriginalRenderSkin = (ind = GameClient()->m_Skins.Find("beast")) != -1 ? GameClient()->m_Skins.Get(ind)->m_OriginalSkin : aRenderInfo[0].m_OriginalRenderSkin;
+			}
+			// System
+			if(g_Config.m_ClShowChatSystem)
+			{
+				TextRender()->TextColor(SystemColor);
+				TextRender()->TextEx(&Cursor, "*** '", -1);
+				TextRender()->TextEx(&Cursor, aBuf, -1);
+				TextRender()->TextEx(&Cursor, "' entered and joined the game", -1);
+				TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+			}
+			// Highlighted
+			TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
+			TextRender()->TextColor(DefaultNameColor);
+			if(g_Config.m_ClShowIDs)
+				TextRender()->TextEx(&Cursor, " 7: ", -1);
+			TextRender()->TextEx(&Cursor, "Random Tee: ", -1);
+			TextRender()->TextColor(HighlightedColor);
+			TextRender()->TextEx(&Cursor, "Hey, how are you ", -1);
+			TextRender()->TextEx(&Cursor, aBuf, -1);
+			TextRender()->TextEx(&Cursor, "?", -1);
+			if(!g_Config.m_ClChatOld)
+				RenderTools()->RenderTee(pIdleState, &aRenderInfo[1], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+			// Team
+			TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
+			TextRender()->TextColor(TeamColor);
+			if(g_Config.m_ClShowIDs)
+				TextRender()->TextEx(&Cursor, "11: ", -1);
+			TextRender()->TextEx(&Cursor, "Your Teammate: Let's speedrun this!", -1);
+			if(!g_Config.m_ClChatOld)
+				RenderTools()->RenderTee(pIdleState, &aRenderInfo[0], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+			// Friend
+			TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
+			if(g_Config.m_ClMessageFriend)
+			{
+				TextRender()->TextColor(FriendColor);
+				TextRender()->TextEx(&Cursor, "♥ ", -1);
+			}
+			TextRender()->TextColor(DefaultNameColor);
+			if(g_Config.m_ClShowIDs)
+				TextRender()->TextEx(&Cursor, " 8: ", -1);
+			TextRender()->TextEx(&Cursor, "Friend: ", -1);
+			TextRender()->TextColor(NormalColor);
+			TextRender()->TextEx(&Cursor, "Hello there", -1);
+			if(!g_Config.m_ClChatOld)
+				RenderTools()->RenderTee(pIdleState, &aRenderInfo[2], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+			// Normal
+			TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
+			TextRender()->TextColor(DefaultNameColor);
+			if(g_Config.m_ClShowIDs)
+				TextRender()->TextEx(&Cursor, " 9: ", -1);
+			TextRender()->TextEx(&Cursor, "Spammer ", -1);
+			TextRender()->TextColor(1.0f, 1.0f, 1.0f, 0.3f);
+			TextRender()->TextEx(&Cursor, "[6]", -1);
+			TextRender()->TextColor(NormalColor);
+			TextRender()->TextEx(&Cursor, ": Hey fools, I'm spamming here!", -1);
+			if(!g_Config.m_ClChatOld)
+				RenderTools()->RenderTee(pIdleState, &aRenderInfo[3], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+			// Client
+			TextRender()->TextColor(ClientColor);
+			TextRender()->TextEx(&Cursor, "*** Echo command executed", -1);
+			TextRender()->SetCursorPosition(&Cursor, X, Y);
+			TextRender()->TextColor(TextRender()->DefaultTextColor());
+		}
+	 */
+    }
 
 	if(s_CurCustomTab == TCLIENT_TAB_BINDWHEEL)
 	{

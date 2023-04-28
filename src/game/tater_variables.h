@@ -86,6 +86,31 @@ MACRO_CONFIG_INT(ClVoteDefaultFriend, tc_vote_default, 0, 0, 1, CFGFLAG_CLIENT |
 MACRO_CONFIG_INT(ClVoteDontShow, tc_vote_show, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show only votes where your vote counts")
 MACRO_CONFIG_INT(ClVoteDontShowFriends, tc_vote_show_friends, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show only votes where your vote counts exclude friends")
 
+// Custom chat
+MACRO_CONFIG_INT(ClChatCustom, tc_chat_custom, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable Custom chat")
+MACRO_CONFIG_INT(ClChatCustomFriends, tc_chat_custom_friends, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable Custom chat for friends")
+MACRO_CONFIG_INT(ClChatCustomTeam, tc_chat_custom_team, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable Custom chat for team")
+MACRO_CONFIG_INT(ClChatCustomWhisper, tc_chat_custom_whisper, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable Custom chat for whisper")
+MACRO_CONFIG_INT(ClChatCustomGlobal, tc_chat_custom_global, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable Custom chat for global")
+MACRO_CONFIG_INT(ClChatCustomServer, tc_chat_custom_server, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable Custom chat for server")
+//font size and rounding
+MACRO_CONFIG_INT(ClChatCustomFontSize, tc_chat_custom_font_size, 1, 6, 128, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Font size for custom chat") // FONT_SIZE in chat.h
+MACRO_CONFIG_INT(ClChatCustomRounding, tc_chat_custom_rounding, 3, 1, 5, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Rounding for custom chat") // MESSAGE_ROUNDING in chat.h
+//chat width and height
+MACRO_CONFIG_INT(ClChatCustomWidth, tc_chat_custom_width, 400, 1, 1000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Width for custom chat") // CHAT_WIDTH in chat.h
+MACRO_CONFIG_INT(ClChatCustomHeight, tc_chat_custom_height, 180, 1, 1000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Height for custom chat") // CHAT_HEIGHT in chat.h
+// chat padding for x and y axis
+MACRO_CONFIG_INT(ClChatCustomPaddingX, tc_chat_custom_padding_x, 5, 0, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Padding for custom chat on x axis") // MESSAGE_PADDING_X in chat.h
+MACRO_CONFIG_INT(ClChatCustomPaddingY, tc_chat_custom_padding_y, 5, 0, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Padding for custom chat on y axis") // MESSAGE_PADDING_Y in chat.h
+// Tee size and padding
+MACRO_CONFIG_INT(ClChatCustomTeeSize, tc_chat_custom_tee_size, 2, 1, 128, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Tee size for custom chat") // MESSAGE_TEE_SIZE in chat.h
+MACRO_CONFIG_INT(ClChatCustomTeePadding, tc_chat_custom_tee_padding, 0, 0, 16, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Tee padding for custom chat") // MESSAGE_TEE_PADDING_RIGHT in chat.h
+//chat position
+MACRO_CONFIG_INT(ClChatCustomPosX, tc_chat_custom_pos_x, 5, 0, 1000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Position X for custom chat") // x in chat.cpp
+MACRO_CONFIG_INT(ClChatCustomPosY, tc_chat_custom_pos_y, 272, 0, 1000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Position Y for custom chat") // y in chat.cpp
+//chat reset
+MACRO_CONFIG_INT(ClChatCustomReset, tc_chat_custom_reset, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Reset custom chat")
+
 //AAAAAAA
 MACRO_CONFIG_INT(ClAmIFrozen, EEEfrz, 0, 0, 1, CFGFLAG_CLIENT, "")
 MACRO_CONFIG_INT(ClFreezeTick, EEEfrztk, 0, 0, 9999, CFGFLAG_CLIENT, "")

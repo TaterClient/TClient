@@ -941,9 +941,9 @@ void CChat::RefindSkins()
 
 void CChat::OnPrepareLines()
 {
-	float x = 5.0f;
-	float y = 300.0f - 28.0f;
-	float FontSize = FONT_SIZE;
+	float x = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPosX : 5.0f;
+	float y = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPosY :  300.0f - 28.0f;
+	float FontSize = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomFontSize : FONT_SIZE;
 
 	float ScreenRatio = Graphics()->ScreenAspect();
 
@@ -957,9 +957,11 @@ void CChat::OnPrepareLines()
 	m_PrevScoreBoardShowed = IsScoreBoardOpen;
 	m_PrevShowChat = ShowLargeArea;
 
-	float RealMsgPaddingX = MESSAGE_PADDING_X;
-	float RealMsgPaddingY = MESSAGE_PADDING_Y;
-	float RealMsgPaddingTee = MESSAGE_TEE_SIZE + MESSAGE_TEE_PADDING_RIGHT;
+	float RealMsgPaddingX = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPaddingX : MESSAGE_PADDING_X;
+    float RealMsgPaddingY = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPaddingY : MESSAGE_PADDING_Y; 
+	float RealMsgPaddingTee =  g_Config.m_ClChatCustom ?  g_Config.m_ClChatCustomTeeSize +  g_Config.m_ClChatCustomTeePadding : MESSAGE_TEE_SIZE + MESSAGE_TEE_PADDING_RIGHT;
+    float RealMsgTeeSize = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomTeeSize : MESSAGE_TEE_SIZE;
+    float RealMsgRounding = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomRounding : MESSAGE_ROUNDING;
 
 	if(g_Config.m_ClChatOld)
 	{
@@ -970,8 +972,10 @@ void CChat::OnPrepareLines()
 
 	int64_t Now = time();
 	float LineWidth = (IsScoreBoardOpen ? 85.0f : 200.0f) - (RealMsgPaddingX * 1.5f) - RealMsgPaddingTee;
+    LineWidth = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomWidth : LineWidth;
 
 	float HeightLimit = IsScoreBoardOpen ? 180.0f : m_PrevShowChat ? 50.0f : 200.0f;
+    HeightLimit = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomHeight : HeightLimit;
 	float Begin = x;
 	float TextBegin = Begin + RealMsgPaddingX / 2.0f;
 	CTextCursor Cursor;
@@ -1156,7 +1160,7 @@ void CChat::OnPrepareLines()
 		{
 			float Height = m_aLines[r].m_aYOffset[OffsetType];
 			Graphics()->SetColor(1, 1, 1, 1);
-			m_aLines[r].m_QuadContainerIndex = Graphics()->CreateRectQuadContainer(Begin, y, (AppendCursor.m_LongestLineWidth - TextBegin) + RealMsgPaddingX * 1.5f, Height, MESSAGE_ROUNDING, IGraphics::CORNER_ALL);
+			m_aLines[r].m_QuadContainerIndex = Graphics()->CreateRectQuadContainer(Begin, y, (AppendCursor.m_LongestLineWidth - TextBegin) + RealMsgPaddingX * 1.5f, Height, RealMsgRounding, IGraphics::CORNER_ALL);
 		}
 
 		TextRender()->SetRenderFlags(CurRenderFlags);
@@ -1186,8 +1190,8 @@ void CChat::OnRender()
 
 	float Width = 300.0f * Graphics()->ScreenAspect();
 	Graphics()->MapScreen(0.0f, 0.0f, Width, 300.0f);
-	float x = 5.0f;
-	float y = 300.0f - 20.0f;
+	float x = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPosX : 5.0f;
+	float y = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomPosY :  300.0f - 28.0f;
 	if(m_Mode != MODE_NONE)
 	{
 		// render chat input
@@ -1269,6 +1273,7 @@ void CChat::OnRender()
 
 	int64_t Now = time();
 	float HeightLimit = IsScoreBoardOpen ? 180.0f : m_PrevShowChat ? 50.0f : 200.0f;
+    HeightLimit = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomHeight : HeightLimit;
 	int OffsetType = IsScoreBoardOpen ? 1 : 0;
 
 	float RealMsgPaddingX = MESSAGE_PADDING_X;
@@ -1283,6 +1288,28 @@ void CChat::OnRender()
 	for(int i = 0; i < MAX_LINES; i++)
 	{
 		int r = ((m_CurrentLine - i) + MAX_LINES) % MAX_LINES;
+
+        if(g_Config.m_ClChatCustom)
+        {
+            if(g_Config.m_ClChatCustomFriends && m_aLines[r].m_Friend){
+                continue;
+            }
+            if(g_Config.m_ClChatCustomTeam && m_aLines[r].m_Team){
+                continue;
+            }
+            
+            if(g_Config.m_ClChatCustomWhisper && m_aLines[r].m_Whisper){
+                continue;
+            }
+            if(g_Config.m_ClChatCustomServer && m_aLines[r].m_ClientID == -1){
+                continue;
+            }
+            if(g_Config.m_ClChatCustomGlobal && m_aLines[r].m_ClientID >= 0){
+                continue;
+            }
+        }
+
+
 		if(Now > m_aLines[r].m_Time + 16 * time_freq() && !m_PrevShowChat)
 			break;
 
@@ -1309,6 +1336,7 @@ void CChat::OnRender()
 		{
 			if(!g_Config.m_ClChatOld && m_aLines[r].m_HasRenderTee)
 			{
+                float RealMsgTeeSize = g_Config.m_ClChatCustom ? g_Config.m_ClChatCustomTeeSize : MESSAGE_TEE_SIZE;
 				CTeeRenderInfo RenderInfo;
 				RenderInfo.m_CustomColoredSkin = m_aLines[r].m_CustomColoredSkin;
 				if(m_aLines[r].m_CustomColoredSkin)
@@ -1319,16 +1347,16 @@ void CChat::OnRender()
 
 				RenderInfo.m_ColorBody = m_aLines[r].m_ColorBody;
 				RenderInfo.m_ColorFeet = m_aLines[r].m_ColorFeet;
-				RenderInfo.m_Size = MESSAGE_TEE_SIZE;
+				RenderInfo.m_Size = RealMsgTeeSize;
 
 				float RowHeight = FONT_SIZE + RealMsgPaddingY;
-				float OffsetTeeY = MESSAGE_TEE_SIZE / 2.0f;
-				float FullHeightMinusTee = RowHeight - MESSAGE_TEE_SIZE;
+				float OffsetTeeY = RealMsgTeeSize / 2.0f;
+				float FullHeightMinusTee = RowHeight - RealMsgTeeSize;
 
 				CAnimState *pIdleState = CAnimState::GetIdle();
 				vec2 OffsetToMid;
 				RenderTools()->GetRenderTeeOffsetToRenderedTee(pIdleState, &RenderInfo, OffsetToMid);
-				vec2 TeeRenderPos(x + (RealMsgPaddingX + MESSAGE_TEE_SIZE) / 2.0f, y + OffsetTeeY + FullHeightMinusTee / 2.0f + OffsetToMid.y);
+				vec2 TeeRenderPos(x + (RealMsgPaddingX + RealMsgTeeSize) / 2.0f, y + OffsetTeeY + FullHeightMinusTee / 2.0f + OffsetToMid.y);
 				RenderTools()->RenderTee(pIdleState, &RenderInfo, EMOTE_NORMAL, vec2(1, 0.1f), TeeRenderPos, Blend);
 			}
 
