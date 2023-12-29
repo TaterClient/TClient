@@ -906,6 +906,7 @@ void CRenderTools::RenderGameTileOutlines(CTile *pTiles, int w, int h, float Sca
 	Graphics()->QuadsEnd();
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
+
 void CRenderTools::RenderTeleOutlines(CTile *pTiles, CTeleTile *pTele, int w, int h, float Scale, float Alpha)
 {
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
@@ -1035,6 +1036,7 @@ void CRenderTools::RenderTeleOutlines(CTile *pTiles, CTeleTile *pTele, int w, in
 	Graphics()->QuadsEnd();
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
+
 void CRenderTools::RenderTeleOverlay(CTeleTile *pTele, int w, int h, float Scale, float Alpha)
 {
 	if(!g_Config.m_ClTextEntities)
@@ -1090,7 +1092,7 @@ void CRenderTools::RenderTeleOverlay(CTeleTile *pTele, int w, int h, float Scale
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
-void CRenderTools::RenderSpeedupOverlay(CSpeedupTile *pSpeedup, int w, int h, float Scale, float Alpha) const
+void CRenderTools::RenderSpeedupOverlay(CSpeedupTile *pSpeedup, int w, int h, float Scale, float Alpha) 
 {
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
@@ -1157,7 +1159,7 @@ void CRenderTools::RenderSpeedupOverlay(CSpeedupTile *pSpeedup, int w, int h, fl
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
-void CRenderTools::RenderSwitchOverlay(CSwitchTile *pSwitch, int w, int h, float Scale, float Alpha) const
+void CRenderTools::RenderSwitchOverlay(CSwitchTile *pSwitch, int w, int h, float Scale, float Alpha) 
 {
 	if(!g_Config.m_ClTextEntities)
 		return;
@@ -1215,7 +1217,7 @@ void CRenderTools::RenderSwitchOverlay(CSwitchTile *pSwitch, int w, int h, float
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
-void CRenderTools::RenderTuneOverlay(CTuneTile *pTune, int w, int h, float Scale, float Alpha) const
+void CRenderTools::RenderTuneOverlay(CTuneTile *pTune, int w, int h, float Scale, float Alpha) 
 {
 	if(!g_Config.m_ClTextEntities)
 		return;
@@ -1265,7 +1267,7 @@ void CRenderTools::RenderTuneOverlay(CTuneTile *pTune, int w, int h, float Scale
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
-void CRenderTools::RenderTelemap(CTeleTile *pTele, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) const
+void CRenderTools::RenderTelemap(CTeleTile *pTele, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) 
 {
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
@@ -1382,7 +1384,7 @@ void CRenderTools::RenderTelemap(CTeleTile *pTele, int w, int h, float Scale, Co
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
-void CRenderTools::RenderSpeedupmap(CSpeedupTile *pSpeedupTile, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) const
+void CRenderTools::RenderSpeedupmap(CSpeedupTile *pSpeedupTile, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) 
 {
 	//Graphics()->TextureSet(img_get(tmap->image));
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
@@ -1501,7 +1503,7 @@ void CRenderTools::RenderSpeedupmap(CSpeedupTile *pSpeedupTile, int w, int h, fl
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
-void CRenderTools::RenderSwitchmap(CSwitchTile *pSwitchTile, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) const
+void CRenderTools::RenderSwitchmap(CSwitchTile *pSwitchTile, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) 
 {
 	//Graphics()->TextureSet(img_get(tmap->image));
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
@@ -1663,7 +1665,7 @@ void CRenderTools::RenderSwitchmap(CSwitchTile *pSwitchTile, int w, int h, float
 	Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
 }
 
-void CRenderTools::RenderTunemap(CTuneTile *pTune, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) const
+void CRenderTools::RenderTunemap(CTuneTile *pTune, int w, int h, float Scale, ColorRGBA Color, int RenderFlags) 
 {
 	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
 	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);

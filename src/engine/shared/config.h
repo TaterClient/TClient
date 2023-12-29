@@ -80,10 +80,6 @@ class CConfigManager : public IConfigManager
 	};
 	std::vector<SCallback> m_vCallbacks;
 
-	class IStorage *m_pStorage;
-	IOHANDLE m_ConfigFile;
-	bool m_Failed;
-	CCallback m_aCallbacks[MAX_CALLBACKS];
 
 	int m_NumCallbacks;
 	std::vector<std::string> m_vUnknownCommands;
@@ -95,9 +91,6 @@ class CConfigManager : public IConfigManager
 	static void Con_Reset(IConsole::IResult *pResult, void *pUserData);
 	static void Con_Toggle(IConsole::IResult *pResult, void *pUserData);
 	static void Con_ToggleStroke(IConsole::IResult *pResult, void *pUserData);
-
-	CCallback m_aTCallbacks[MAX_CALLBACKS];
-	int m_NumTCallbacks;
 
 public:
 	CConfigManager();
@@ -112,7 +105,6 @@ public:
 	CConfig *Values() override { return &g_Config; }
 
 	void RegisterCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) override;
-	void RegisterTCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) override;
 
 	void WriteLine(const char *pLine) override;
 

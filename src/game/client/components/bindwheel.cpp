@@ -57,7 +57,7 @@ void CBindWheel::OnConsoleInit()
 {
 	IConfigManager *pConfigManager = Kernel()->RequestInterface<IConfigManager>();
 	if(pConfigManager)
-		pConfigManager->RegisterTCallback(ConfigSaveCallback, this);
+		pConfigManager->RegisterCallback(ConfigSaveCallback, this);
 
 	Console()->Register("+bindwheel", "", CFGFLAG_CLIENT, ConBindwheel, this, "Open bindwheel selector");
 	Console()->Register("bindwheel", "i[bindwheel] s[description:128] s[command:10]", CFGFLAG_CLIENT, ConBind, this, "Edit the command");

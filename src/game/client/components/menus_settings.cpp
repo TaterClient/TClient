@@ -684,7 +684,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	if(*pUseCustomColor)
 	{
 		RandomColorsButton.VSplitLeft(120.0f, &RandomColorsButton, 0);
-		if(DoButton_Menu(&s_RandomizeColors, "Randomize Colors", 0, &RandomColorsButton, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0, 0, 0, 0.5f), vec4(0, 0, 0, 0.25f)))
+		if(DoButton_Menu(&s_RandomizeColors, "Randomize Colors", 0, &RandomColorsButton, nullptr, IGraphics::CORNER_ALL, 5.0f))
 		{
 			if(m_Dummy)
 			{
@@ -3424,13 +3424,15 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			ExtMenu.VSplitRight(130.0f, 0, &ExtMenu);
 			ExtMenu.HSplitBottom(25.0f, &ExtMenu, &Button);
 			static CButtonContainer s_DiscordButton;
-			if(DoButton_Menu(&s_DiscordButton, Localize("Discord"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+
+			if(DoButton_Menu(&s_DiscordButton, Localize("Discord"), 0, &Button, 0, IGraphics::CORNER_ALL))
 			{
 				if(!open_link("https://discord.gg/fBvhH93Bt6"))
 				{
 					dbg_msg("menus", "couldn't open link");
 				}
-			}
+			} 
+
 		}
 	}
 	// ***** PAGE 2 ***** //
@@ -4015,7 +4017,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	LabelRight.HSplitTop(30.0f, &Button, &LabelRight);
 	static CButtonContainer s_LoadButton;
 
-	if(DoButton_Menu(&s_LoadButton, Localize("Load"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+	if(DoButton_Menu(&s_LoadButton, Localize("Load"), 0, &Button, 0, IGraphics::CORNER_ALL))
 	{
 		if(SelectedProfile != -1 && SelectedProfile < (int)GameClient()->m_SkinProfiles.m_Profiles.size())
 		{
@@ -4063,7 +4065,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 	LabelRight.HSplitTop(30.0f, &Button, &LabelRight);
 	static CButtonContainer s_SaveButton;
-	if(DoButton_Menu(&s_SaveButton, Localize("Save"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+	if(DoButton_Menu(&s_SaveButton, Localize("Save"), 0, &Button, 0, IGraphics::CORNER_ALL))
 	{
 		GameClient()->m_SkinProfiles.AddProfile(
 			doColors ? *pColorBody : -1,
@@ -4085,7 +4087,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	{
 		LabelRight.HSplitTop(28.0f, &Button, &LabelRight);
 		static CButtonContainer s_DeleteButton;
-		if(DoButton_Menu(&s_DeleteButton, Localize("Delete"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+		if(DoButton_Menu(&s_DeleteButton, Localize("Delete"), 0, &Button, 0, IGraphics::CORNER_ALL))
 		{
 			if(SelectedProfile != -1 && SelectedProfile < (int)GameClient()->m_SkinProfiles.m_Profiles.size())
 			{
@@ -4097,7 +4099,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 		LabelRight.HSplitTop(28.0f, &Button, &LabelRight);
 		static CButtonContainer s_OverrideButton;
-		if(DoButton_Menu(&s_OverrideButton, Localize("Override"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+		if(DoButton_Menu(&s_OverrideButton, Localize("Override"), 0, &Button, 0, IGraphics::CORNER_ALL))
 		{
 			if(SelectedProfile != -1 && SelectedProfile < (int)GameClient()->m_SkinProfiles.m_Profiles.size())
 			{

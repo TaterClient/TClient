@@ -20,7 +20,6 @@ public:
 	virtual class CConfig *Values() = 0;
 
 	virtual void RegisterCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) = 0;
-	virtual void RegisterTCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) = 0;
 
 	virtual void WriteLine(const char *pLine) = 0;
 

@@ -390,7 +390,7 @@ void CClient::EnterGame(int Conn)
 	if(State() == IClient::STATE_DEMOPLAYBACK)
 		return;
 
-	m_CodeRunAfterJoin[Conn] = false;
+	m_aCodeRunAfterJoin[Conn] = false;
 	m_CodeRunAfterJoinConsole[Conn] = false;
 
 	// now we will wait for two snapshots
@@ -1953,7 +1953,7 @@ void CClient::ProcessServerPacket(CNetChunk *pPacket, int Conn, bool Dummy)
 							if(g_Config.m_ClRunOnJoin[0] || g_Config.m_ClDummyDefaultEyes || g_Config.m_ClPlayerDefaultEyes)
 								SendMsg(Conn, &PackerTimeout, MSGFLAG_VITAL);
 						}
-						m_CodeRunAfterJoin[Conn] = true;
+						m_aCodeRunAfterJoin[Conn] = true;
 					}
 
 					// ack snapshot
