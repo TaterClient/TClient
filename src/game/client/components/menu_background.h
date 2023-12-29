@@ -11,7 +11,7 @@
 
 class CMenuMap : public CBackgroundEngineMap
 {
-	MACRO_INTERFACE("menu_enginemap", 0)
+	MACRO_INTERFACE("menu_enginemap")
 };
 
 // themes
@@ -81,7 +81,6 @@ public:
 
 	CBackgroundEngineMap *CreateBGMap() override;
 
-	vec2 m_MenuCenter;
 	vec2 m_RotationCenter;
 	std::array<vec2, NUM_POS> m_aPositions;
 	int m_CurrentPosition;

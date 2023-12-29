@@ -252,8 +252,7 @@ void CPlayers::RenderHookCollLine(
 					DoBreak = true;
 				}
 
-				int TeleNr = 0;
-				int Hit = Collision()->IntersectLineTeleHook(OldPos, NewPos, &FinishPos, 0x0, &TeleNr);
+				int Hit = Collision()->IntersectLineTeleHook(OldPos, NewPos, &FinishPos, 0x0);
 
 				if(!DoBreak && Hit)
 				{
@@ -444,15 +443,15 @@ void CPlayers::RenderPlayer(
 	}
 
 	bool PredictLocalWeapons = false;
-	float AttackTime = (Client()->PrevGameTick(g_Config.m_ClDummy) - Player.m_AttackTick) / (float)SERVER_TICK_SPEED + Client()->GameTickTime(g_Config.m_ClDummy);
-	float LastAttackTime = (Client()->PrevGameTick(g_Config.m_ClDummy) - Player.m_AttackTick) / (float)SERVER_TICK_SPEED + s_LastGameTickTime;
+	float AttackTime = (Client()->PrevGameTick(g_Config.m_ClDummy) - Player.m_AttackTick) / (float)Client()->GameTickSpeed() + Client()->GameTickTime(g_Config.m_ClDummy);
+	float LastAttackTime = (Client()->PrevGameTick(g_Config.m_ClDummy) - Player.m_AttackTick) / (float)Client()->GameTickSpeed() + s_LastGameTickTime;
 	if(ClientID >= 0 && m_pClient->m_aClients[ClientID].m_IsPredictedLocal && m_pClient->AntiPingGunfire())
 	{
 		PredictLocalWeapons = true;
-		AttackTime = (Client()->PredIntraGameTick(g_Config.m_ClDummy) + (Client()->PredGameTick(g_Config.m_ClDummy) - 1 - Player.m_AttackTick)) / (float)SERVER_TICK_SPEED;
-		LastAttackTime = (s_LastPredIntraTick + (Client()->PredGameTick(g_Config.m_ClDummy) - 1 - Player.m_AttackTick)) / (float)SERVER_TICK_SPEED;
+		AttackTime = (Client()->PredIntraGameTick(g_Config.m_ClDummy) + (Client()->PredGameTick(g_Config.m_ClDummy) - 1 - Player.m_AttackTick)) / (float)Client()->GameTickSpeed();
+		LastAttackTime = (s_LastPredIntraTick + (Client()->PredGameTick(g_Config.m_ClDummy) - 1 - Player.m_AttackTick)) / (float)Client()->GameTickSpeed();
 	}
-	float AttackTicksPassed = AttackTime * (float)SERVER_TICK_SPEED;
+	float AttackTicksPassed = AttackTime * (float)Client()->GameTickSpeed();
 
 	float Angle;
 	if(Local && (!m_pClient->m_Snap.m_SpecInfo.m_Active || m_pClient->m_Snap.m_SpecInfo.m_SpectatorID != SPEC_FREEVIEW) && Client()->State() != IClient::STATE_DEMOPLAYBACK)
@@ -750,7 +749,7 @@ void CPlayers::RenderPlayer(
 	RenderTools()->RenderTee(&State, &RenderInfo, Player.m_Emote, Direction, Position, Alpha);
 
 	float TeeAnimScale, TeeBaseSize;
-	RenderTools()->GetRenderTeeAnimScaleAndBaseSize(&RenderInfo, TeeAnimScale, TeeBaseSize);
+	CRenderTools::GetRenderTeeAnimScaleAndBaseSize(&RenderInfo, TeeAnimScale, TeeBaseSize);
 	vec2 BodyPos = Position + vec2(State.GetBody()->m_X, State.GetBody()->m_Y) * TeeAnimScale;
 	if(RenderInfo.m_TeeRenderFlags & TEE_EFFECT_FROZEN)
 	{
@@ -1343,10 +1342,12 @@ void CPlayers::OnRender()
 		RenderTools()->RenderTee(CAnimState::GetIdle(), &RenderInfoSpec, EMOTE_BLINK, vec2(1, 0), m_aClient.m_SpecChar);
 	}
 
-	// render everyone else's tee, then our own
+	// render everyone else's tee, then either our own or the tee we are spectating.
+	const int RenderLastID = (m_pClient->m_Snap.m_SpecInfo.m_SpectatorID != SPEC_FREEVIEW && m_pClient->m_Snap.m_SpecInfo.m_Active) ? m_pClient->m_Snap.m_SpecInfo.m_SpectatorID : LocalClientID;
+
 	for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
 	{
-		if(ClientID == LocalClientID || !m_pClient->m_Snap.m_aCharacters[ClientID].m_Active || !IsPlayerInfoAvailable(ClientID))
+		if(ClientID == RenderLastID || !m_pClient->m_Snap.m_aCharacters[ClientID].m_Active || !IsPlayerInfoAvailable(ClientID))
 		{
 			continue;
 		}
@@ -1387,7 +1388,7 @@ void CPlayers::OnRender()
 			RenderPlayer(&m_pClient->m_aClients[ClientID].m_RenderPrev, &m_pClient->m_aClients[ClientID].m_RenderCur, &aRenderInfo[ClientID], ClientID);
 		RenderPlayer(&m_pClient->m_aClients[ClientID].m_RenderPrev, &m_pClient->m_aClients[ClientID].m_RenderCur, &aRenderInfo[ClientID], ClientID);
 	}
-	if(LocalClientID != -1 && m_pClient->m_Snap.m_aCharacters[LocalClientID].m_Active && IsPlayerInfoAvailable(LocalClientID))
+	if(RenderLastID != -1 && m_pClient->m_Snap.m_aCharacters[RenderLastID].m_Active && IsPlayerInfoAvailable(RenderLastID))
 	{
 		if(m_pClient->m_Snap.m_pLocalInfo)
 			RenderHookCollLine(&m_pClient->m_aClients[LocalClientID].m_RenderPrev, &m_pClient->m_aClients[LocalClientID].m_RenderCur, LocalClientID);

@@ -15,13 +15,13 @@
 
 class CChat : public CComponent
 {
-	static constexpr float CHAT_WIDTH = 200.0f;
 	static constexpr float CHAT_HEIGHT_FULL = 200.0f;
 	static constexpr float CHAT_HEIGHT_MIN = 50.0f;
+	static constexpr float CHAT_FONTSIZE_WIDTH_RATIO = 2.5f;
 
 	enum
 	{
-		MAX_LINES = 25,
+		MAX_LINES = 64,
 		MAX_LINE_LENGTH = 256
 	};
 
@@ -96,21 +96,26 @@ class CChat : public CComponent
 
 	struct CCommand
 	{
-		const char *m_pName;
-		const char *m_pParams;
+		char m_aName[IConsole::TEMPCMD_NAME_LENGTH];
+		char m_aParams[IConsole::TEMPCMD_PARAMS_LENGTH];
+		char m_aHelpText[IConsole::TEMPCMD_HELP_LENGTH];
 
 		CCommand() = default;
-		CCommand(const char *pName, const char *pParams) :
-			m_pName(pName), m_pParams(pParams)
+		CCommand(const char *pName, const char *pParams, const char *pHelpText)
 		{
+			str_copy(m_aName, pName);
+			str_copy(m_aParams, pParams);
+			str_copy(m_aHelpText, pHelpText);
 		}
 
-		bool operator<(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) < 0; }
-		bool operator<=(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) <= 0; }
-		bool operator==(const CCommand &Other) const { return str_comp(m_pName, Other.m_pName) == 0; }
+		bool operator<(const CCommand &Other) const { return str_comp(m_aName, Other.m_aName) < 0; }
+		bool operator<=(const CCommand &Other) const { return str_comp(m_aName, Other.m_aName) <= 0; }
+		bool operator==(const CCommand &Other) const { return str_comp(m_aName, Other.m_aName) == 0; }
 	};
 
 	std::vector<CCommand> m_vCommands;
+	std::vector<CCommand> m_vDefaultCommands;
+	bool m_CommandsNeedSorting;
 
 	struct CHistoryEntry
 	{
@@ -126,6 +131,8 @@ class CChat : public CComponent
 	char m_aCurrentInputText[MAX_LINE_LENGTH];
 	bool m_EditingNewLine;
 
+	bool m_ServerSupportsCommandInfo;
+
 	static void ConSay(IConsole::IResult *pResult, void *pUserData);
 	static void ConSayTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConChat(IConsole::IResult *pResult, void *pUserData);
@@ -133,6 +140,8 @@ class CChat : public CComponent
 	static void ConEcho(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConchainChatOld(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+	static void ConchainChatFontSize(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+	static void ConchainChatWidth(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	bool LineShouldHighlight(const char *pLine, const char *pName);
 	void StoreSave(const char *pText);
@@ -141,13 +150,7 @@ public:
 	CChat();
 	int Sizeof() const override { return sizeof(*this); }
 
-	static constexpr float MESSAGE_PADDING_X = 5.0f;
-	static constexpr float MESSAGE_TEE_SIZE = 7.0f;
 	static constexpr float MESSAGE_TEE_PADDING_RIGHT = 0.5f;
-	static constexpr float FONT_SIZE = 6.0f;
-	static constexpr float MESSAGE_PADDING_Y = 1.0f;
-	static constexpr float MESSAGE_ROUNDING = 3.0f;
-	static_assert(FONT_SIZE + MESSAGE_PADDING_Y >= MESSAGE_ROUNDING * 2.0f, "Corners for background chat are too huge for this combination of font size and message padding.");
 
 	bool IsActive() const { return m_Mode != MODE_NONE; }
 	void AddLine(int ClientID, int Team, const char *pLine);
@@ -155,7 +158,8 @@ public:
 	void DisableMode();
 	void Say(int Team, const char *pLine);
 	void SayChat(const char *pLine);
-	void RegisterCommand(const char *pName, const char *pParams, int flags, const char *pHelp);
+	void RegisterCommand(const char *pName, const char *pParams, const char *pHelpText);
+	void UnregisterCommand(const char *pName);
 	void Echo(const char *pString);
 
 	void OnWindowResize() override;
@@ -163,13 +167,23 @@ public:
 	void OnStateChange(int NewState, int OldState) override;
 	void OnRender() override;
 	void RefindSkins();
-	void OnPrepareLines();
+	void OnPrepareLines(float y);
 	void Reset();
 	void OnRelease() override;
 	void OnMessage(int MsgType, void *pRawMsg) override;
 	bool OnInput(const IInput::CEvent &Event) override;
 	void OnInit() override;
+	void OnMapLoad() override;
 
 	void RebuildChat();
+
+	void EnsureCoherentFontSize() const;
+	void EnsureCoherentWidth() const;
+
+	float FontSize() const { return g_Config.m_ClChatFontSize / 10.0f; }
+	float MessagePaddingX() const { return FontSize() * (5 / 6.f); }
+	float MessagePaddingY() const { return FontSize() * (1 / 6.f); }
+	float MessageTeeSize() const { return FontSize() * (7 / 6.f); }
+	float MessageRounding() const { return FontSize() * (1 / 2.f); }
 };
 #endif

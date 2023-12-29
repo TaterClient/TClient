@@ -1,6 +1,7 @@
 #include "uuid_manager.h"
 
 #include <base/hash_ctxt.h>
+#include <base/system.h>
 #include <engine/shared/packer.h>
 
 #include <algorithm>
@@ -9,6 +10,10 @@
 static const CUuid TEEWORLDS_NAMESPACE = {{// "e05ddaaa-c4e6-4cfb-b642-5d48e80c0029"
 	0xe0, 0x5d, 0xda, 0xaa, 0xc4, 0xe6, 0x4c, 0xfb,
 	0xb6, 0x42, 0x5d, 0x48, 0xe8, 0x0c, 0x00, 0x29}};
+
+const CUuid UUID_ZEROED = {{// "00000000-0000-0000-0000-000000000000"
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
 
 CUuid RandomUuid()
 {
@@ -94,6 +99,11 @@ bool CUuid::operator==(const CUuid &Other) const
 bool CUuid::operator!=(const CUuid &Other) const
 {
 	return !(*this == Other);
+}
+
+bool CUuid::operator<(const CUuid &Other) const
+{
+	return mem_comp(this, &Other, sizeof(*this)) < 0;
 }
 
 static int GetIndex(int ID)

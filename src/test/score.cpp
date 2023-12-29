@@ -19,13 +19,13 @@ char *CSaveTeam::GetString()
 	return nullptr;
 }
 
-int CSaveTeam::FromString(char const *)
+int CSaveTeam::FromString(const char *)
 {
 	// Dummy implementation for testing
 	return 1;
 }
 
-bool CSaveTeam::MatchPlayers(const char (*paNames)[MAX_NAME_LENGTH], const int *pClientID, int NumPlayer, char *pMessage, int MessageLen)
+bool CSaveTeam::MatchPlayers(const char (*paNames)[MAX_NAME_LENGTH], const int *pClientID, int NumPlayer, char *pMessage, int MessageLen) const
 {
 	// Dummy implementation for testing
 	return false;

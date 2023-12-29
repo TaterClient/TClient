@@ -47,7 +47,7 @@ void CUIElement::SUIElementRect::Reset()
 	m_Rounding = -1.0f;
 	m_Corners = -1;
 	m_Text.clear();
-	mem_zero(&m_Cursor, sizeof(m_Cursor));
+	m_Cursor.Reset();
 	m_TextColor = ColorRGBA(-1, -1, -1, -1);
 	m_TextOutlineColor = ColorRGBA(-1, -1, -1, -1);
 	m_QuadColor = ColorRGBA(-1, -1, -1, -1);
@@ -152,7 +152,7 @@ void CUI::AddUIElement(CUIElement *pElement)
 	m_vpUIElements.push_back(pElement);
 }
 
-void CUI::ResetUIElement(CUIElement &UIElement)
+void CUI::ResetUIElement(CUIElement &UIElement) const
 {
 	for(CUIElement::SUIElementRect &Rect : UIElement.m_vUIRects)
 	{
@@ -179,8 +179,8 @@ void CUI::OnCursorMove(float X, float Y)
 {
 	if(!CheckMouseLock())
 	{
-		m_UpdatedMousePos.x = clamp(m_UpdatedMousePos.x + X, 0.0f, (float)Graphics()->WindowWidth());
-		m_UpdatedMousePos.y = clamp(m_UpdatedMousePos.y + Y, 0.0f, (float)Graphics()->WindowHeight());
+		m_UpdatedMousePos.x = clamp(m_UpdatedMousePos.x + X, 0.0f, Graphics()->WindowWidth() - 1.0f);
+		m_UpdatedMousePos.y = clamp(m_UpdatedMousePos.y + Y, 0.0f, Graphics()->WindowHeight() - 1.0f);
 	}
 
 	m_UpdatedMouseDelta += vec2(X, Y);
@@ -490,19 +490,37 @@ int CUI::DoDraggableButtonLogic(const void *pID, int Checked, const CUIRect *pRe
 	return ReturnValue;
 }
 
-int CUI::DoPickerLogic(const void *pID, const CUIRect *pRect, float *pX, float *pY)
+EEditState CUI::DoPickerLogic(const void *pID, const CUIRect *pRect, float *pX, float *pY)
 {
+	static const void *s_pEditing = nullptr;
+
 	if(MouseHovered(pRect))
 		SetHotItem(pID);
 
+	EEditState Res = EEditState::EDITING;
+
 	if(HotItem() == pID && MouseButtonClicked(0))
+	{
 		SetActiveItem(pID);
+		if(!s_pEditing)
+		{
+			s_pEditing = pID;
+			Res = EEditState::START;
+		}
+	}
 
 	if(CheckActiveItem(pID) && !MouseButton(0))
+	{
 		SetActiveItem(nullptr);
+		if(s_pEditing == pID)
+		{
+			s_pEditing = nullptr;
+			Res = EEditState::END;
+		}
+	}
 
-	if(!CheckActiveItem(pID))
-		return 0;
+	if(!CheckActiveItem(pID) && Res == EEditState::EDITING)
+		return EEditState::NONE;
 
 	if(Input()->ShiftIsPressed())
 		m_MouseSlow = true;
@@ -512,10 +530,10 @@ int CUI::DoPickerLogic(const void *pID, const CUIRect *pRect, float *pX, float *
 	if(pY)
 		*pY = clamp(m_MouseY - pRect->y, 0.0f, pRect->h);
 
-	return 1;
+	return Res;
 }
 
-void CUI::DoSmoothScrollLogic(float *pScrollOffset, float *pScrollOffsetChange, float ViewPortSize, float TotalSize, bool SmoothClamp, float ScrollSpeed)
+void CUI::DoSmoothScrollLogic(float *pScrollOffset, float *pScrollOffsetChange, float ViewPortSize, float TotalSize, bool SmoothClamp, float ScrollSpeed) const
 {
 	// reset scrolling if it's not necessary anymore
 	if(TotalSize < ViewPortSize)
@@ -648,7 +666,7 @@ vec2 CUI::CalcAlignedCursorPos(const CUIRect *pRect, vec2 TextSize, int Align, c
 	return Cursor;
 }
 
-void CUI::DoLabel(const CUIRect *pRect, const char *pText, float Size, int Align, const SLabelProperties &LabelProps)
+void CUI::DoLabel(const CUIRect *pRect, const char *pText, float Size, int Align, const SLabelProperties &LabelProps) const
 {
 	const int Flags = GetFlagsForLabelProperties(LabelProps, nullptr);
 	const SCursorAndBoundingBox TextBounds = CalcFontSizeCursorHeightAndBoundingBox(TextRender(), pText, Flags, Size, pRect->w, LabelProps);
@@ -660,7 +678,7 @@ void CUI::DoLabel(const CUIRect *pRect, const char *pText, float Size, int Align
 	TextRender()->TextEx(&Cursor, pText, -1);
 }
 
-void CUI::DoLabel(CUIElement::SUIElementRect &RectEl, const CUIRect *pRect, const char *pText, float Size, int Align, const SLabelProperties &LabelProps, int StrLen, const CTextCursor *pReadCursor)
+void CUI::DoLabel(CUIElement::SUIElementRect &RectEl, const CUIRect *pRect, const char *pText, float Size, int Align, const SLabelProperties &LabelProps, int StrLen, const CTextCursor *pReadCursor) const
 {
 	const int Flags = GetFlagsForLabelProperties(LabelProps, pReadCursor);
 	const SCursorAndBoundingBox TextBounds = CalcFontSizeCursorHeightAndBoundingBox(TextRender(), pText, Flags, Size, pRect->w, LabelProps);
@@ -687,7 +705,7 @@ void CUI::DoLabel(CUIElement::SUIElementRect &RectEl, const CUIRect *pRect, cons
 	RectEl.m_Cursor = Cursor;
 }
 
-void CUI::DoLabelStreamed(CUIElement::SUIElementRect &RectEl, const CUIRect *pRect, const char *pText, float Size, int Align, const SLabelProperties &LabelProps, int StrLen, const CTextCursor *pReadCursor)
+void CUI::DoLabelStreamed(CUIElement::SUIElementRect &RectEl, const CUIRect *pRect, const char *pText, float Size, int Align, const SLabelProperties &LabelProps, int StrLen, const CTextCursor *pReadCursor) const
 {
 	const int ReadCursorGlyphCount = pReadCursor == nullptr ? -1 : pReadCursor->m_GlyphCount;
 	bool NeedsRecreate = false;
@@ -748,6 +766,7 @@ bool CUI::DoEditBox(CLineInput *pLineInput, const CUIRect *pRect, float FontSize
 	const bool Inside = MouseHovered(pRect);
 	const bool Active = m_pLastActiveItem == pLineInput;
 	const bool Changed = pLineInput->WasChanged();
+	const bool CursorChanged = pLineInput->WasCursorChanged();
 
 	const float VSpacing = 2.0f;
 	CUIRect Textbox;
@@ -824,11 +843,11 @@ bool CUI::DoEditBox(CLineInput *pLineInput, const CUIRect *pRect, float FontSize
 	pRect->Draw(ms_LightButtonColorFunction.GetColor(Active, HotItem() == pLineInput), Corners, 3.0f);
 	ClipEnable(pRect);
 	Textbox.x -= ScrollOffset;
-	const STextBoundingBox BoundingBox = pLineInput->Render(&Textbox, FontSize, TEXTALIGN_ML, Changed, -1.0f);
+	const STextBoundingBox BoundingBox = pLineInput->Render(&Textbox, FontSize, TEXTALIGN_ML, Changed || CursorChanged, -1.0f, 0.0f);
 	ClipDisable();
 
 	// Scroll left or right if necessary
-	if(Active && !JustGotActive && (Changed || Input()->HasComposition()))
+	if(Active && !JustGotActive && (Changed || CursorChanged || Input()->HasComposition()))
 	{
 		const float CaretPositionX = pLineInput->GetCaretPosition().x - Textbox.x - ScrollOffset - ScrollOffsetChange;
 		if(CaretPositionX > Textbox.w)
@@ -982,11 +1001,18 @@ int CUI::DoButton_PopupMenu(CButtonContainer *pButtonContainer, const char *pTex
 
 int64_t CUI::DoValueSelector(const void *pID, const CUIRect *pRect, const char *pLabel, int64_t Current, int64_t Min, int64_t Max, const SValueSelectorProperties &Props)
 {
+	return DoValueSelectorWithState(pID, pRect, pLabel, Current, Min, Max, Props).m_Value;
+}
+
+SEditResult<int64_t> CUI::DoValueSelectorWithState(const void *pID, const CUIRect *pRect, const char *pLabel, int64_t Current, int64_t Min, int64_t Max, const SValueSelectorProperties &Props)
+{
 	// logic
 	static float s_Value;
 	static CLineInputNumber s_NumberInput;
 	static const void *s_pLastTextID = pID;
 	const bool Inside = MouseInside(pRect);
+	static const void *s_pEditing = nullptr;
+	EEditState State = EEditState::NONE;
 
 	if(Inside)
 		SetHotItem(pID);
@@ -1091,7 +1117,23 @@ int64_t CUI::DoValueSelector(const void *pID, const CUIRect *pRect, const char *
 	if(!m_ValueSelectorTextMode)
 		s_NumberInput.Clear();
 
-	return Current;
+	if(s_pEditing == pID)
+		State = EEditState::EDITING;
+
+	bool MouseLocked = CheckMouseLock();
+	if((MouseLocked || m_ValueSelectorTextMode) && !s_pEditing)
+	{
+		State = EEditState::START;
+		s_pEditing = pID;
+	}
+
+	if(!CheckMouseLock() && !m_ValueSelectorTextMode && s_pEditing == pID)
+	{
+		State = EEditState::END;
+		s_pEditing = nullptr;
+	}
+
+	return SEditResult<int64_t>{State, Current};
 }
 
 float CUI::DoScrollbarV(const void *pID, const CUIRect *pRect, float Current)
@@ -1294,7 +1336,7 @@ void CUI::DoScrollbarOption(const void *pID, int *pOption, const CUIRect *pRect,
 	*pOption = Value;
 }
 
-void CUI::RenderProgressSpinner(vec2 Center, float OuterRadius, const SProgressSpinnerProperties &Props)
+void CUI::RenderProgressSpinner(vec2 Center, float OuterRadius, const SProgressSpinnerProperties &Props) const
 {
 	static float s_SpinnerOffset = 0.0f;
 	static float s_LastRender = Client()->LocalTime();
@@ -1368,27 +1410,30 @@ void CUI::RenderPopupMenus()
 	for(size_t i = 0; i < m_vPopupMenus.size(); ++i)
 	{
 		const SPopupMenu &PopupMenu = m_vPopupMenus[i];
+		const SPopupMenuId *pID = PopupMenu.m_pID;
 		const bool Inside = MouseInside(&PopupMenu.m_Rect);
 		const bool Active = i == m_vPopupMenus.size() - 1;
 
 		if(Active)
-			SetHotItem(PopupMenu.m_pID);
+			SetHotItem(pID);
 
-		if(CheckActiveItem(PopupMenu.m_pID))
+		if(CheckActiveItem(pID))
 		{
 			if(!MouseButton(0))
 			{
 				if(!Inside)
 				{
-					ClosePopupMenu(PopupMenu.m_pID);
+					ClosePopupMenu(pID);
+					--i;
+					continue;
 				}
 				SetActiveItem(nullptr);
 			}
 		}
-		else if(HotItem() == PopupMenu.m_pID)
+		else if(HotItem() == pID)
 		{
 			if(MouseButton(0))
-				SetActiveItem(PopupMenu.m_pID);
+				SetActiveItem(pID);
 		}
 
 		CUIRect PopupRect = PopupMenu.m_Rect;
@@ -1397,9 +1442,11 @@ void CUI::RenderPopupMenus()
 		PopupRect.Draw(PopupMenu.m_Props.m_BackgroundColor, PopupMenu.m_Props.m_Corners, 3.0f);
 		PopupRect.Margin(SPopupMenu::POPUP_MARGIN, &PopupRect);
 
+		// The popup render function can open/close popups, which may resize the vector and thus
+		// invalidate the variable PopupMenu. We therefore store pID in a separate variable.
 		EPopupMenuFunctionResult Result = PopupMenu.m_pfnFunc(PopupMenu.m_pContext, PopupRect, Active);
 		if(Result != POPUP_KEEP_OPEN || (Active && ConsumeHotkey(HOTKEY_ESCAPE)))
-			ClosePopupMenu(PopupMenu.m_pID, Result == POPUP_CLOSE_CURRENT_AND_DESCENDANTS);
+			ClosePopupMenu(pID, Result == POPUP_CLOSE_CURRENT_AND_DESCENDANTS);
 	}
 }
 
@@ -1686,6 +1733,7 @@ CUI::EPopupMenuFunctionResult CUI::PopupColorPicker(void *pContext, CUIRect View
 {
 	SColorPickerPopupContext *pColorPicker = static_cast<SColorPickerPopupContext *>(pContext);
 	CUI *pUI = pColorPicker->m_pUI;
+	pColorPicker->m_State = EEditState::NONE;
 
 	CUIRect ColorsArea, HueArea, BottomArea, ModeButtonArea, HueRect, SatRect, ValueRect, HexRect, AlphaRect;
 
@@ -1759,10 +1807,10 @@ CUI::EPopupMenuFunctionResult CUI::PopupColorPicker(void *pContext, CUIRect View
 		HuePartialArea.Draw4(TL, TL, BL, BL, IGraphics::CORNER_NONE, 0.0f);
 	}
 
-	const auto &&RenderAlphaSelector = [&](unsigned OldA) -> unsigned {
+	const auto &&RenderAlphaSelector = [&](unsigned OldA) -> SEditResult<int64_t> {
 		if(pColorPicker->m_Alpha)
 		{
-			return pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[3], &AlphaRect, "A:", OldA, 0, 255);
+			return pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[3], &AlphaRect, "A:", OldA, 0, 255);
 		}
 		else
 		{
@@ -1770,22 +1818,22 @@ CUI::EPopupMenuFunctionResult CUI::PopupColorPicker(void *pContext, CUIRect View
 			str_format(aBuf, sizeof(aBuf), "A: %d", OldA);
 			pUI->DoLabel(&AlphaRect, aBuf, 10.0f, TEXTALIGN_MC);
 			AlphaRect.Draw(ColorRGBA(0.0f, 0.0f, 0.0f, 0.65f), IGraphics::CORNER_ALL, 3.0f);
-			return OldA;
+			return {EEditState::NONE, OldA};
 		}
 	};
 
 	// Editboxes Area
 	if(pColorPicker->m_ColorMode == SColorPickerPopupContext::MODE_HSVA)
 	{
-		const unsigned OldH = (unsigned)(PickerColorHSV.h * 255.0f);
-		const unsigned OldS = (unsigned)(PickerColorHSV.s * 255.0f);
-		const unsigned OldV = (unsigned)(PickerColorHSV.v * 255.0f);
-		const unsigned OldA = (unsigned)(PickerColorHSV.a * 255.0f);
+		const unsigned OldH = round_to_int(PickerColorHSV.h * 255.0f);
+		const unsigned OldS = round_to_int(PickerColorHSV.s * 255.0f);
+		const unsigned OldV = round_to_int(PickerColorHSV.v * 255.0f);
+		const unsigned OldA = round_to_int(PickerColorHSV.a * 255.0f);
 
-		const unsigned H = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[0], &HueRect, "H:", OldH, 0, 255);
-		const unsigned S = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[1], &SatRect, "S:", OldS, 0, 255);
-		const unsigned V = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[2], &ValueRect, "V:", OldV, 0, 255);
-		const unsigned A = RenderAlphaSelector(OldA);
+		const auto [StateH, H] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[0], &HueRect, "H:", OldH, 0, 255);
+		const auto [StateS, S] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[1], &SatRect, "S:", OldS, 0, 255);
+		const auto [StateV, V] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[2], &ValueRect, "V:", OldV, 0, 255);
+		const auto [StateA, A] = RenderAlphaSelector(OldA);
 
 		if(OldH != H || OldS != S || OldV != V || OldA != A)
 		{
@@ -1793,18 +1841,27 @@ CUI::EPopupMenuFunctionResult CUI::PopupColorPicker(void *pContext, CUIRect View
 			PickerColorHSL = color_cast<ColorHSLA>(PickerColorHSV);
 			PickerColorRGB = color_cast<ColorRGBA>(PickerColorHSL);
 		}
+
+		for(auto State : {StateH, StateS, StateV, StateA})
+		{
+			if(State != EEditState::NONE)
+			{
+				pColorPicker->m_State = State;
+				break;
+			}
+		}
 	}
 	else if(pColorPicker->m_ColorMode == SColorPickerPopupContext::MODE_RGBA)
 	{
-		const unsigned OldR = (unsigned)(PickerColorRGB.r * 255.0f);
-		const unsigned OldG = (unsigned)(PickerColorRGB.g * 255.0f);
-		const unsigned OldB = (unsigned)(PickerColorRGB.b * 255.0f);
-		const unsigned OldA = (unsigned)(PickerColorRGB.a * 255.0f);
+		const unsigned OldR = round_to_int(PickerColorRGB.r * 255.0f);
+		const unsigned OldG = round_to_int(PickerColorRGB.g * 255.0f);
+		const unsigned OldB = round_to_int(PickerColorRGB.b * 255.0f);
+		const unsigned OldA = round_to_int(PickerColorRGB.a * 255.0f);
 
-		const unsigned R = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[0], &HueRect, "R:", OldR, 0, 255);
-		const unsigned G = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[1], &SatRect, "G:", OldG, 0, 255);
-		const unsigned B = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[2], &ValueRect, "B:", OldB, 0, 255);
-		const unsigned A = RenderAlphaSelector(OldA);
+		const auto [StateR, R] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[0], &HueRect, "R:", OldR, 0, 255);
+		const auto [StateG, G] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[1], &SatRect, "G:", OldG, 0, 255);
+		const auto [StateB, B] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[2], &ValueRect, "B:", OldB, 0, 255);
+		const auto [StateA, A] = RenderAlphaSelector(OldA);
 
 		if(OldR != R || OldG != G || OldB != B || OldA != A)
 		{
@@ -1812,24 +1869,42 @@ CUI::EPopupMenuFunctionResult CUI::PopupColorPicker(void *pContext, CUIRect View
 			PickerColorHSL = color_cast<ColorHSLA>(PickerColorRGB);
 			PickerColorHSV = color_cast<ColorHSVA>(PickerColorHSL);
 		}
+
+		for(auto State : {StateR, StateG, StateB, StateA})
+		{
+			if(State != EEditState::NONE)
+			{
+				pColorPicker->m_State = State;
+				break;
+			}
+		}
 	}
 	else if(pColorPicker->m_ColorMode == SColorPickerPopupContext::MODE_HSLA)
 	{
-		const unsigned OldH = (unsigned)(PickerColorHSL.h * 255.0f);
-		const unsigned OldS = (unsigned)(PickerColorHSL.s * 255.0f);
-		const unsigned OldL = (unsigned)(PickerColorHSL.l * 255.0f);
-		const unsigned OldA = (unsigned)(PickerColorHSL.a * 255.0f);
+		const unsigned OldH = round_to_int(PickerColorHSL.h * 255.0f);
+		const unsigned OldS = round_to_int(PickerColorHSL.s * 255.0f);
+		const unsigned OldL = round_to_int(PickerColorHSL.l * 255.0f);
+		const unsigned OldA = round_to_int(PickerColorHSL.a * 255.0f);
 
-		const unsigned H = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[0], &HueRect, "H:", OldH, 0, 255);
-		const unsigned S = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[1], &SatRect, "S:", OldS, 0, 255);
-		const unsigned L = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[2], &ValueRect, "L:", OldL, 0, 255);
-		const unsigned A = RenderAlphaSelector(OldA);
+		const auto [StateH, H] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[0], &HueRect, "H:", OldH, 0, 255);
+		const auto [StateS, S] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[1], &SatRect, "S:", OldS, 0, 255);
+		const auto [StateL, L] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[2], &ValueRect, "L:", OldL, 0, 255);
+		const auto [StateA, A] = RenderAlphaSelector(OldA);
 
 		if(OldH != H || OldS != S || OldL != L || OldA != A)
 		{
 			PickerColorHSL = ColorHSLA(H / 255.0f, S / 255.0f, L / 255.0f, A / 255.0f);
 			PickerColorHSV = color_cast<ColorHSVA>(PickerColorHSL);
 			PickerColorRGB = color_cast<ColorRGBA>(PickerColorHSL);
+		}
+
+		for(auto State : {StateH, StateS, StateL, StateA})
+		{
+			if(State != EEditState::NONE)
+			{
+				pColorPicker->m_State = State;
+				break;
+			}
 		}
 	}
 	else
@@ -1842,7 +1917,7 @@ CUI::EPopupMenuFunctionResult CUI::PopupColorPicker(void *pContext, CUIRect View
 	Props.m_IsHex = true;
 	Props.m_HexPrefix = pColorPicker->m_Alpha ? 8 : 6;
 	const unsigned OldHex = PickerColorRGB.PackAlphaLast(pColorPicker->m_Alpha);
-	const unsigned Hex = pUI->DoValueSelector(&pColorPicker->m_aValueSelectorIds[4], &HexRect, "Hex:", OldHex, 0, pColorPicker->m_Alpha ? 0xFFFFFFFFll : 0xFFFFFFll, Props);
+	auto [HexState, Hex] = pUI->DoValueSelectorWithState(&pColorPicker->m_aValueSelectorIds[4], &HexRect, "Hex:", OldHex, 0, pColorPicker->m_Alpha ? 0xFFFFFFFFll : 0xFFFFFFll, Props);
 	if(OldHex != Hex)
 	{
 		const float OldAlpha = PickerColorRGB.a;
@@ -1853,21 +1928,28 @@ CUI::EPopupMenuFunctionResult CUI::PopupColorPicker(void *pContext, CUIRect View
 		PickerColorHSV = color_cast<ColorHSVA>(PickerColorHSL);
 	}
 
+	if(HexState != EEditState::NONE)
+		pColorPicker->m_State = HexState;
+
 	// Logic
 	float PickerX, PickerY;
-	if(pUI->DoPickerLogic(&pColorPicker->m_ColorPickerId, &ColorsArea, &PickerX, &PickerY))
+	EEditState ColorPickerRes = pUI->DoPickerLogic(&pColorPicker->m_ColorPickerId, &ColorsArea, &PickerX, &PickerY);
+	if(ColorPickerRes != EEditState::NONE)
 	{
 		PickerColorHSV.y = PickerX / ColorsArea.w;
 		PickerColorHSV.z = 1.0f - PickerY / ColorsArea.h;
 		PickerColorHSL = color_cast<ColorHSLA>(PickerColorHSV);
 		PickerColorRGB = color_cast<ColorRGBA>(PickerColorHSL);
+		pColorPicker->m_State = ColorPickerRes;
 	}
 
-	if(pUI->DoPickerLogic(&pColorPicker->m_HuePickerId, &HueArea, &PickerX, &PickerY))
+	EEditState HuePickerRes = pUI->DoPickerLogic(&pColorPicker->m_HuePickerId, &HueArea, &PickerX, &PickerY);
+	if(HuePickerRes != EEditState::NONE)
 	{
 		PickerColorHSV.x = 1.0f - PickerY / HueArea.h;
 		PickerColorHSL = color_cast<ColorHSLA>(PickerColorHSV);
 		PickerColorRGB = color_cast<ColorRGBA>(PickerColorHSL);
+		pColorPicker->m_State = HuePickerRes;
 	}
 
 	// Marker Color Area

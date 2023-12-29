@@ -3,7 +3,6 @@
 #ifndef GAME_GAMECORE_H
 #define GAME_GAMECORE_H
 
-#include <base/system.h>
 #include <base/vmath.h>
 
 #include <map>
@@ -45,7 +44,6 @@ class CTuningParams
 public:
 	CTuningParams()
 	{
-		const float TicksPerSecond = 50.0f;
 #define MACRO_TUNING_PARAM(Name, ScriptName, Value, Description) m_##Name.Set((int)((Value)*100.0f));
 #include "tuning.h"
 #undef MACRO_TUNING_PARAM
@@ -192,7 +190,10 @@ class CWorldCore
 public:
 	CWorldCore()
 	{
-		mem_zero(m_apCharacters, sizeof(m_apCharacters));
+		for(auto &pCharacter : m_apCharacters)
+		{
+			pCharacter = nullptr;
+		}
 		m_pPrng = nullptr;
 	}
 
@@ -276,7 +277,7 @@ public:
 	void Move();
 
 	void Read(const CNetObj_CharacterCore *pObjCore);
-	void Write(CNetObj_CharacterCore *pObjCore);
+	void Write(CNetObj_CharacterCore *pObjCore) const;
 	void Quantize();
 
 	// DDRace
@@ -284,7 +285,6 @@ public:
 	bool m_Reset;
 	CCollision *Collision() { return m_pCollision; }
 
-	vec2 m_LastVel;
 	int m_Colliding;
 	bool m_LeftWall;
 

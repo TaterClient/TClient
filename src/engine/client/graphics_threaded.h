@@ -1,6 +1,7 @@
 #ifndef ENGINE_CLIENT_GRAPHICS_THREADED_H
 #define ENGINE_CLIENT_GRAPHICS_THREADED_H
 
+#include <base/system.h>
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
@@ -965,7 +966,7 @@ public:
 
 	// simple uncompressed RGBA loaders
 	IGraphics::CTextureHandle LoadTexture(const char *pFilename, int StorageType, int Flags = 0) override;
-	int LoadPNG(CImageInfo *pImg, const char *pFilename, int StorageType) override;
+	bool LoadPNG(CImageInfo *pImg, const char *pFilename, int StorageType) override;
 	void FreePNG(CImageInfo *pImg) override;
 
 	bool CheckImageDivisibility(const char *pFileName, CImageInfo &Img, int DivX, int DivY, bool AllowResize) override;
@@ -997,14 +998,14 @@ public:
 		pVert->m_Color = m_aColor[ColorIndex];
 	}
 
-	void SetColorVertex(const CColorVertex *pArray, int Num) override;
+	void SetColorVertex(const CColorVertex *pArray, size_t Num) override;
 	void SetColor(float r, float g, float b, float a) override;
 	void SetColor(ColorRGBA Color) override;
 	void SetColor4(ColorRGBA TopLeft, ColorRGBA TopRight, ColorRGBA BottomLeft, ColorRGBA BottomRight) override;
 
 	// go through all vertices and change their color (only works for quads)
 	void ChangeColorOfCurrentQuadVertices(float r, float g, float b, float a) override;
-	void ChangeColorOfQuadVertices(int QuadOffset, unsigned char r, unsigned char g, unsigned char b, unsigned char a) override;
+	void ChangeColorOfQuadVertices(size_t QuadOffset, unsigned char r, unsigned char g, unsigned char b, unsigned char a) override;
 
 	void QuadsSetSubset(float TlU, float TlV, float BrU, float BrV) override;
 	void QuadsSetSubsetFree(
