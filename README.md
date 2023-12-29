@@ -91,5 +91,3 @@ tc_rainbow
 tc_rainbow_others
 tc_rainbow_mode
 add_profile
-```
-

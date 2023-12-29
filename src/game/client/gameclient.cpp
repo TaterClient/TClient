@@ -51,8 +51,8 @@
 #include "components/freezebars.h"
 #include "components/ghost.h"
 #include "components/hud.h"
+#include "components/infomessages.h"
 #include "components/items.h"
-#include "components/killmessages.h"
 #include "components/mapimages.h"
 #include "components/maplayers.h"
 #include "components/mapsounds.h"
@@ -146,7 +146,7 @@ void CGameClient::OnConsoleInit()
 					      &m_Hud,
 					      &m_Spectator,
 					      &m_Emoticon,
-					      &m_KillMessages,
+					      &m_InfoMessages,
 					      &m_Chat,
 					      &m_Broadcast,
 					      &m_DebugHud,
@@ -370,7 +370,6 @@ void CGameClient::OnInit()
 	str_format(aBuf, sizeof(aBuf), "initialisation finished after %.2fms", ((End - Start) * 1000) / (float)time_freq());
 	Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "gameclient", aBuf);
 
-	m_GameWorld.m_GameTickSpeed = SERVER_TICK_SPEED;
 	m_GameWorld.m_pCollision = Collision();
 	m_GameWorld.m_pTuningList = m_aTuningList;
 
@@ -546,7 +545,7 @@ void CGameClient::OnConnected()
 	m_GameWorld.m_WorldConfig.m_InfiniteAmmo = true;
 	mem_zero(&m_GameInfo, sizeof(m_GameInfo));
 	m_PredictedDummyID = -1;
-	Console()->ResetGameSettings();
+	ConfigManager()->ResetGameSettings();
 	LoadMapSettings();
 
 	if(Client()->State() != IClient::STATE_DEMOPLAYBACK && g_Config.m_ClAutoDemoOnConnect)
@@ -763,7 +762,7 @@ void CGameClient::OnDummyDisconnect()
 	m_PredictedDummyID = -1;
 }
 
-int CGameClient::GetLastRaceTick()
+int CGameClient::GetLastRaceTick() const
 {
 	return m_Ghost.GetLastRaceTick();
 }
@@ -947,6 +946,30 @@ void CGameClient::OnMessage(int MsgId, CUnpacker *pUnpacker, int Conn, bool Dumm
 					}
 				}
 			}
+		}
+	}
+	else if(MsgId == NETMSGTYPE_SV_KILLMSGTEAM)
+	{
+		CNetMsg_Sv_KillMsgTeam *pMsg = (CNetMsg_Sv_KillMsgTeam *)pRawMsg;
+
+		// reset prediction
+		std::vector<std::pair<int, int>> vStrongWeakSorted;
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(m_Teams.Team(i) == pMsg->m_Team)
+			{
+				if(CCharacter *pChar = m_GameWorld.GetCharacterByID(i))
+				{
+					pChar->ResetPrediction();
+					vStrongWeakSorted.emplace_back(i, pMsg->m_First == i ? MAX_CLIENTS : pChar ? pChar->GetStrongWeakID() : 0);
+				}
+				m_GameWorld.ReleaseHooked(i);
+			}
+		}
+		std::stable_sort(vStrongWeakSorted.begin(), vStrongWeakSorted.end(), [](auto &Left, auto &Right) { return Left.second > Right.second; });
+		for(auto ID : vStrongWeakSorted)
+		{
+			m_CharOrder.GiveWeak(ID.first);
 		}
 	}
 }
@@ -2204,6 +2227,8 @@ void CGameClient::CClientData::Reset()
 	m_aName[0] = 0;
 	m_aClan[0] = 0;
 	m_Country = -1;
+	m_aSkinName[0] = '\0';
+	m_SkinColor = 0;
 	m_Team = 0;
 	m_Angle = 0;
 	m_Emoticon = 0;
@@ -2332,7 +2357,7 @@ void CGameClient::SendDummyInfo(bool Start)
 	}
 }
 
-void CGameClient::SendKill(int ClientID)
+void CGameClient::SendKill(int ClientID) const
 {
 	CNetMsg_Cl_Kill Msg;
 	Client()->SendPackMsgActive(&Msg, MSGFLAG_VITAL);
@@ -2573,7 +2598,7 @@ void CGameClient::UpdatePrediction()
 	}
 
 	// advance the gameworld to the current gametick
-	if(pLocalChar && absolute(m_GameWorld.GameTick() - Client()->GameTick(g_Config.m_ClDummy)) < SERVER_TICK_SPEED)
+	if(pLocalChar && absolute(m_GameWorld.GameTick() - Client()->GameTick(g_Config.m_ClDummy)) < Client()->GameTickSpeed())
 	{
 		for(int Tick = m_GameWorld.GameTick() + 1; Tick <= Client()->GameTick(g_Config.m_ClDummy); Tick++)
 		{
@@ -2731,7 +2756,7 @@ void CGameClient::DetectStrongHook()
 		int ToPlayer = m_Snap.m_aCharacters[FromPlayer].m_Prev.m_HookedPlayer;
 		if(ToPlayer < 0 || ToPlayer >= MAX_CLIENTS || !m_Snap.m_aCharacters[ToPlayer].m_Active || ToPlayer != m_Snap.m_aCharacters[FromPlayer].m_Cur.m_HookedPlayer)
 			continue;
-		if(absolute(minimum(m_aLastUpdateTick[ToPlayer], m_aLastUpdateTick[FromPlayer]) - Client()->GameTick(g_Config.m_ClDummy)) < SERVER_TICK_SPEED / 4)
+		if(absolute(minimum(m_aLastUpdateTick[ToPlayer], m_aLastUpdateTick[FromPlayer]) - Client()->GameTick(g_Config.m_ClDummy)) < Client()->GameTickSpeed() / 4)
 			continue;
 		if(m_Snap.m_aCharacters[FromPlayer].m_Prev.m_Direction != m_Snap.m_aCharacters[FromPlayer].m_Cur.m_Direction || m_Snap.m_aCharacters[ToPlayer].m_Prev.m_Direction != m_Snap.m_aCharacters[ToPlayer].m_Cur.m_Direction)
 			continue;
@@ -2866,7 +2891,7 @@ void CGameClient::Echo(const char *pString)
 	m_Chat.Echo(pString);
 }
 
-bool CGameClient::IsOtherTeam(int ClientID)
+bool CGameClient::IsOtherTeam(int ClientID) const
 {
 	bool Local = m_Snap.m_LocalClientID == ClientID;
 
@@ -2889,7 +2914,7 @@ bool CGameClient::IsOtherTeam(int ClientID)
 	return m_Teams.Team(ClientID) != m_Teams.Team(m_Snap.m_LocalClientID);
 }
 
-int CGameClient::SwitchStateTeam()
+int CGameClient::SwitchStateTeam() const
 {
 	if(m_aSwitchStateTeam[g_Config.m_ClDummy] >= 0)
 		return m_aSwitchStateTeam[g_Config.m_ClDummy];
@@ -2900,7 +2925,7 @@ int CGameClient::SwitchStateTeam()
 	return m_Teams.Team(m_Snap.m_LocalClientID);
 }
 
-bool CGameClient::IsLocalCharSuper()
+bool CGameClient::IsLocalCharSuper() const
 {
 	if(m_Snap.m_LocalClientID < 0)
 		return false;
@@ -3443,7 +3468,7 @@ void CGameClient::RefindSkins()
 	}
 	m_Ghost.RefindSkins();
 	m_Chat.RefindSkins();
-	m_KillMessages.RefindSkins();
+	m_InfoMessages.RefindSkins();
 }
 
 static bool UnknownMapSettingCallback(const char *pCommand, void *pUser)
@@ -3539,12 +3564,12 @@ void CGameClient::DummyResetInput()
 	m_DummyInput = m_Controls.m_aInputData[!g_Config.m_ClDummy];
 }
 
-bool CGameClient::CanDisplayWarning()
+bool CGameClient::CanDisplayWarning() const
 {
 	return m_Menus.CanDisplayWarning();
 }
 
-bool CGameClient::IsDisplayingWarning()
+bool CGameClient::IsDisplayingWarning() const
 {
 	return m_Menus.GetCurPopup() == CMenus::POPUP_WARNING;
 }

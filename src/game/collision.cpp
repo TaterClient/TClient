@@ -225,7 +225,7 @@ static int GetMoveRestrictions(int Direction, int Tile, int Flags)
 	return Result & GetMoveRestrictionsMask(Direction);
 }
 
-int CCollision::GetMoveRestrictions(CALLBACK_SWITCHACTIVE pfnSwitchActive, void *pUser, vec2 Pos, float Distance, int OverrideCenterTileIndex)
+int CCollision::GetMoveRestrictions(CALLBACK_SWITCHACTIVE pfnSwitchActive, void *pUser, vec2 Pos, float Distance, int OverrideCenterTileIndex) const
 {
 	static const vec2 DIRECTIONS[NUM_MR_DIRS] =
 		{
@@ -336,11 +336,14 @@ int CCollision::IntersectLineTeleHook(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision,
 		int iy = round_to_int(Pos.y);
 
 		int Index = GetPureMapIndex(Pos);
-		if(g_Config.m_SvOldTeleportHook)
-			*pTeleNr = IsTeleport(Index);
-		else
-			*pTeleNr = IsTeleportHook(Index);
-		if(*pTeleNr)
+		if(pTeleNr)
+		{
+			if(g_Config.m_SvOldTeleportHook)
+				*pTeleNr = IsTeleport(Index);
+			else
+				*pTeleNr = IsTeleportHook(Index);
+		}
+		if(pTeleNr && *pTeleNr)
 		{
 			if(pOutCollision)
 				*pOutCollision = Pos;
@@ -391,11 +394,14 @@ int CCollision::IntersectLineTeleWeapon(vec2 Pos0, vec2 Pos1, vec2 *pOutCollisio
 		int iy = round_to_int(Pos.y);
 
 		int Index = GetPureMapIndex(Pos);
-		if(g_Config.m_SvOldTeleportWeapons)
-			*pTeleNr = IsTeleport(Index);
-		else
-			*pTeleNr = IsTeleportWeapon(Index);
-		if(*pTeleNr)
+		if(pTeleNr)
+		{
+			if(g_Config.m_SvOldTeleportWeapons)
+				*pTeleNr = IsTeleport(Index);
+			else
+				*pTeleNr = IsTeleportWeapon(Index);
+		}
+		if(pTeleNr && *pTeleNr)
 		{
 			if(pOutCollision)
 				*pOutCollision = Pos;

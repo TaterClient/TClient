@@ -6,6 +6,7 @@
 #include "mapitems.h"
 #include "teamscore.h"
 
+#include <base/system.h>
 #include <engine/shared/config.h>
 
 const char *CTuningParams::ms_apNames[] =
@@ -79,10 +80,7 @@ void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore
 	m_Id = -1;
 
 	// fail safe, if core's tuning didn't get updated at all, just fallback to world tuning.
-	if(m_pWorld)
-		m_Tuning = m_pWorld->m_aTuning[g_Config.m_ClDummy];
-
-	Reset();
+	m_Tuning = m_pWorld->m_aTuning[g_Config.m_ClDummy];
 }
 
 void CCharacterCore::SetCoreWorld(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams)
@@ -99,6 +97,7 @@ void CCharacterCore::Reset()
 	m_NewHook = false;
 	m_HookPos = vec2(0, 0);
 	m_HookDir = vec2(0, 0);
+	m_HookTeleBase = vec2(0, 0);
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
 	SetHookedPlayer(-1);
@@ -548,7 +547,7 @@ void CCharacterCore::Move()
 	m_Pos = NewPos;
 }
 
-void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore)
+void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore) const
 {
 	pObjCore->m_X = round_to_int(m_Pos.x);
 	pObjCore->m_Y = round_to_int(m_Pos.y);

@@ -2,7 +2,6 @@
 #define ENGINE_SERVER_DATABASES_CONNECTION_H
 
 #include "connection_pool.h"
-#include <base/system.h>
 
 #include <memory>
 
@@ -12,10 +11,7 @@ class IConsole;
 class IDbConnection
 {
 public:
-	IDbConnection(const char *pPrefix)
-	{
-		str_copy(m_aPrefix, pPrefix);
-	}
+	IDbConnection(const char *pPrefix);
 	virtual ~IDbConnection() {}
 	IDbConnection &operator=(const IDbConnection &) = delete;
 	virtual void Print(IConsole *pConsole, const char *pMode) = 0;
@@ -88,11 +84,11 @@ private:
 	char m_aPrefix[64];
 
 protected:
-	void FormatCreateRace(char *aBuf, unsigned int BufferSize, bool Backup);
-	void FormatCreateTeamrace(char *aBuf, unsigned int BufferSize, const char *pIdType, bool Backup);
-	void FormatCreateMaps(char *aBuf, unsigned int BufferSize);
-	void FormatCreateSaves(char *aBuf, unsigned int BufferSize, bool Backup);
-	void FormatCreatePoints(char *aBuf, unsigned int BufferSize);
+	void FormatCreateRace(char *aBuf, unsigned int BufferSize, bool Backup) const;
+	void FormatCreateTeamrace(char *aBuf, unsigned int BufferSize, const char *pIdType, bool Backup) const;
+	void FormatCreateMaps(char *aBuf, unsigned int BufferSize) const;
+	void FormatCreateSaves(char *aBuf, unsigned int BufferSize, bool Backup) const;
+	void FormatCreatePoints(char *aBuf, unsigned int BufferSize) const;
 };
 
 bool MysqlAvailable();

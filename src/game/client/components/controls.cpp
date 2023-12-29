@@ -20,6 +20,10 @@ CControls::CControls()
 	mem_zero(&m_aLastData, sizeof(m_aLastData));
 	m_LastDummy = 0;
 	m_OtherFire = 0;
+
+	mem_zero(m_aMousePos, sizeof(m_aMousePos));
+	mem_zero(m_aMousePosOnAction, sizeof(m_aMousePosOnAction));
+	mem_zero(m_aTargetPos, sizeof(m_aTargetPos));
 }
 
 void CControls::OnReset()
@@ -262,6 +266,13 @@ int CControls::SnapInput(int *pData)
 		if(!m_aInputDirectionLeft[g_Config.m_ClDummy] && m_aInputDirectionRight[g_Config.m_ClDummy])
 			m_aInputData[g_Config.m_ClDummy].m_Direction = 1;
 
+		// scale TargetX, TargetY by zoom.
+		if(!m_pClient->m_Snap.m_SpecInfo.m_Active)
+		{
+			m_aInputData[g_Config.m_ClDummy].m_TargetX *= m_pClient->m_Camera.m_Zoom;
+			m_aInputData[g_Config.m_ClDummy].m_TargetY *= m_pClient->m_Camera.m_Zoom;
+		}
+
 		// dummy copy moves
 		if(g_Config.m_ClDummyCopyMoves)
 		{
@@ -274,7 +285,9 @@ int CControls::SnapInput(int *pData)
 			pDummyInput->m_TargetY = m_aInputData[g_Config.m_ClDummy].m_TargetY;
 			pDummyInput->m_WantedWeapon = m_aInputData[g_Config.m_ClDummy].m_WantedWeapon;
 
-			pDummyInput->m_Fire += m_aInputData[g_Config.m_ClDummy].m_Fire - m_aLastData[g_Config.m_ClDummy].m_Fire;
+			if(!g_Config.m_ClDummyControl)
+				pDummyInput->m_Fire += m_aInputData[g_Config.m_ClDummy].m_Fire - m_aLastData[g_Config.m_ClDummy].m_Fire;
+
 			pDummyInput->m_NextWeapon += m_aInputData[g_Config.m_ClDummy].m_NextWeapon - m_aLastData[g_Config.m_ClDummy].m_NextWeapon;
 			pDummyInput->m_PrevWeapon += m_aInputData[g_Config.m_ClDummy].m_PrevWeapon - m_aLastData[g_Config.m_ClDummy].m_PrevWeapon;
 
@@ -285,7 +298,12 @@ int CControls::SnapInput(int *pData)
 		{
 			CNetObj_PlayerInput *pDummyInput = &m_pClient->m_DummyInput;
 			pDummyInput->m_Jump = g_Config.m_ClDummyJump;
-			pDummyInput->m_Fire = g_Config.m_ClDummyFire;
+
+			if(g_Config.m_ClDummyFire)
+				pDummyInput->m_Fire = g_Config.m_ClDummyFire;
+			else if((pDummyInput->m_Fire & 1) != 0)
+				pDummyInput->m_Fire++;
+
 			pDummyInput->m_Hook = g_Config.m_ClDummyHook;
 		}
 

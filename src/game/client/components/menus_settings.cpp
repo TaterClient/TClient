@@ -418,7 +418,7 @@ void CMenus::RandomSkin()
 	unsigned *pColorBody = !m_Dummy ? &g_Config.m_ClPlayerColorBody : &g_Config.m_ClDummyColorBody;
 	unsigned *pColorFeet = !m_Dummy ? &g_Config.m_ClPlayerColorFeet : &g_Config.m_ClDummyColorFeet;
 
-	mem_copy(pSkinName, pRandomSkinName, sizeof(g_Config.m_ClPlayerSkin));
+	str_copy(pSkinName, pRandomSkinName, sizeof(g_Config.m_ClPlayerSkin));
 	*pColorBody = Body.Pack(false);
 	*pColorFeet = Feet.Pack(false);
 
@@ -428,24 +428,26 @@ void CMenus::RandomSkin()
 void CMenus::Con_AddFavoriteSkin(IConsole::IResult *pResult, void *pUserData)
 {
 	auto *pSelf = (CMenus *)pUserData;
-	if(pResult->NumArguments() >= 1)
+	const char *pStr = pResult->GetString(0);
+	if(!CSkin::IsValidName(pStr))
 	{
-		pSelf->m_SkinFavorites.emplace(pResult->GetString(0));
-		pSelf->m_SkinFavoritesChanged = true;
+		char aError[IConsole::CMDLINE_LENGTH + 64];
+		str_format(aError, sizeof(aError), "Favorite skin name '%s' is not valid", pStr);
+		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "menus/settings", aError);
+		return;
 	}
+	pSelf->m_SkinFavorites.emplace(pStr);
+	pSelf->m_SkinFavoritesChanged = true;
 }
 
 void CMenus::Con_RemFavoriteSkin(IConsole::IResult *pResult, void *pUserData)
 {
 	auto *pSelf = (CMenus *)pUserData;
-	if(pResult->NumArguments() >= 1)
+	const auto it = pSelf->m_SkinFavorites.find(pResult->GetString(0));
+	if(it != pSelf->m_SkinFavorites.end())
 	{
-		const auto it = pSelf->m_SkinFavorites.find(pResult->GetString(0));
-		if(it != pSelf->m_SkinFavorites.end())
-		{
-			pSelf->m_SkinFavorites.erase(it);
-			pSelf->m_SkinFavoritesChanged = true;
-		}
+		pSelf->m_SkinFavorites.erase(it);
+		pSelf->m_SkinFavoritesChanged = true;
 	}
 }
 
@@ -460,9 +462,6 @@ void CMenus::OnConfigSave(IConfigManager *pConfigManager)
 	for(const auto &Entry : m_SkinFavorites)
 	{
 		char aBuffer[256];
-		char aNameEscaped[256];
-		char *pDst = aNameEscaped;
-		str_escape(&pDst, Entry.c_str(), aNameEscaped + std::size(aNameEscaped));
 		str_format(aBuffer, std::size(aBuffer), "add_favorite_skin \"%s\"", Entry.c_str());
 		pConfigManager->WriteLine(aBuffer);
 	}
@@ -588,7 +587,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	Label.VSplitLeft(260.0f, &Label, 0);
 	const CAnimState *pIdleState = CAnimState::GetIdle();
 	vec2 OffsetToMid;
-	RenderTools()->GetRenderTeeOffsetToRenderedTee(pIdleState, &OwnSkinInfo, OffsetToMid);
+	CRenderTools::GetRenderTeeOffsetToRenderedTee(pIdleState, &OwnSkinInfo, OffsetToMid);
 	vec2 TeeRenderPos(Label.x + 30.0f, Label.y + Label.h / 2.0f + OffsetToMid.y);
 	int Emote = m_Dummy ? g_Config.m_ClDummyDefaultEyes : g_Config.m_ClPlayerDefaultEyes;
 	RenderTools()->RenderTee(pIdleState, &OwnSkinInfo, Emote, vec2(1, 0), TeeRenderPos);
@@ -625,7 +624,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 			EyesLabel.HSplitTop(10.0f, 0, &EyesLabel);
 		}
 		float Highlight = (m_Dummy ? g_Config.m_ClDummyDefaultEyes == CurrentEyeEmote : g_Config.m_ClPlayerDefaultEyes == CurrentEyeEmote) ? 1.0f : 0.0f;
-		if(DoButton_Menu(&s_aEyeButtons[CurrentEyeEmote], "", 0, &EyesTee, 0, IGraphics::CORNER_ALL, 10.0f, 0.0f, vec4(1, 1, 1, 0.5f + Highlight * 0.25f), vec4(1, 1, 1, 0.25f + Highlight * 0.25f)))
+		if(DoButton_Menu(&s_aEyeButtons[CurrentEyeEmote], "", 0, &EyesTee, 0, IGraphics::CORNER_ALL, 10.0f, 0.0f, ColorRGBA(1.0f, 1.0f, 1.0f, 0.25f + Highlight * 0.25f)))
 		{
 			if(m_Dummy)
 			{
@@ -685,7 +684,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	if(*pUseCustomColor)
 	{
 		RandomColorsButton.VSplitLeft(120.0f, &RandomColorsButton, 0);
-		if(DoButton_Menu(&s_RandomizeColors, "Randomize Colors", 0, &RandomColorsButton, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0, 0, 0, 0.5f), vec4(0, 0, 0, 0.25f)))
+		if(DoButton_Menu(&s_RandomizeColors, "Randomize Colors", 0, &RandomColorsButton, nullptr, IGraphics::CORNER_ALL, 5.0f))
 		{
 			if(m_Dummy)
 			{
@@ -764,7 +763,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 
 		for(const auto &it : m_SkinFavorites)
 		{
-			const CSkin *pSkinToBeSelected = m_pClient->m_Skins.FindOrNullptr(it.c_str());
+			const CSkin *pSkinToBeSelected = m_pClient->m_Skins.FindOrNullptr(it.c_str(), true);
 
 			if(pSkinToBeSelected == nullptr || !SkinNotFiltered(pSkinToBeSelected))
 				continue;
@@ -825,7 +824,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 		Info.m_ColorableRenderSkin = pSkinToBeDraw->m_ColorableSkin;
 		Info.m_SkinMetrics = pSkinToBeDraw->m_Metrics;
 
-		RenderTools()->GetRenderTeeOffsetToRenderedTee(pIdleState, &Info, OffsetToMid);
+		CRenderTools::GetRenderTeeOffsetToRenderedTee(pIdleState, &Info, OffsetToMid);
 		TeeRenderPos = vec2(OriginalRect.x + 30, OriginalRect.y + OriginalRect.h / 2 + OffsetToMid.y);
 		RenderTools()->RenderTee(pIdleState, &Info, Emote, vec2(1.0f, 0.0f), TeeRenderPos);
 
@@ -882,7 +881,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	const int NewSelected = s_ListBox.DoEnd();
 	if(OldSelected != NewSelected)
 	{
-		mem_copy(pSkinName, s_vSkinList[NewSelected].m_pSkin->GetName(), sizeof(g_Config.m_ClPlayerSkin));
+		str_copy(pSkinName, s_vSkinList[NewSelected].m_pSkin->GetName(), sizeof(g_Config.m_ClPlayerSkin));
 		SetNeedSendInfo();
 	}
 
@@ -943,7 +942,7 @@ void CMenus::RenderSettingsTee(CUIRect MainView)
 	TextRender()->SetFontPreset(EFontPreset::ICON_FONT);
 	TextRender()->SetRenderFlags(ETextRenderFlags::TEXT_RENDER_FLAG_ONLY_ADVANCE_WIDTH | ETextRenderFlags::TEXT_RENDER_FLAG_NO_X_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_Y_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_PIXEL_ALIGMENT | ETextRenderFlags::TEXT_RENDER_FLAG_NO_OVERSIZE);
 	static CButtonContainer s_SkinRefreshButtonID;
-	if(DoButton_Menu(&s_SkinRefreshButtonID, FONT_ICON_ARROW_ROTATE_RIGHT, 0, &RefreshButton, nullptr, IGraphics::CORNER_ALL, 5, 0, vec4(1.0f, 1.0f, 1.0f, 0.75f), vec4(1, 1, 1, 0.5f)))
+	if(DoButton_Menu(&s_SkinRefreshButtonID, FONT_ICON_ARROW_ROTATE_RIGHT, 0, &RefreshButton) || Input()->KeyPress(KEY_F5) || (Input()->KeyPress(KEY_R) && Input()->ModifierIsPressed()))
 	{
 		// reset render flags for possible loading screen
 		TextRender()->SetRenderFlags(0);
@@ -2008,11 +2007,12 @@ bool CMenus::RenderLanguageSelection(CUIRect MainView)
 void CMenus::RenderSettings(CUIRect MainView)
 {
 	// render background
-	CUIRect Button, TabBar, RestartWarning;
+	CUIRect Button, TabBar, RestartBar, RestartWarning, RestartButton;
 	MainView.VSplitRight(120.0f, &MainView, &TabBar);
 	MainView.Draw(ms_ColorTabbarActive, IGraphics::CORNER_B, 10.0f);
 	MainView.Margin(10.0f, &MainView);
-	MainView.HSplitBottom(15.0f, &MainView, &RestartWarning);
+	MainView.HSplitBottom(15.0f, &MainView, &RestartBar);
+	RestartBar.VSplitRight(125.0f, &RestartWarning, &RestartButton);
 	TabBar.HSplitTop(50.0f, &Button, &TabBar);
 	Button.Draw(ms_ColorTabbarActive, IGraphics::CORNER_BR, 10.0f);
 
@@ -2043,7 +2043,7 @@ void CMenus::RenderSettings(CUIRect MainView)
 	}
 
 	MainView.Margin(10.0f, &MainView);
-	RestartWarning.VMargin(10.0f, &RestartWarning);
+	RestartBar.VMargin(10.0f, &RestartBar);
 
 	if(g_Config.m_UiSettingsPage == SETTINGS_LANGUAGE)
 	{
@@ -2106,14 +2106,32 @@ void CMenus::RenderSettings(CUIRect MainView)
 		RenderSettingsProfiles(MainView);
 	}
 
-	if(m_NeedRestartUpdate)
+	if(m_NeedRestartGraphics || m_NeedRestartSound || m_NeedRestartUpdate)
 	{
-		TextRender()->TextColor(1.0f, 0.4f, 0.4f, 1.0f);
-		UI()->DoLabel(&RestartWarning, Localize("DDNet Client needs to be restarted to complete update!"), 14.0f, TEXTALIGN_ML);
-		TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
+		if(m_NeedRestartUpdate)
+		{
+			TextRender()->TextColor(1.0f, 0.4f, 0.4f, 1.0f);
+			UI()->DoLabel(&RestartWarning, Localize("DDNet Client needs to be restarted to complete update!"), 14.0f, TEXTALIGN_ML);
+			TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
+		}
+		else
+		{
+			UI()->DoLabel(&RestartWarning, Localize("You must restart the game for all settings to take effect."), 14.0f, TEXTALIGN_ML);
+		}
+
+		static CButtonContainer s_RestartButton;
+		if(DoButton_Menu(&s_RestartButton, Localize("Restart"), 0, &RestartButton))
+		{
+			if(Client()->State() == IClient::STATE_ONLINE || m_pClient->Editor()->HasUnsavedData())
+			{
+				m_Popup = POPUP_RESTART;
+			}
+			else
+			{
+				Client()->Restart();
+			}
+		}
 	}
-	else if(m_NeedRestartGeneral || m_NeedRestartSkins || m_NeedRestartGraphics || m_NeedRestartSound || m_NeedRestartDDNet)
-		UI()->DoLabel(&RestartWarning, Localize("You must restart the game for all settings to take effect."), 14.0f, TEXTALIGN_ML);
 }
 
 ColorHSLA CMenus::RenderHSLScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alpha, bool ClampedLight)
@@ -2461,7 +2479,7 @@ enum
 	APPEARANCE_TAB_CHAT = 1,
 	APPEARANCE_TAB_NAME_PLATE = 2,
 	APPEARANCE_TAB_HOOK_COLLISION = 3,
-	APPEARANCE_TAB_KILL_MESSAGES = 4,
+	APPEARANCE_TAB_INFO_MESSAGES = 4,
 	APPEARANCE_TAB_LASER = 5,
 	NUMBER_OF_APPEARANCE_TABS = 6,
 };
@@ -2491,8 +2509,8 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		s_CurTab = APPEARANCE_TAB_NAME_PLATE;
 	if(DoButton_MenuTab(&s_aPageTabs[APPEARANCE_TAB_HOOK_COLLISION], Localize("Hook Collisions"), s_CurTab == APPEARANCE_TAB_HOOK_COLLISION, &Page4Tab, 0, NULL, NULL, NULL, NULL, 4))
 		s_CurTab = APPEARANCE_TAB_HOOK_COLLISION;
-	if(DoButton_MenuTab(&s_aPageTabs[APPEARANCE_TAB_KILL_MESSAGES], Localize("Kill Messages"), s_CurTab == APPEARANCE_TAB_KILL_MESSAGES, &Page5Tab, 0, NULL, NULL, NULL, NULL, 4))
-		s_CurTab = APPEARANCE_TAB_KILL_MESSAGES;
+	if(DoButton_MenuTab(&s_aPageTabs[APPEARANCE_TAB_INFO_MESSAGES], Localize("Info Messages"), s_CurTab == APPEARANCE_TAB_INFO_MESSAGES, &Page5Tab, 0, NULL, NULL, NULL, NULL, 4))
+		s_CurTab = APPEARANCE_TAB_INFO_MESSAGES;
 	if(DoButton_MenuTab(&s_aPageTabs[APPEARANCE_TAB_LASER], Localize("Laser"), s_CurTab == APPEARANCE_TAB_LASER, &Page6Tab, IGraphics::CORNER_R, NULL, NULL, NULL, NULL, 4))
 		s_CurTab = APPEARANCE_TAB_LASER;
 
@@ -2524,7 +2542,7 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowhud, Localize("Show ingame HUD"), &g_Config.m_ClShowhud, &Section, LineSize);
 
 		// Switches of the various normal HUD elements
-		LeftView.HSplitTop(SectionTotalMargin + 5 * LineSize, &Section, &LeftView);
+		LeftView.HSplitTop(SectionTotalMargin + 6 * LineSize, &Section, &LeftView);
 		Section.Margin(SectionMargin, &Section);
 
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowhudHealthAmmo, Localize("Show health, shields and ammo"), &g_Config.m_ClShowhudHealthAmmo, &Section, LineSize);
@@ -2532,6 +2550,7 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClNameplates, Localize("Show name plates"), &g_Config.m_ClNameplates, &Section, LineSize);
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowKillMessages, Localize("Show kill messages"), &g_Config.m_ClShowKillMessages, &Section, LineSize);
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowhudScore, Localize("Show score"), &g_Config.m_ClShowhudScore, &Section, LineSize);
+		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowLocalTimeAlways, Localize("Show local time always"), &g_Config.m_ClShowLocalTimeAlways, &Section, LineSize);
 
 		// Settings of the HUD element for votes
 		LeftView.HSplitTop(SectionTotalMargin + LineSize, &Section, &LeftView);
@@ -2588,14 +2607,18 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 	}
 	else if(s_CurTab == APPEARANCE_TAB_CHAT)
 	{
-		MainView.VSplitMid(&LeftView, &RightView);
+		CChat &Chat = GameClient()->m_Chat;
+		CUIRect TopView, PreviewView;
+		MainView.h += 20.f; // Increase height a little
+		MainView.HSplitTop(MainView.h - 260, &TopView, &PreviewView);
+		TopView.VSplitMid(&LeftView, &RightView);
 
 		// ***** Chat ***** //
 		LeftView.HSplitTop(HeadlineAndVMargin, &Label, &LeftView);
 		UI()->DoLabel(&Label, Localize("Chat"), HeadlineFontSize, TEXTALIGN_ML);
 
 		// General chat settings
-		LeftView.HSplitTop(SectionTotalMargin + 3 * LineSize, &Section, &LeftView);
+		LeftView.HSplitTop(SectionTotalMargin + 7 * LineSize, &Section, &LeftView);
 		Section.Margin(SectionMargin, &Section);
 
 		DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatTeamColors, Localize("Show names in chat in team colors"), &g_Config.m_ClChatTeamColors, &Section, LineSize);
@@ -2604,13 +2627,30 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		if(DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClChatOld, Localize("Use old chat style"), &g_Config.m_ClChatOld, &Section, LineSize))
 			GameClient()->m_Chat.RebuildChat();
 
+		Section.HSplitTop(2 * LineSize, &Button, &Section);
+		int PrevFontSize = g_Config.m_ClChatFontSize;
+		UI()->DoScrollbarOption(&g_Config.m_ClChatFontSize, &g_Config.m_ClChatFontSize, &Button, Localize("Chat font size"), 10, 100, &CUI::ms_LinearScrollbarScale, CUI::SCROLLBAR_OPTION_MULTILINE);
+		if(PrevFontSize != g_Config.m_ClChatFontSize)
+		{
+			Chat.EnsureCoherentWidth();
+			Chat.RebuildChat();
+		}
+
+		Section.HSplitTop(2 * LineSize, &Button, &Section);
+		int PrevWidth = g_Config.m_ClChatWidth;
+		UI()->DoScrollbarOption(&g_Config.m_ClChatWidth, &g_Config.m_ClChatWidth, &Button, Localize("Chat width"), 120, 400, &CUI::ms_LinearScrollbarScale, CUI::SCROLLBAR_OPTION_MULTILINE);
+		if(PrevWidth != g_Config.m_ClChatWidth)
+		{
+			Chat.EnsureCoherentFontSize();
+			Chat.RebuildChat();
+		}
+
 		// ***** Messages ***** //
-		LeftView.HSplitTop(MarginToNextSection, 0x0, &LeftView);
-		LeftView.HSplitTop(HeadlineAndVMargin, &Label, &LeftView);
+		RightView.HSplitTop(HeadlineAndVMargin, &Label, &RightView);
 		UI()->DoLabel(&Label, Localize("Messages"), HeadlineFontSize, TEXTALIGN_ML);
 
 		// Message Colors and extra settings
-		LeftView.HSplitTop(SectionTotalMargin + 6 * ColorPickerLineSize, &Section, &LeftView);
+		RightView.HSplitTop(SectionTotalMargin + 6 * ColorPickerLineSize, &Section, &RightView);
 		Section.Margin(SectionMargin, &Section);
 
 		int i = 0;
@@ -2626,11 +2666,11 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		DoLine_ColorPicker(&s_aResetIDs[i++], ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, aBuf, &g_Config.m_ClMessageClientColor, ColorRGBA(0.5f, 0.78f, 1.0f));
 
 		// ***** Chat Preview ***** //
-		RightView.HSplitTop(HeadlineAndVMargin, &Label, &RightView);
+		PreviewView.HSplitTop(HeadlineAndVMargin, &Label, &PreviewView);
 		UI()->DoLabel(&Label, Localize("Preview"), HeadlineFontSize, TEXTALIGN_ML);
 
 		// Use the rest of the view for preview
-		Section = RightView;
+		Section = PreviewView;
 		Section.Margin(SectionMargin, &Section);
 
 		Section.Draw(ColorRGBA(1, 1, 1, 0.1f), IGraphics::CORNER_ALL, 8.0f);
@@ -2645,29 +2685,207 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		ColorRGBA ClientColor = color_cast<ColorRGBA, ColorHSLA>(ColorHSLA(g_Config.m_ClMessageClientColor));
 		ColorRGBA DefaultNameColor(0.8f, 0.8f, 0.8f, 1.0f);
 
-		constexpr float RealFontSize = CChat::FONT_SIZE * 2;
-		const float RealMsgPaddingX = (!g_Config.m_ClChatOld ? CChat::MESSAGE_PADDING_X : 0) * 2;
-		const float RealMsgPaddingY = (!g_Config.m_ClChatOld ? CChat::MESSAGE_PADDING_Y : 0) * 2;
-		const float RealMsgPaddingTee = (!g_Config.m_ClChatOld ? CChat::MESSAGE_TEE_SIZE + CChat::MESSAGE_TEE_PADDING_RIGHT : 0) * 2;
+		const float RealFontSize = Chat.FontSize() * 2;
+		const float RealMsgPaddingX = (!g_Config.m_ClChatOld ? Chat.MessagePaddingX() : 0) * 2;
+		const float RealMsgPaddingY = (!g_Config.m_ClChatOld ? Chat.MessagePaddingY() : 0) * 2;
+		const float RealMsgPaddingTee = (!g_Config.m_ClChatOld ? Chat.MessageTeeSize() + CChat::MESSAGE_TEE_PADDING_RIGHT : 0) * 2;
 		const float RealOffsetY = RealFontSize + RealMsgPaddingY;
 
 		const float X = 5.0f + RealMsgPaddingX / 2.0f + Section.x;
 		float Y = Section.y;
+		float LineWidth = g_Config.m_ClChatWidth * 2 - (RealMsgPaddingX * 1.5f) - RealMsgPaddingTee;
 
 		CTextCursor Cursor;
 		TextRender()->SetCursor(&Cursor, X, Y, RealFontSize, TEXTFLAG_RENDER);
+		Cursor.m_LineWidth = LineWidth;
 
 		str_copy(aBuf, Client()->PlayerName());
 
 		const CAnimState *pIdleState = CAnimState::GetIdle();
-		constexpr int PreviewTeeCount = 4;
-		constexpr float RealTeeSize = CChat::MESSAGE_TEE_SIZE * 2;
-		constexpr float RealTeeSizeHalved = CChat::MESSAGE_TEE_SIZE;
+		const float RealTeeSize = Chat.MessageTeeSize() * 2;
+		const float RealTeeSizeHalved = Chat.MessageTeeSize();
 		constexpr float TWSkinUnreliableOffset = -0.25f;
-		constexpr float OffsetTeeY = RealTeeSizeHalved;
+		const float OffsetTeeY = RealTeeSizeHalved;
 		const float FullHeightMinusTee = RealOffsetY - RealTeeSize;
 
-		CTeeRenderInfo aRenderInfo[PreviewTeeCount];
+		struct SPreviewLine
+		{
+			int m_ClientID;
+			bool m_Team;
+			char m_aName[64];
+			char m_aText[256];
+			bool m_Friend;
+			bool m_Player;
+			bool m_Client;
+			bool m_Highlighted;
+			int m_TimesRepeated;
+
+			CTeeRenderInfo m_RenderInfo;
+		};
+
+		static std::vector<SPreviewLine> s_vLines;
+
+		const auto *pDefaultSkin = GameClient()->m_Skins.Find("default");
+		enum ELineFlag
+		{
+			FLAG_TEAM = 1 << 0,
+			FLAG_FRIEND = 1 << 1,
+			FLAG_HIGHLIGHT = 1 << 2,
+			FLAG_CLIENT = 1 << 3
+		};
+		enum
+		{
+			PREVIEW_SYS,
+			PREVIEW_HIGHLIGHT,
+			PREVIEW_TEAM,
+			PREVIEW_FRIEND,
+			PREVIEW_SPAMMER,
+			PREVIEW_CLIENT
+		};
+		auto &&SetPreviewLine = [](int Index, int ClientID, const char *pName, const char *pText, int Flag, int Repeats) {
+			SPreviewLine *pLine;
+			if((int)s_vLines.size() <= Index)
+			{
+				s_vLines.emplace_back();
+				pLine = &s_vLines.back();
+			}
+			else
+			{
+				pLine = &s_vLines[Index];
+			}
+			pLine->m_ClientID = ClientID;
+			pLine->m_Team = Flag & FLAG_TEAM;
+			pLine->m_Friend = Flag & FLAG_FRIEND;
+			pLine->m_Player = ClientID >= 0;
+			pLine->m_Highlighted = Flag & FLAG_HIGHLIGHT;
+			pLine->m_Client = Flag & FLAG_CLIENT;
+			pLine->m_TimesRepeated = Repeats;
+			str_copy(pLine->m_aName, pName);
+			str_copy(pLine->m_aText, pText);
+		};
+		auto &&SetLineSkin = [RealTeeSize, &pDefaultSkin](int Index, const CSkin *pSkin) {
+			if(Index >= (int)s_vLines.size())
+				return;
+			s_vLines[Index].m_RenderInfo.m_Size = RealTeeSize;
+			s_vLines[Index].m_RenderInfo.m_CustomColoredSkin = false;
+			if(pSkin != nullptr)
+				s_vLines[Index].m_RenderInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
+			else if(pDefaultSkin != nullptr)
+				s_vLines[Index].m_RenderInfo.m_OriginalRenderSkin = pDefaultSkin->m_OriginalSkin;
+		};
+
+		auto &&RenderPreview = [&](int LineIndex, int x, int y, bool Render = true) {
+			if(LineIndex >= (int)s_vLines.size())
+				return vec2(0, 0);
+			CTextCursor LocalCursor;
+			TextRender()->SetCursor(&LocalCursor, x, y, RealFontSize, Render ? TEXTFLAG_RENDER : 0);
+			LocalCursor.m_LineWidth = LineWidth;
+			const auto &Line = s_vLines[LineIndex];
+
+			char aName[64 + 12] = "";
+
+			if(g_Config.m_ClShowIDs && Line.m_ClientID >= 0 && Line.m_aName[0] != '\0')
+			{
+				if(Line.m_ClientID < 10)
+					str_format(aName, sizeof(aName), " %d: ", Line.m_ClientID);
+				else
+					str_format(aName, sizeof(aName), "%d: ", Line.m_ClientID);
+			}
+
+			str_append(aName, Line.m_aName);
+
+			char aCount[12];
+			if(Line.m_ClientID < 0)
+				str_format(aCount, sizeof(aCount), "[%d] ", Line.m_TimesRepeated + 1);
+			else
+				str_format(aCount, sizeof(aCount), " [%d]", Line.m_TimesRepeated + 1);
+
+			if(Line.m_Player)
+			{
+				LocalCursor.m_X += RealMsgPaddingTee;
+
+				if(Line.m_Friend && g_Config.m_ClMessageFriend)
+				{
+					if(Render)
+						TextRender()->TextColor(FriendColor);
+					TextRender()->TextEx(&LocalCursor, "♥ ", -1);
+				}
+			}
+
+			ColorRGBA NameColor;
+			if(Line.m_Team)
+				NameColor = CalculateNameColor(color_cast<ColorHSLA>(TeamColor));
+			else if(Line.m_Player)
+				NameColor = DefaultNameColor;
+			else if(Line.m_Client)
+				NameColor = ClientColor;
+			else
+				NameColor = SystemColor;
+
+			if(Render)
+				TextRender()->TextColor(NameColor);
+
+			TextRender()->TextEx(&LocalCursor, aName, -1);
+
+			if(Line.m_TimesRepeated > 0)
+			{
+				if(Render)
+					TextRender()->TextColor(1.0f, 1.0f, 1.0f, 0.3f);
+				TextRender()->TextEx(&LocalCursor, aCount, -1);
+			}
+
+			if(Line.m_ClientID >= 0 && Line.m_aName[0] != '\0')
+			{
+				if(Render)
+					TextRender()->TextColor(NameColor);
+				TextRender()->TextEx(&LocalCursor, ": ", -1);
+			}
+
+			CTextCursor AppendCursor = LocalCursor;
+			AppendCursor.m_LongestLineWidth = 0.0f;
+			if(!g_Config.m_ClChatOld)
+			{
+				AppendCursor.m_StartX = LocalCursor.m_X;
+				AppendCursor.m_LineWidth -= LocalCursor.m_LongestLineWidth;
+			}
+
+			if(Render)
+			{
+				if(Line.m_Highlighted)
+					TextRender()->TextColor(HighlightedColor);
+				else if(Line.m_Team)
+					TextRender()->TextColor(TeamColor);
+				else if(Line.m_Player)
+					TextRender()->TextColor(NormalColor);
+			}
+
+			TextRender()->TextEx(&AppendCursor, Line.m_aText, -1);
+			if(Render)
+				TextRender()->TextColor(TextRender()->DefaultTextColor());
+
+			return vec2{LocalCursor.m_LongestLineWidth + AppendCursor.m_LongestLineWidth, AppendCursor.Height() + RealMsgPaddingY};
+		};
+
+		// Set preview lines
+		{
+			char aLineBuilder[128];
+
+			str_format(aLineBuilder, sizeof(aLineBuilder), "'%s' entered and joined the game", aBuf);
+			SetPreviewLine(PREVIEW_SYS, -1, "*** ", aLineBuilder, 0, 0);
+
+			str_format(aLineBuilder, sizeof(aLineBuilder), "Hey, how are you %s?", aBuf);
+			SetPreviewLine(PREVIEW_HIGHLIGHT, 7, "Random Tee", aLineBuilder, FLAG_HIGHLIGHT, 0);
+
+			SetPreviewLine(PREVIEW_TEAM, 11, "Your Teammate", "Let's speedrun this!", FLAG_TEAM, 0);
+			SetPreviewLine(PREVIEW_FRIEND, 8, "Friend", "Hello there", FLAG_FRIEND, 0);
+			SetPreviewLine(PREVIEW_SPAMMER, 9, "Spammer", "Hey fools, I'm spamming here!", 0, 5);
+			SetPreviewLine(PREVIEW_CLIENT, -1, "— ", "Echo command executed", FLAG_CLIENT, 0);
+		}
+
+		SetLineSkin(1, GameClient()->m_Skins.FindOrNullptr("pinky"));
+		SetLineSkin(2, pDefaultSkin);
+		SetLineSkin(3, GameClient()->m_Skins.FindOrNullptr("cammostripes"));
+		SetLineSkin(4, GameClient()->m_Skins.FindOrNullptr("beast"));
 
 		// Backgrounds first
 		if(!g_Config.m_ClChatOld)
@@ -2676,142 +2894,71 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 			Graphics()->QuadsBegin();
 			Graphics()->SetColor(0, 0, 0, 0.12f);
 
-			char aLineBuilder[128];
-			float Width;
 			float TempY = Y;
-			constexpr float RealBackgroundRounding = CChat::MESSAGE_ROUNDING * 2.0f;
+			const float RealBackgroundRounding = Chat.MessageRounding() * 2.0f;
+
+			auto &&RenderMessageBackground = [&](int LineIndex) {
+				auto Size = RenderPreview(LineIndex, 0, 0, false);
+				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Size.x + RealMsgPaddingX * 1.5f, Size.y, RealBackgroundRounding, IGraphics::CORNER_ALL);
+				return Size.y;
+			};
 
 			if(g_Config.m_ClShowChatSystem)
 			{
-				str_format(aLineBuilder, sizeof(aLineBuilder), "*** '%s' entered and joined the game", aBuf);
-				Width = TextRender()->TextWidth(RealFontSize, aLineBuilder, -1, -1);
-				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
-				TempY += RealOffsetY;
+				TempY += RenderMessageBackground(PREVIEW_SYS);
 			}
 
 			if(!g_Config.m_ClShowChatFriends)
 			{
-				str_format(aLineBuilder, sizeof(aLineBuilder), "%sRandom Tee: Hey, how are you %s?", g_Config.m_ClShowIDs ? " 7: " : "", aBuf);
-				Width = TextRender()->TextWidth(RealFontSize, aLineBuilder, -1, -1);
-				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
-				TempY += RealOffsetY;
-
-				str_format(aLineBuilder, sizeof(aLineBuilder), "%sYour Teammate: Let's speedrun this!", g_Config.m_ClShowIDs ? "11: " : "");
-				Width = TextRender()->TextWidth(RealFontSize, aLineBuilder, -1, -1);
-				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
-				TempY += RealOffsetY;
+				TempY += RenderMessageBackground(PREVIEW_HIGHLIGHT);
+				TempY += RenderMessageBackground(PREVIEW_TEAM);
 			}
 
-			str_format(aLineBuilder, sizeof(aLineBuilder), "%s%sFriend: Hello there", g_Config.m_ClMessageFriend ? "♥ " : "", g_Config.m_ClShowIDs ? " 8: " : "");
-			Width = TextRender()->TextWidth(RealFontSize, aLineBuilder, -1, -1);
-			Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
-			TempY += RealOffsetY;
+			TempY += RenderMessageBackground(PREVIEW_FRIEND);
 
 			if(!g_Config.m_ClShowChatFriends)
 			{
-				str_format(aLineBuilder, sizeof(aLineBuilder), "%sSpammer [6]: Hey fools, I'm spamming here!", g_Config.m_ClShowIDs ? " 9: " : "");
-				Width = TextRender()->TextWidth(RealFontSize, aLineBuilder, -1, -1);
-				Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX + RealMsgPaddingTee, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
-				TempY += RealOffsetY;
+				TempY += RenderMessageBackground(PREVIEW_SPAMMER);
 			}
 
-			Width = TextRender()->TextWidth(RealFontSize, "— Echo command executed", -1, -1);
-			Graphics()->DrawRectExt(X - RealMsgPaddingX / 2.0f, TempY - RealMsgPaddingY / 2.0f, Width + RealMsgPaddingX, RealFontSize + RealMsgPaddingY, RealBackgroundRounding, IGraphics::CORNER_ALL);
+			TempY += RenderMessageBackground(PREVIEW_CLIENT);
 
 			Graphics()->QuadsEnd();
-
-			// Load skins
-
-			const auto *pDefaultSkin = GameClient()->m_Skins.Find("default");
-
-			for(auto &Info : aRenderInfo)
-			{
-				Info.m_Size = RealTeeSize;
-				Info.m_CustomColoredSkin = false;
-			}
-
-			const CSkin *pSkin = nullptr;
-			int pos = 0;
-
-			aRenderInfo[pos++].m_OriginalRenderSkin = pDefaultSkin->m_OriginalSkin;
-			aRenderInfo[pos++].m_OriginalRenderSkin = (pSkin = GameClient()->m_Skins.FindOrNullptr("pinky")) != nullptr ? pSkin->m_OriginalSkin : aRenderInfo[0].m_OriginalRenderSkin;
-			aRenderInfo[pos++].m_OriginalRenderSkin = (pSkin = GameClient()->m_Skins.FindOrNullptr("cammostripes")) != nullptr ? pSkin->m_OriginalSkin : aRenderInfo[0].m_OriginalRenderSkin;
-			aRenderInfo[pos++].m_OriginalRenderSkin = (pSkin = GameClient()->m_Skins.FindOrNullptr("beast")) != nullptr ? pSkin->m_OriginalSkin : aRenderInfo[0].m_OriginalRenderSkin;
 		}
 
 		// System
 		if(g_Config.m_ClShowChatSystem)
 		{
-			TextRender()->TextColor(SystemColor);
-			TextRender()->TextEx(&Cursor, "*** '", -1);
-			TextRender()->TextEx(&Cursor, aBuf, -1);
-			TextRender()->TextEx(&Cursor, "' entered and joined the game", -1);
-			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+			Y += RenderPreview(PREVIEW_SYS, X, Y).y;
 		}
 
 		if(!g_Config.m_ClShowChatFriends)
 		{
 			// Highlighted
-			TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
-			TextRender()->TextColor(DefaultNameColor);
-			if(g_Config.m_ClShowIDs)
-				TextRender()->TextEx(&Cursor, " 7: ", -1);
-			TextRender()->TextEx(&Cursor, "Random Tee: ", -1);
-			TextRender()->TextColor(HighlightedColor);
-			TextRender()->TextEx(&Cursor, "Hey, how are you ", -1);
-			TextRender()->TextEx(&Cursor, aBuf, -1);
-			TextRender()->TextEx(&Cursor, "?", -1);
 			if(!g_Config.m_ClChatOld)
-				RenderTools()->RenderTee(pIdleState, &aRenderInfo[1], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
-			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+				RenderTools()->RenderTee(pIdleState, &s_vLines[PREVIEW_HIGHLIGHT].m_RenderInfo, EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+			Y += RenderPreview(PREVIEW_HIGHLIGHT, X, Y).y;
 
 			// Team
-			TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
-			TextRender()->TextColor(TeamColor);
-			if(g_Config.m_ClShowIDs)
-				TextRender()->TextEx(&Cursor, "11: ", -1);
-			TextRender()->TextEx(&Cursor, "Your Teammate: Let's speedrun this!", -1);
 			if(!g_Config.m_ClChatOld)
-				RenderTools()->RenderTee(pIdleState, &aRenderInfo[0], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
-			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+				RenderTools()->RenderTee(pIdleState, &s_vLines[PREVIEW_TEAM].m_RenderInfo, EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+			Y += RenderPreview(PREVIEW_TEAM, X, Y).y;
 		}
 
 		// Friend
-		TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
-		if(g_Config.m_ClMessageFriend)
-		{
-			TextRender()->TextColor(FriendColor);
-			TextRender()->TextEx(&Cursor, "♥ ", -1);
-		}
-		TextRender()->TextColor(DefaultNameColor);
-		if(g_Config.m_ClShowIDs)
-			TextRender()->TextEx(&Cursor, " 8: ", -1);
-		TextRender()->TextEx(&Cursor, "Friend: ", -1);
-		TextRender()->TextColor(NormalColor);
-		TextRender()->TextEx(&Cursor, "Hello there", -1);
 		if(!g_Config.m_ClChatOld)
-			RenderTools()->RenderTee(pIdleState, &aRenderInfo[2], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
-		TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+			RenderTools()->RenderTee(pIdleState, &s_vLines[PREVIEW_FRIEND].m_RenderInfo, EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+		Y += RenderPreview(PREVIEW_FRIEND, X, Y).y;
 
 		// Normal
 		if(!g_Config.m_ClShowChatFriends)
 		{
-			TextRender()->MoveCursor(&Cursor, RealMsgPaddingTee, 0);
-			TextRender()->TextColor(DefaultNameColor);
-			if(g_Config.m_ClShowIDs)
-				TextRender()->TextEx(&Cursor, " 9: ", -1);
-			TextRender()->TextEx(&Cursor, "Spammer ", -1);
-			TextRender()->TextColor(1.0f, 1.0f, 1.0f, 0.3f);
-			TextRender()->TextEx(&Cursor, "[6]", -1);
-			TextRender()->TextColor(NormalColor);
-			TextRender()->TextEx(&Cursor, ": Hey fools, I'm spamming here!", -1);
 			if(!g_Config.m_ClChatOld)
-				RenderTools()->RenderTee(pIdleState, &aRenderInfo[3], EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
-			TextRender()->SetCursorPosition(&Cursor, X, Y += RealOffsetY);
+				RenderTools()->RenderTee(pIdleState, &s_vLines[PREVIEW_SPAMMER].m_RenderInfo, EMOTE_NORMAL, vec2(1, 0.1f), vec2(X + RealTeeSizeHalved, Y + OffsetTeeY + FullHeightMinusTee / 2.0f + TWSkinUnreliableOffset));
+			Y += RenderPreview(PREVIEW_SPAMMER, X, Y).y;
 		}
 		// Client
-		TextRender()->TextColor(ClientColor);
-		TextRender()->TextEx(&Cursor, "— Echo command executed", -1);
+		RenderPreview(PREVIEW_CLIENT, X, Y);
 		TextRender()->SetCursorPosition(&Cursor, X, Y);
 
 		TextRender()->TextColor(TextRender()->DefaultTextColor());
@@ -2880,6 +3027,13 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 				break;
 			}
 		}
+
+		Section.HSplitTop(LineSize, &Button, &Section);
+		ColorRGBA GreenDefault(0.78f, 1.0f, 0.8f, 1.0f);
+		static CButtonContainer s_AuthedColor;
+		static CButtonContainer s_SameClanColor;
+		DoLine_ColorPicker(&s_AuthedColor, 25.0f, 13.0f, 5.0f, &Button, Localize("Authed name color in scoreboard"), &g_Config.m_ClAuthedPlayerColor, GreenDefault, false);
+		DoLine_ColorPicker(&s_SameClanColor, 25.0f, 13.0f, 5.0f, &Button, Localize("Same clan color in scoreboard"), &g_Config.m_ClSameClanColor, GreenDefault, false);
 	}
 	else if(s_CurTab == APPEARANCE_TAB_HOOK_COLLISION)
 	{
@@ -2916,20 +3070,31 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		DoLine_ColorPicker(&s_HookCollHookableCollResetID, ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Something hookable"), &g_Config.m_ClHookCollColorHookableColl, ColorRGBA(130.0f / 255.0f, 232.0f / 255.0f, 160.0f / 255.0f, 1.0f), false);
 		DoLine_ColorPicker(&s_HookCollTeeCollResetID, ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("A Tee"), &g_Config.m_ClHookCollColorTeeColl, ColorRGBA(1.0f, 1.0f, 0.0f, 1.0f), false);
 	}
-	else if(s_CurTab == APPEARANCE_TAB_KILL_MESSAGES)
+	else if(s_CurTab == APPEARANCE_TAB_INFO_MESSAGES)
 	{
 		MainView.VSplitMid(&LeftView, &RightView);
 
-		// ***** Kill Messages ***** //
+		// ***** Info Messages ***** //
 		LeftView.HSplitTop(HeadlineAndVMargin, &Label, &LeftView);
-		UI()->DoLabel(&Label, Localize("Kill Messages"), HeadlineFontSize, TEXTALIGN_ML);
+		UI()->DoLabel(&Label, Localize("Info Messages"), HeadlineFontSize, TEXTALIGN_ML);
 
-		// General kill messages settings
-		LeftView.HSplitTop(SectionTotalMargin + 2 * ColorPickerLineSize, &Section, &LeftView);
+		// General info messages settings
+		LeftView.HSplitTop(SectionTotalMargin + 2 * LineSize + 2 * ColorPickerLineSize, &Section, &LeftView);
 		Section.Margin(SectionMargin, &Section);
 
-		static CButtonContainer s_KillMessageNormalColorID, s_KillMessageHighlightColorID;
+		Section.HSplitTop(LineSize, &Button, &Section);
+		if(DoButton_CheckBox(&g_Config.m_ClShowKillMessages, Localize("Show kill messages"), g_Config.m_ClShowKillMessages, &Button))
+		{
+			g_Config.m_ClShowKillMessages ^= 1;
+		}
 
+		Section.HSplitTop(LineSize, &Button, &Section);
+		if(DoButton_CheckBox(&g_Config.m_ClShowFinishMessages, Localize("Show finish messages"), g_Config.m_ClShowFinishMessages, &Button))
+		{
+			g_Config.m_ClShowFinishMessages ^= 1;
+		}
+
+		static CButtonContainer s_KillMessageNormalColorID, s_KillMessageHighlightColorID;
 		DoLine_ColorPicker(&s_KillMessageNormalColorID, ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Normal Color"), &g_Config.m_ClKillMessageNormalColor, ColorRGBA(1.0f, 1.0f, 1.0f), false);
 		DoLine_ColorPicker(&s_KillMessageHighlightColorID, ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &Section, Localize("Highlight Color"), &g_Config.m_ClKillMessageHighlightColor, ColorRGBA(1.0f, 1.0f, 1.0f), false);
 	}
@@ -3259,13 +3424,15 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			ExtMenu.VSplitRight(130.0f, 0, &ExtMenu);
 			ExtMenu.HSplitBottom(25.0f, &ExtMenu, &Button);
 			static CButtonContainer s_DiscordButton;
-			if(DoButton_Menu(&s_DiscordButton, Localize("Discord"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+
+			if(DoButton_Menu(&s_DiscordButton, Localize("Discord"), 0, &Button, 0, IGraphics::CORNER_ALL))
 			{
 				if(!open_link("https://discord.gg/fBvhH93Bt6"))
 				{
 					dbg_msg("menus", "couldn't open link");
 				}
-			}
+			} 
+
 		}
 	}
 	// ***** PAGE 2 ***** //
@@ -3850,7 +4017,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	LabelRight.HSplitTop(30.0f, &Button, &LabelRight);
 	static CButtonContainer s_LoadButton;
 
-	if(DoButton_Menu(&s_LoadButton, Localize("Load"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+	if(DoButton_Menu(&s_LoadButton, Localize("Load"), 0, &Button, 0, IGraphics::CORNER_ALL))
 	{
 		if(SelectedProfile != -1 && SelectedProfile < (int)GameClient()->m_SkinProfiles.m_Profiles.size())
 		{
@@ -3898,7 +4065,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 	LabelRight.HSplitTop(30.0f, &Button, &LabelRight);
 	static CButtonContainer s_SaveButton;
-	if(DoButton_Menu(&s_SaveButton, Localize("Save"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+	if(DoButton_Menu(&s_SaveButton, Localize("Save"), 0, &Button, 0, IGraphics::CORNER_ALL))
 	{
 		GameClient()->m_SkinProfiles.AddProfile(
 			doColors ? *pColorBody : -1,
@@ -3920,7 +4087,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	{
 		LabelRight.HSplitTop(28.0f, &Button, &LabelRight);
 		static CButtonContainer s_DeleteButton;
-		if(DoButton_Menu(&s_DeleteButton, Localize("Delete"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+		if(DoButton_Menu(&s_DeleteButton, Localize("Delete"), 0, &Button, 0, IGraphics::CORNER_ALL))
 		{
 			if(SelectedProfile != -1 && SelectedProfile < (int)GameClient()->m_SkinProfiles.m_Profiles.size())
 			{
@@ -3932,7 +4099,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 		LabelRight.HSplitTop(28.0f, &Button, &LabelRight);
 		static CButtonContainer s_OverrideButton;
-		if(DoButton_Menu(&s_OverrideButton, Localize("Override"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f), vec4(0.0f, 0.0f, 0.0f, 0.25f)))
+		if(DoButton_Menu(&s_OverrideButton, Localize("Override"), 0, &Button, 0, IGraphics::CORNER_ALL))
 		{
 			if(SelectedProfile != -1 && SelectedProfile < (int)GameClient()->m_SkinProfiles.m_Profiles.size())
 			{

@@ -57,17 +57,10 @@ CServerBrowser::CServerBrowser() :
 	m_ppServerlist = nullptr;
 	m_pSortedServerlist = nullptr;
 
-	m_pFirstReqServer = nullptr; // request list
-	m_pLastReqServer = nullptr;
-	m_NumRequests = 0;
-
 	m_NeedResort = false;
 	m_Sorthash = 0;
 
-	m_NumSortedServers = 0;
 	m_NumSortedServersCapacity = 0;
-	m_NumSortedPlayers = 0;
-	m_NumServers = 0;
 	m_NumServerCapacity = 0;
 
 	m_ServerlistType = 0;
@@ -76,6 +69,8 @@ CServerBrowser::CServerBrowser() :
 
 	m_pDDNetInfo = nullptr;
 	m_DDNetInfoUpdateTime = 0;
+
+	CleanUp();
 }
 
 CServerBrowser::~CServerBrowser()
@@ -127,7 +122,7 @@ void CServerBrowser::Con_LeakIpAddress(IConsole::IResult *pResult, void *pUserDa
 	{
 	public:
 		CServerBrowser *m_pThis;
-		bool operator()(int i, int j)
+		bool operator()(int i, int j) const
 		{
 			NETADDR Addr1 = m_pThis->m_ppServerlist[i]->m_Info.m_aAddresses[0];
 			NETADDR Addr2 = m_pThis->m_ppServerlist[j]->m_Info.m_aAddresses[0];
@@ -546,7 +541,7 @@ void ServerBrowserFormatAddresses(char *pBuffer, int BufferSize, NETADDR *pAddrs
 	}
 }
 
-void CServerBrowser::SetInfo(CServerEntry *pEntry, const CServerInfo &Info)
+void CServerBrowser::SetInfo(CServerEntry *pEntry, const CServerInfo &Info) const
 {
 	const CServerInfo TmpInfo = pEntry->m_Info;
 	pEntry->m_Info = Info;
@@ -580,7 +575,7 @@ void CServerBrowser::SetInfo(CServerEntry *pEntry, const CServerInfo &Info)
 		{
 		}
 
-		bool operator()(const CServerInfo::CClient &p0, const CServerInfo::CClient &p1)
+		bool operator()(const CServerInfo::CClient &p0, const CServerInfo::CClient &p1) const
 		{
 			// Sort players before non players
 			if(p0.m_Player && !p1.m_Player)
@@ -657,7 +652,7 @@ void CServerBrowser::SetLatency(NETADDR Addr, int Latency)
 CServerBrowser::CServerEntry *CServerBrowser::Add(const NETADDR *pAddrs, int NumAddrs)
 {
 	// create new pEntry
-	CServerEntry *pEntry = (CServerEntry *)m_ServerlistHeap.Allocate(sizeof(CServerEntry));
+	CServerEntry *pEntry = m_ServerlistHeap.Allocate<CServerEntry>();
 	mem_zero(pEntry, sizeof(CServerEntry));
 
 	// set the info
