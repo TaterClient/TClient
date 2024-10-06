@@ -17,6 +17,7 @@
 #include <game/client/components/sounds.h>
 #include <game/client/gameclient.h>
 #include <game/localization.h>
+#include <regex.h>
 
 #include "chat.h"
 
@@ -531,6 +532,24 @@ void CChat::OnMessage(int MsgType, void *pRawMsg)
 	if(MsgType == NETMSGTYPE_SV_CHAT)
 	{
 		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
+
+		if(g_Config.m_ClRegexChatIgnore[0])
+		{
+			regex_t Regex;
+			int Reti = regcomp(&Regex, g_Config.m_ClRegexChatIgnore, REG_EXTENDED);
+			if(!Reti)
+			{
+				Reti = regexec(&Regex, pMsg->m_pMessage, 0, nullptr, 0);
+				if(!Reti)
+				{
+					regfree(&Regex);
+					return;
+				}
+				regfree(&Regex);
+			}
+			else
+				m_pClient->Echo("Could not compile regex. (reset tc_regex_chat_ignore)");
+		}
 		AddLine(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
 	}
 	else if(MsgType == NETMSGTYPE_SV_COMMANDINFO)
