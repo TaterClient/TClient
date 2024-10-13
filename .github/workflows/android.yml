@@ -1,0 +1,145 @@
+name: Build-Android
+
+on:
+  push:
+    branches-ignore:
+      - gh-readonly-queue/**
+  pull_request:
+  merge_group:
+
+jobs:
+  build-cmakeA:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_HTTP_MULTIPLEXING: false
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        include:
+        - os: ubuntu-latest
+          cmake-args: -G Ninja
+          cmake-init-env: CXXFLAGS=-Werror
+          package-file: "*.apk"
+          fancy: true
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Prepare Linux
+      run: |
+        sudo apt-get update -y
+        # mount: /var/lib/grub/esp: special device /dev/disk/by-id/scsi-... does not exist.
+        # sudo apt-get upgrade -y
+        sudo apt-get install pkg-config cmake ninja-build libfreetype6-dev libnotify-dev libsdl2-dev libsqlite3-dev libvulkan-dev glslang-tools spirv-tools libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libx264-dev libpng-dev valgrind gcovr libglew-dev -y
+
+    - name: Prepare Linux (fancy)
+      run: |
+        sudo apt-get install libmariadb-dev libwebsockets-dev mariadb-server -y
+        sudo systemctl stop mysql
+        sudo rm -rf /var/lib/mysql/
+        sudo mysql_install_db --user=mysql --datadir=/var/lib/mysql/
+        cd /usr; sudo mysqld_safe --datadir='/var/lib/mysql/' --no-watch
+        sleep 10
+        sudo mysql <<EOF
+        CREATE DATABASE ddnet;
+        CREATE USER 'ddnet'@'localhost' IDENTIFIED BY 'thebestpassword';
+        GRANT ALL PRIVILEGES ON ddnet.* TO 'ddnet'@'localhost';
+        FLUSH PRIVILEGES;
+        EOF
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2
+
+    - name: Install Android build deps
+      run: |
+        sudo apt-get install p7zip-full ninja-build curl
+
+    - name: Setup Java JDK
+      uses: actions/setup-java@v4.4.0
+      with:
+        java-version: 21
+        distribution: oracle
+        # The package type (jdk, jre, jdk+fx, jre+fx)
+        java-package: jdk
+
+    - name: Install Android NDK
+      run: |
+        mkdir ~/Android
+        cd ~/Android
+        mkdir Sdk
+        cd Sdk
+        mkdir ndk
+        cd ndk
+        wget -nv https://dl.google.com/android/repository/android-ndk-r26d-linux.zip
+        unzip -q android-ndk-r26d-linux.zip
+        unlink android-ndk-r26d-linux.zip
+
+    - name: Install Android SDK build tools
+      run: |
+        cd ~/Android/Sdk
+        mkdir build-tools
+        cd build-tools
+        wget -nv https://dl.google.com/android/repository/build-tools_r30.0.3-linux.zip
+        unzip -q build-tools_r30.0.3-linux.zip
+        unlink build-tools_r30.0.3-linux.zip
+        mv android-11 30.0.3
+
+    - name: Install Android command-line tools
+      run: |
+        cd ~/Android/Sdk
+        mkdir cmdline-tools
+        cd cmdline-tools
+        wget -nv https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+        unzip -q commandlinetools-linux-11076708_latest.zip
+        unlink commandlinetools-linux-11076708_latest.zip
+        mv cmdline-tools latest
+        yes | latest/bin/sdkmanager --licenses
+
+    - name: Install Rust Android NDK
+      run: |
+        cargo install cargo-ndk
+        rustup target add armv7-linux-androideabi
+        rustup target add i686-linux-android
+        rustup target add aarch64-linux-android
+        rustup target add x86_64-linux-android
+
+    - name: Build ddnet-libs for Android
+      run: |
+        mkdir build-android-libs
+        scripts/compile_libs/gen_libs.sh build-android-libs android
+        cp -r build-android-libs/ddnet-libs/. ddnet-libs/
+
+    - name: Build DDNet
+      run: |
+        # keytool -genkey -v -storepass mypassword -keystore Teeworlds.jks -keyalg RSA -keysize 2048 -validity 10000 -alias Teeworlds-Key
+        # It will prompt for the password, input for example "mypassword"
+        mkdir -p build-android-release
+        cp Teeworlds.jks build-android-release/
+
+        export TW_KEY_NAME=Teeworlds.jks
+        export TW_KEY_PW=mypassword
+        export TW_KEY_ALIAS=Teeworlds-Key
+
+        unset ANDROID_SDK_ROOT
+        unset ANDROID_NDK_ROOT
+
+        # Version code and name will be determined automatically
+        scripts/android/cmake_android.sh arm64 DDNet org.ddnet.client Release build-android-release
+
+    - name: Version
+      run: echo -e "#include \"src/game/version.h\"\nGAME_RELEASE_VERSION" | cc -E -xc - | tail -1
+      id: version
+
+    - name: Package
+      run: |
+        mkdir artifacts
+        mv build-android-release/DDNet.apk artifacts/
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ddnet
+        path: artifacts
