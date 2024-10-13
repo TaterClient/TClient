@@ -127,7 +127,7 @@ jobs:
         unset ANDROID_NDK_ROOT
 
         # Version code and name will be determined automatically
-        scripts/android/cmake_android.sh arm64 DDNet org.ddnet.client Release build-android-release
+        scripts/android/cmake_android.sh all DDNet org.ddnet.client Release build-android-release
 
     - name: Version
       run: echo -e "#include \"src/game/version.h\"\nGAME_RELEASE_VERSION" | cc -E -xc - | tail -1
