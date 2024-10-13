@@ -164,13 +164,13 @@ if [[ "${ANDROID_BUILD}" == "arm64" || "${ANDROID_BUILD}" == "all" ]]; then
 fi
 
 if [[ "${ANDROID_BUILD}" == "x86" || "${ANDROID_BUILD}" == "all" ]]; then
-	build_for_type x86 x86 i686-linux-android &
-	PID_BUILD_X86=$!
+	#build_for_type x86 x86 i686-linux-android &
+	#PID_BUILD_X86=$!
 fi
 
 if [[ "${ANDROID_BUILD}" == "x86_64" || "${ANDROID_BUILD}" == "x64" || "${ANDROID_BUILD}" == "all" ]]; then
-	build_for_type x86_64 x86_64 x86_64-linux-android &
-	PID_BUILD_X86_64=$!
+	#build_for_type x86_64 x86_64 x86_64-linux-android &
+	#PID_BUILD_X86_64=$!
 fi
 
 if [ -n "$PID_BUILD_ARM" ] && ! wait "$PID_BUILD_ARM"; then
@@ -233,11 +233,11 @@ if [[ "${ANDROID_BUILD}" == "arm64" || "${ANDROID_BUILD}" == "all" ]]; then
 fi
 
 if [[ "${ANDROID_BUILD}" == "x86" || "${ANDROID_BUILD}" == "all" ]]; then
-	copy_libs x86 x86
+	#copy_libs x86 x86
 fi
 
 if [[ "${ANDROID_BUILD}" == "x86_64" || "${ANDROID_BUILD}" == "x64" || "${ANDROID_BUILD}" == "all" ]]; then
-	copy_libs x86_64 x86_64
+	#copy_libs x86_64 x86_64
 fi
 
 ANDROID_BUILD_DUMMY=$ANDROID_BUILD
