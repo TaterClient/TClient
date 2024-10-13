@@ -2419,10 +2419,10 @@ if(CLIENT)
     components/tater.h
     components/tooltips.cpp
     components/tooltips.h
-    components/verify.cpp
-    components/verify.h
     components/touch_controls.cpp
     components/touch_controls.h
+    components/verify.cpp
+    components/verify.h
     components/voting.cpp
     components/voting.h
     gameclient.cpp
