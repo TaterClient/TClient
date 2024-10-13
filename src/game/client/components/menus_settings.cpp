@@ -3156,10 +3156,10 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			static CButtonContainer s_VerifyButton;
 			if(DoButton_Menu(&s_VerifyButton, Localize("Manual Verify"), 0, &ButtonVerify, 0, IGraphics::CORNER_ALL))
 			{
-				if(!open_link("https://ger10.ddnet.org/"))
+				/*if(!open_link("https://ger10.ddnet.org/"))
 				{
 					dbg_msg("menus", "couldn't open link");
-				}
+				}*/
 			}
 		}
 
@@ -3268,10 +3268,10 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			static CButtonContainer s_DiscordButton;
 			if(DoButton_Menu(&s_DiscordButton, Localize("Discord"), 0, &Button, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, vec4(0.0f, 0.0f, 0.0f, 0.5f)))
 			{
-				if(!open_link("https://discord.gg/fBvhH93Bt6"))
+				/*if(!open_link("https://discord.gg/fBvhH93Bt6"))
 				{
 					dbg_msg("menus", "couldn't open link");
-				}
+				}*/
 			}
 		}
 	}
@@ -4070,10 +4070,10 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	if(DoButton_Menu(&s_ProfilesFile, Localize("Profiles file"), 0, &FileButton))
 	{
 		Storage()->GetCompletePath(IStorage::TYPE_SAVE, PROFILES_FILE, aTempBuf, sizeof(aTempBuf));
-		if(!open_file(aTempBuf))
+		/*if(!open_file(aTempBuf))
 		{
 			dbg_msg("menus", "couldn't open file");
-		}
+		}*/
 	}
 }
 
