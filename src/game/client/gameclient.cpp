@@ -157,6 +157,7 @@ void CGameClient::OnConsoleInit()
 					      &m_Chat,
 					      &m_Broadcast,
 					      &m_DebugHud,
+					      &m_TouchControls,
 					      &m_Scoreboard,
 					      &m_Statboard,
 					      &m_Motd,
@@ -177,6 +178,7 @@ void CGameClient::OnConsoleInit()
 						  &m_Emoticon,
 						  &m_Menus,
 						  &m_Controls,
+						  &m_TouchControls,
 						  &m_Binds});
 
 	// add basic console commands
@@ -453,6 +455,23 @@ void CGameClient::OnUpdate()
 		{
 			if(pComponent->OnCursorMove(x, y, CursorType))
 				break;
+		}
+	}
+
+	// handle touch events
+	const std::vector<IInput::CTouchFingerState> &vTouchFingerStates = Input()->TouchFingerStates();
+	bool TouchHandled = false;
+	for(auto &pComponent : m_vpInput)
+	{
+		if(TouchHandled)
+		{
+			// Also update inactive components so they can handle touch fingers being released.
+			pComponent->OnTouchState({});
+		}
+		else if(pComponent->OnTouchState(vTouchFingerStates))
+		{
+			Input()->ClearTouchDeltas();
+			TouchHandled = true;
 		}
 	}
 
