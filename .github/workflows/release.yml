@@ -13,35 +13,49 @@ on:
       body:
         description: 'Release description'
         required: false
-
-env:
-  BUILD_PREFIX: ddnet
+     
+      run_id:
+        description: 'Run ID of the build workflow to download artifacts from'
+        required: true
 
 jobs:
   release:
     runs-on: ubuntu-latest
+
+    env:
+      BUILD_PREFIX: ddnet
+      TARGET_REPOSITORY: ${{ github.repository }} 
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Download Ubuntu artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.BUILD_PREFIX }}-ubuntu-latest
           path: ./artifacts/
+          github-token: ${{ secrets.GH_PAT }}
+          repository: ${{ env.TARGET_REPOSITORY }}
+          run-id: ${{ github.event.inputs.run_id }}
 
       - name: Download Windows artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.BUILD_PREFIX }}-windows-latest
           path: ./artifacts/
+          github-token: ${{ secrets.GH_PAT }}
+          repository: ${{ env.TARGET_REPOSITORY }}
+          run-id: ${{ github.event.inputs.run_id }}
 
       - name: Download macOS artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ env.BUILD_PREFIX }}-macos-latest
           path: ./artifacts/
+          github-token: ${{ secrets.GH_PAT }}
+          repository: ${{ env.TARGET_REPOSITORY }}
+          run-id: ${{ github.event.inputs.run_id }}
 
       - name: Create Release
         id: create_release
@@ -57,7 +71,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/ubuntu/${{ env.BUILD_PREFIX }}-ubuntu-latest.zip
+          asset_path: ./artifacts/${{ env.BUILD_PREFIX }}-ubuntu-latest.zip
           asset_name: ${{ env.BUILD_PREFIX }}-ubuntu-latest.zip
           asset_content_type: application/zip
 
@@ -65,7 +79,7 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/windows/${{ env.BUILD_PREFIX }}-windows-latest.zip
+          asset_path: ./artifacts/${{ env.BUILD_PREFIX }}-windows-latest.zip
           asset_name: ${{ env.BUILD_PREFIX }}-windows-latest.zip
           asset_content_type: application/zip
 
@@ -73,6 +87,6 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/macos/${{ env.BUILD_PREFIX }}-macos-latest.zip
+          asset_path: ./artifacts/${{ env.BUILD_PREFIX }}-macos-latest.zip
           asset_name: ${{ env.BUILD_PREFIX }}-macos-latest.zip
           asset_content_type: application/zip
