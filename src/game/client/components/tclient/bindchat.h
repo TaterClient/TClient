@@ -43,10 +43,13 @@ public:
 
 	virtual void OnConsoleInit() override;
 
-	void AddBind(const char *Name, const char *Command);
-	void RemoveBind(const char *Name, const char *Command);
+	void AddBind(const char *pName, const char *pCommand);
+	void RemoveBind(const char *pName);
 	void RemoveBind(int Index);
 	void RemoveAllBinds();
+
+	int GetBind(const char *pCommand);
+	CBind *Get(int Index);
 
 	bool ChatDoBinds(const char *pText);
 	bool ChatDoAutocomplete(bool ShiftPressed);

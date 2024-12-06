@@ -52,9 +52,8 @@ void CBindchat::ConBindchats(IConsole::IResult *pResult, void *pUserData)
 void CBindchat::ConRemoveBindchat(IConsole::IResult *pResult, void *pUserData)
 {
 	const char *aName = pResult->GetString(0);
-	const char *aCommand = pResult->GetString(1);
 	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
-	pThis->RemoveBind(aName, aCommand);
+	pThis->RemoveBind(aName);
 }
 
 
@@ -68,7 +67,7 @@ void CBindchat::ConBindchatDefaults(IConsole::IResult *pResult, void *pUserData)
 {
 	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
 	pThis->AddBind("!shrug", "say ¯\\_(ツ)_/¯");
-	pThis->AddBind("!tableflip", "say (╯°□°)╯︵ ┻━┻");
+	pThis->AddBind("!flip", "say (╯°□°)╯︵ ┻━┻");
 	pThis->AddBind("!unflip", "say ┬─┬ノ( º _ ºノ)");
 }
 
@@ -77,33 +76,58 @@ void CBindchat::AddBind(const char *pName, const char *pCommand)
 	if((pName[0] == '\0' && pCommand[0] == '\0') || m_vBinds.size() >= BINDCHAT_MAX_BINDS)
 		return;
 
+	RemoveBind(pName); // Prevent duplicates
+
 	CBind Bind;
 	str_copy(Bind.m_aName, pName);
 	str_copy(Bind.m_aCommand, pCommand);
 	m_vBinds.push_back(Bind);
 }
 
-void CBindchat::RemoveBind(const char *pName, const char *pCommand)
+void CBindchat::RemoveBind(const char *pName)
 {
-	CBind Bind;
-	str_copy(Bind.m_aName, pName);
-	str_copy(Bind.m_aCommand, pCommand);
-	auto it = std::find(m_vBinds.begin(), m_vBinds.end(), Bind);
-	if(it != m_vBinds.end())
-		m_vBinds.erase(it);
+	if(pName[0] == '\0')
+		return;
+	for (auto It = m_vBinds.begin(); It != m_vBinds.end(); ++It)
+	{
+		if(str_comp(It->m_aName, pName) == 0)
+		{
+			m_vBinds.erase(It);
+			return;
+		}
+	}
 }
 
 void CBindchat::RemoveBind(int Index)
 {
 	if(Index >= static_cast<int>(m_vBinds.size()) || Index < 0)
 		return;
-	auto Pos = m_vBinds.begin() + Index;
-	m_vBinds.erase(Pos);
+	auto It = m_vBinds.begin() + Index;
+	m_vBinds.erase(It);
 }
 
 void CBindchat::RemoveAllBinds()
 {
 	m_vBinds.clear();
+}
+
+int CBindchat::GetBind(const char *pCommand)
+{
+	if(pCommand[0] == '\0')
+		return -1;
+	for (auto It = m_vBinds.begin(); It != m_vBinds.end(); ++It)
+	{
+		if(str_comp_nocase(It->m_aCommand, pCommand) == 0)
+			return &*It - &m_vBinds[0];
+	}
+	return -1;
+}
+
+CBindchat::CBind *CBindchat::Get(int Index)
+{
+	if(Index < 0 || Index >= (int)m_vBinds.size())
+		return nullptr;
+	return &m_vBinds[Index];
 }
 
 void CBindchat::OnConsoleInit()
@@ -216,7 +240,7 @@ void CBindchat::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserDa
 		char aBuf[BINDCHAT_MAX_CMD * 2] = "";
 		char *pEnd = aBuf + sizeof(aBuf);
 		char *pDst;
-		str_append(aBuf, "add_bindchat \"");
+		str_append(aBuf, "bindchat \"");
 		// Escape name
 		pDst = aBuf + str_length(aBuf);
 		str_escape(&pDst, Bind.m_aName, pEnd);

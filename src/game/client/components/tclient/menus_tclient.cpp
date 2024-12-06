@@ -48,9 +48,10 @@ enum
 {
 	TCLIENT_TAB_SETTINGS = 0,
 	TCLIENT_TAB_BINDWHEEL = 1,
-	TCLIENT_TAB_WARLIST = 2,
-	TCLIENT_TAB_INFO = 3,
-	NUMBER_OF_TCLIENT_TABS = 4
+	TCLIENT_TAB_BINDCHAT = 2,
+	TCLIENT_TAB_WARLIST = 3,
+	TCLIENT_TAB_INFO = 4,
+	NUMBER_OF_TCLIENT_TABS = 5
 };
 
 typedef struct
@@ -130,6 +131,16 @@ bool CMenus::DoSliderWithScaledValue(const void *pId, int *pOption, const CUIRec
 	return false;
 }
 
+bool CMenus::DoEditBoxWithLabel(CLineInput *LineInput, const CUIRect *pRect, const char *pLabel, const char *pDefault, char *pBuf, size_t BufSize)
+{
+	CUIRect Button, Label;
+	pRect->VSplitLeft(100.0f, &Label, &Button);
+	Ui()->DoLabel(&Label, pLabel, FontSize, TEXTALIGN_ML);
+	LineInput->SetBuffer(pBuf, BufSize);
+	LineInput->SetEmptyText(pDefault);
+	return Ui()->DoEditBox(LineInput, &Button, EditBoxFontSize);
+}
+
 void CMenus::RenderSettingsTClient(CUIRect MainView)
 {
 	s_Time += Client()->RenderFrameTime() * (1.0f / 100.0f);
@@ -149,22 +160,16 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 	const char *apTabNames[] = {
 		Localize("Settings"),
 		Localize("Bindwheel"),
+		Localize("Chat Binds"),
 		Localize("Warlist"),
 		Localize("Info")};
 
 	for(int Tab = 0; Tab < NUMBER_OF_TCLIENT_TABS; ++Tab)
 	{
 		TabBar.VSplitLeft(TabWidth, &Button, &TabBar);
-		const int Corners = Tab == 0 ? IGraphics::CORNER_L : Tab == NUMBER_OF_TCLIENT_TABS - 1 ? IGraphics::CORNER_R :
-													 IGraphics::CORNER_NONE;
+		const int Corners = Tab == 0 ? IGraphics::CORNER_L : Tab == NUMBER_OF_TCLIENT_TABS - 1 ? IGraphics::CORNER_R : IGraphics::CORNER_NONE;
 		if(DoButton_MenuTab(&s_aPageTabs[Tab], apTabNames[Tab], s_CurCustomTab == Tab, &Button, Corners, nullptr, nullptr, nullptr, nullptr, 4.0f))
-		{
-			// if(Tab == TCLIENT_TAB_DISCORD)
-			//	PopupConfirm(Localize("Open TClient Discord"), Localize("Click open to open the TClient Discord invite in your browser"), Localize("Open"), Localize("Cancel"), &CMenus::OpenTClientDiscord);
-			// else
 			s_CurCustomTab = Tab;
-			break;
-		}
 	}
 
 	MainView.HSplitTop(MarginSmall, nullptr, &MainView);
@@ -542,6 +547,57 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		ScrollRegion.h = 0.0f;
 		s_ScrollRegion.AddRect(ScrollRegion);
 		s_ScrollRegion.End();
+	}
+
+	if(s_CurCustomTab == TCLIENT_TAB_BINDCHAT)
+	{
+		MainView.HSplitTop(MarginBetweenSections, nullptr, &MainView);
+		Column = MainView;
+
+		Column.HSplitTop(HeadlineHeight, &Label, &Column);
+		Ui()->DoLabel(&Label, Localize("Kaomoji"), HeadlineFontSize, TEXTALIGN_ML);
+		Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+		auto DoBindchat = [&](CLineInput &LineInput, const char *pLabel, const char *pName, const char *pCommand)
+		{
+			Column.HSplitTop(LineSize, &Button, &Column);
+			char *BindCommand;
+			int BindIndex = GameClient()->m_Bindchat.GetBind(pCommand);
+			bool BindNew = BindIndex == -1;
+			if(BindNew)
+			{
+				static char s_aBindCommandTemp[BINDCHAT_MAX_CMD] = "";
+				BindCommand = s_aBindCommandTemp;
+				BindNew = true; // Make a new bind, as we arent editing one
+			}
+			else
+			{
+				auto *Bind = GameClient()->m_Bindchat.Get(BindIndex);
+				BindCommand = Bind->m_aName;
+			}
+			if(DoEditBoxWithLabel(&LineInput, &Button, pLabel, pName, BindCommand, BINDCHAT_MAX_CMD))
+			{
+				if(BindNew && BindCommand[0] != '\0' && LineInput.IsActive())
+				{
+					GameClient()->m_Bindchat.AddBind(BindCommand, pCommand);
+					BindCommand[0] = '\0'; // Reset for new usage
+				}
+				if(!BindNew && BindCommand[0] == '\0')
+					GameClient()->m_Bindchat.RemoveBind(BindIndex);
+			}
+		};
+
+		static CLineInput s_KaomojiShrug;
+		DoBindchat(s_KaomojiShrug, Localize("Shrug:"), "!shrug", "say ¯\\_(ツ)_/¯");
+
+		Column.HSplitTop(MarginSmall, nullptr, &Column);
+		static CLineInput s_KaomojiFlip;
+		DoBindchat(s_KaomojiFlip, Localize("Flip:"), "!flip", "say (╯°□°)╯︵ ┻━┻");
+
+		Column.HSplitTop(MarginSmall, nullptr, &Column);
+		static CLineInput s_KaomojiUnflip;
+		DoBindchat(s_KaomojiUnflip, Localize("Unflip:"), "!unflip", "say ┬─┬ノ( º _ ºノ)");
+
 	}
 
 	if(s_CurCustomTab == TCLIENT_TAB_BINDWHEEL)
