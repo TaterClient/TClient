@@ -11,13 +11,15 @@ enum
 	BINDCHAT_MAX_BINDS = 256,
 };
 
-class CBindChat : public CComponent
+class CBindchat : public CComponent
 {
 	static void ConAddBindchat(IConsole::IResult *pResult, void *pUserData);
 	static void ConRemoveBindchat(IConsole::IResult *pResult, void *pUserData);
 	static void ConRemoveAllBindchatBinds(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
+
+	void ExecuteBind(int Bind, const char *pArgs);
 
 public:
 	class CBind
@@ -34,7 +36,7 @@ public:
 
 	std::vector<CBind> m_vBinds;
 
-	CBindChat();
+	CBindchat();
 	virtual int Sizeof() const override { return sizeof(*this); }
 
 	virtual void OnConsoleInit() override;
@@ -43,8 +45,6 @@ public:
 	void RemoveBind(const char *Name, const char *Command);
 	void RemoveBind(int Index);
 	void RemoveAllBinds();
-
-	void ExecuteBind(int Bind, const char *pArgs);
 
 	bool ChatDoBinds(const char *pText);
 	bool ChatDoAutocomplete(bool ShiftPressed);

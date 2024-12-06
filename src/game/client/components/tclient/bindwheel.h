@@ -10,7 +10,7 @@ enum
 	BINDWHEEL_MAX_BINDS = 64
 };
 
-class CBindWheel : public CComponent
+class CBindwheel : public CComponent
 {
 	void DrawCircle(float x, float y, float r, int Segments);
 
@@ -44,7 +44,7 @@ public:
 
 	std::vector<CBind> m_vBinds;
 
-	CBindWheel();
+	CBindwheel();
 	virtual int Sizeof() const override { return sizeof(*this); }
 
 	virtual void OnReset() override;

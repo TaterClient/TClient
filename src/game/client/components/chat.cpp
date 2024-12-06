@@ -262,7 +262,7 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			m_CommandsNeedSorting = false;
 		}
 
-		if (m_pClient->m_BindChat.ChatDoBinds(m_Input.GetString()))
+		if (m_pClient->m_Bindchat.ChatDoBinds(m_Input.GetString()))
 			; // Do nothing as bindchat was executed
 		else
 			SendChatQueued(m_Input.GetString());
@@ -315,7 +315,7 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 				});
 		}
 
-		if (m_pClient->m_BindChat.ChatDoAutocomplete(ShiftPressed))
+		if (m_pClient->m_Bindchat.ChatDoAutocomplete(ShiftPressed))
 		{
 
 		}

@@ -180,8 +180,8 @@ public:
 
 	// TClient Components
 	CSkinProfiles m_SkinProfiles;
-	CBindChat m_BindChat;
-	CBindWheel m_Bindwheel;
+	CBindchat m_Bindchat;
+	CBindwheel m_Bindwheel;
 	CTater m_Tater;
 	CPlayerIndicator m_PlayerIndicator;
 	COutlines m_Outlines;

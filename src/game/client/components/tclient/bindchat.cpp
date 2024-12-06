@@ -6,36 +6,36 @@
 
 #include "bindchat.h"
 
-CBindChat::CBindChat()
+CBindchat::CBindchat()
 {
 	OnReset();
 }
 
-void CBindChat::ConAddBindchat(IConsole::IResult *pResult, void *pUserData)
+void CBindchat::ConAddBindchat(IConsole::IResult *pResult, void *pUserData)
 {
 	const char *aName = pResult->GetString(0);
 	const char *aCommand = pResult->GetString(1);
 
-	CBindChat *pThis = static_cast<CBindChat *>(pUserData);
+	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
 	pThis->AddBind(aName, aCommand);
 }
 
-void CBindChat::ConRemoveBindchat(IConsole::IResult *pResult, void *pUserData)
+void CBindchat::ConRemoveBindchat(IConsole::IResult *pResult, void *pUserData)
 {
 	const char *aName = pResult->GetString(0);
 	const char *aCommand = pResult->GetString(1);
 
-	CBindChat *pThis = static_cast<CBindChat *>(pUserData);
+	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
 	pThis->RemoveBind(aName, aCommand);
 }
 
-void CBindChat::ConRemoveAllBindchatBinds(IConsole::IResult *pResult, void *pUserData)
+void CBindchat::ConRemoveAllBindchatBinds(IConsole::IResult *pResult, void *pUserData)
 {
-	CBindChat *pThis = static_cast<CBindChat *>(pUserData);
+	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
 	pThis->RemoveAllBinds();
 }
 
-void CBindChat::AddBind(const char *pName, const char *pCommand)
+void CBindchat::AddBind(const char *pName, const char *pCommand)
 {
 	if((pName[0] == '\0' && pCommand[0] == '\0') || m_vBinds.size() >= BINDCHAT_MAX_BINDS)
 		return;
@@ -46,7 +46,7 @@ void CBindChat::AddBind(const char *pName, const char *pCommand)
 	m_vBinds.push_back(Bind);
 }
 
-void CBindChat::RemoveBind(const char *pName, const char *pCommand)
+void CBindchat::RemoveBind(const char *pName, const char *pCommand)
 {
 	CBind Bind;
 	str_copy(Bind.m_aName, pName);
@@ -56,7 +56,7 @@ void CBindChat::RemoveBind(const char *pName, const char *pCommand)
 		m_vBinds.erase(it);
 }
 
-void CBindChat::RemoveBind(int Index)
+void CBindchat::RemoveBind(int Index)
 {
 	if(Index >= static_cast<int>(m_vBinds.size()) || Index < 0)
 		return;
@@ -64,12 +64,12 @@ void CBindChat::RemoveBind(int Index)
 	m_vBinds.erase(Pos);
 }
 
-void CBindChat::RemoveAllBinds()
+void CBindchat::RemoveAllBinds()
 {
 	m_vBinds.clear();
 }
 
-void CBindChat::OnConsoleInit()
+void CBindchat::OnConsoleInit()
 {
 	IConfigManager *pConfigManager = Kernel()->RequestInterface<IConfigManager>();
 	if(pConfigManager)
@@ -80,7 +80,7 @@ void CBindChat::OnConsoleInit()
 	Console()->Register("delete_all_bindchat_binds", "", CFGFLAG_CLIENT, ConRemoveAllBindchatBinds, this, "Removes all bindchat binds");
 }
 
-void CBindChat::ExecuteBind(int Bind, const char *pArgs)
+void CBindchat::ExecuteBind(int Bind, const char *pArgs)
 {
 	char aBuf[BINDCHAT_MAX_CMD] = "";
 	str_append(aBuf, m_vBinds[Bind].m_aCommand);
@@ -92,7 +92,7 @@ void CBindChat::ExecuteBind(int Bind, const char *pArgs)
 	Console()->ExecuteLine(aBuf);
 }
 
-bool CBindChat::ChatDoBinds(const char *pText)
+bool CBindchat::ChatDoBinds(const char *pText)
 {
 	CChat &Chat = GameClient()->m_Chat;
 	const char *pSpace = str_find(pText, " ");
@@ -113,7 +113,7 @@ bool CBindChat::ChatDoBinds(const char *pText)
 	return false;
 }
 
-bool CBindChat::ChatDoAutocomplete(bool ShiftPressed) {
+bool CBindchat::ChatDoAutocomplete(bool ShiftPressed) {
 	CChat &Chat = GameClient()->m_Chat;
 
 	if(*Chat.m_aCompletionBuffer == '\0')
@@ -168,9 +168,9 @@ bool CBindChat::ChatDoAutocomplete(bool ShiftPressed) {
 	return pCompletionBind != nullptr;
 }
 
-void CBindChat::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData)
+void CBindchat::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData)
 {
-	CBindChat *pThis = (CBindChat *)pUserData;
+	CBindchat *pThis = (CBindchat *)pUserData;
 
 	for(CBind &Bind : pThis->m_vBinds)
 	{
