@@ -14,8 +14,10 @@ enum
 class CBindchat : public CComponent
 {
 	static void ConAddBindchat(IConsole::IResult *pResult, void *pUserData);
+	static void ConBindchats(IConsole::IResult *pResult, void *pUserData);
 	static void ConRemoveBindchat(IConsole::IResult *pResult, void *pUserData);
-	static void ConRemoveAllBindchatBinds(IConsole::IResult *pResult, void *pUserData);
+	static void ConRemoveBindchatAll(IConsole::IResult *pResult, void *pUserData);
+	static void ConBindchatDefaults(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 

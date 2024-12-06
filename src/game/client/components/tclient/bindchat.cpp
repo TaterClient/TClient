@@ -20,19 +20,56 @@ void CBindchat::ConAddBindchat(IConsole::IResult *pResult, void *pUserData)
 	pThis->AddBind(aName, aCommand);
 }
 
+void CBindchat::ConBindchats(IConsole::IResult *pResult, void *pUserData)
+{
+	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
+	char aBuf[BINDCHAT_MAX_NAME + BINDCHAT_MAX_CMD + 32];
+	if(pResult->NumArguments() == 1)
+	{
+		const char *pName = pResult->GetString(0);
+		for(const CBind &Bind : pThis->m_vBinds)
+		{
+			if(str_comp_nocase(Bind.m_aName, pName) == 0)
+			{
+				str_format(aBuf, sizeof(aBuf), "%s = %s", Bind.m_aName, Bind.m_aCommand);
+				pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "bindchat", aBuf);
+				return;
+			}
+		}
+		str_format(aBuf, sizeof(aBuf), "%s is not bound", pName);
+		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "bindchat", aBuf);
+	}
+	else
+	{
+		for(const CBind &Bind : pThis->m_vBinds)
+		{
+			str_format(aBuf, sizeof(aBuf), "%s = %s", Bind.m_aName, Bind.m_aCommand);
+			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "bindchat", aBuf);
+		}
+	}
+}
+
 void CBindchat::ConRemoveBindchat(IConsole::IResult *pResult, void *pUserData)
 {
 	const char *aName = pResult->GetString(0);
 	const char *aCommand = pResult->GetString(1);
-
 	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
 	pThis->RemoveBind(aName, aCommand);
 }
 
-void CBindchat::ConRemoveAllBindchatBinds(IConsole::IResult *pResult, void *pUserData)
+
+void CBindchat::ConRemoveBindchatAll(IConsole::IResult *pResult, void *pUserData)
 {
 	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
 	pThis->RemoveAllBinds();
+}
+
+void CBindchat::ConBindchatDefaults(IConsole::IResult *pResult, void *pUserData)
+{
+	CBindchat *pThis = static_cast<CBindchat *>(pUserData);
+	pThis->AddBind("!shrug", "say ¯\\_(ツ)_/¯");
+	pThis->AddBind("!tableflip", "say (╯°□°)╯︵ ┻━┻");
+	pThis->AddBind("!unflip", "say ┬─┬ノ( º _ ºノ)");
 }
 
 void CBindchat::AddBind(const char *pName, const char *pCommand)
@@ -75,9 +112,11 @@ void CBindchat::OnConsoleInit()
 	if(pConfigManager)
 		pConfigManager->RegisterTCallback(ConfigSaveCallback, this);
 
-	Console()->Register("add_bindchat", "s[namfe] r[command]", CFGFLAG_CLIENT, ConAddBindchat, this, "Add a bind to the bindchat");
-	Console()->Register("remove_bindchat", "s[name] r[command]", CFGFLAG_CLIENT, ConRemoveBindchat, this, "Remove a bind from the bindchat");
-	Console()->Register("delete_all_bindchat_binds", "", CFGFLAG_CLIENT, ConRemoveAllBindchatBinds, this, "Removes all bindchat binds");
+	Console()->Register("bindchat", "s[name] r[command]", CFGFLAG_CLIENT, ConAddBindchat, this, "Add a chat bind");
+	Console()->Register("bindchats", "?s[name]", CFGFLAG_CLIENT, ConBindchats, this, "Print command executed by this name or all chat binds");
+	Console()->Register("unbindchat", "s[name] r[command]", CFGFLAG_CLIENT, ConRemoveBindchat, this, "Remove a chat bind");
+	Console()->Register("unbindchatall", "", CFGFLAG_CLIENT, ConRemoveBindchatAll, this, "Removes all chat binds");
+	Console()->Register("bindchatdefaults", "", CFGFLAG_CLIENT, ConBindchatDefaults, this, "Adds default chat binds");
 }
 
 void CBindchat::ExecuteBind(int Bind, const char *pArgs)
