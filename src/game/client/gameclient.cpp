@@ -148,7 +148,8 @@ void CGameClient::OnConsoleInit()
 					      &m_Hud,
 					      &m_Spectator,
 					      &m_Emoticon,
-					      &m_Bindwheel,
+					      &m_BindChat,
+					      &m_BindWheel,
 					      &m_InfoMessages,
 					      &m_Chat,
 					      &m_Broadcast,
@@ -169,7 +170,7 @@ void CGameClient::OnConsoleInit()
 						  &m_Chat, // chat has higher prio, due to that you can quit it by pressing esc
 						  &m_Motd, // for pressing esc to remove it
 						  &m_Spectator,
-						  &m_Bindwheel,
+						  &m_BindWheel,
 						  &m_Emoticon,
 						  &m_Menus,
 						  &m_Controls,
