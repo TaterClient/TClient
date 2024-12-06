@@ -219,6 +219,10 @@ void CBindWheel::ExecuteHoveredBind()
 	if(m_SelectedBind >= 0)
 		Console()->ExecuteLine(m_vBinds[m_SelectedBind].m_aCommand);
 }
+static void EscapeParam(char *pDst, const char *pSrc, int Size)
+{
+	str_escape(&pDst, pSrc, pDst + Size);
+}
 
 void CBindWheel::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData)
 {

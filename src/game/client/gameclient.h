@@ -66,6 +66,7 @@
 #include "components/tclient/skinprofiles.h"
 #include "components/tclient/tater.h"
 #include "components/tclient/verify.h"
+#include "components/tclient/warlist.h"
 #include "components/voting.h"
 
 class CGameInfo
@@ -139,7 +140,6 @@ public:
 	CBroadcast m_Broadcast;
 	CGameConsole m_GameConsole;
 	CBinds m_Binds;
-	CSkinProfiles m_SkinProfiles;
 	CParticles m_Particles;
 	CMenus m_Menus;
 	CSkins m_Skins;
@@ -154,17 +154,13 @@ public:
 	CStatboard m_Statboard;
 	CSounds m_Sounds;
 	CEmoticon m_Emoticon;
-	CBindChat m_BindChat;
-	CBindWheel m_BindWheel;
-	CTater m_Tater;
+	
 	CDamageInd m_DamageInd;
 	CVoting m_Voting;
 	CVerify m_Verify;
 	CSpectator m_Spectator;
 
 	CPlayers m_Players;
-	CPlayerIndicator m_PlayerIndicator;
-	COutlines m_Outlines;
 	CNamePlates m_NamePlates;
 	CFreezeBars m_FreezeBars;
 	CItems m_Items;
@@ -178,10 +174,19 @@ public:
 	CMapSounds m_MapSounds;
 
 	CRaceDemo m_RaceDemo;
-	CRainbow m_Rainbow;
 	CGhost m_Ghost;
 
 	CTooltips m_Tooltips;
+
+	// TClient Components
+	CSkinProfiles m_SkinProfiles;
+	CBindChat m_BindChat;
+	CBindWheel m_Bindwheel;
+	CTater m_Tater;
+	CPlayerIndicator m_PlayerIndicator;
+	COutlines m_Outlines;
+	CRainbow m_Rainbow;
+	CWarList m_WarList;
 
 private:
 	std::vector<class CComponent *> m_vpAll;
