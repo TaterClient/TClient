@@ -5,6 +5,13 @@
 
 #include "kernel.h"
 
+enum EConfigDomain
+{
+	CFGDOMAIN_NONE = 0,
+	CFGDOMAIN_TCLIENT,
+	CFGDOMAIN_MAX,
+};
+
 class IConfigManager : public IInterface
 {
 	MACRO_INTERFACE("config")
@@ -17,13 +24,11 @@ public:
 	virtual void ResetGameSettings() = 0;
 	virtual void SetReadOnly(const char *pScriptName, bool ReadOnly) = 0;
 	virtual bool Save() = 0;
-	virtual bool TSave() = 0;
 	virtual class CConfig *Values() = 0;
 
-	virtual void RegisterCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) = 0;
-	virtual void RegisterTCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData) = 0;
+	virtual void RegisterCallback(SAVECALLBACKFUNC pfnFunc, void *pUserData, EConfigDomain pClient = EConfigDomain::CFGDOMAIN_NONE) = 0;
 
-	virtual void WriteLine(const char *pLine) = 0;
+	virtual void WriteLine(const char *pLine, EConfigDomain pClient = EConfigDomain::CFGDOMAIN_NONE) = 0;
 
 	virtual void StoreUnknownCommand(const char *pCommand) = 0;
 

@@ -19,7 +19,7 @@ void CWarList::OnConsoleInit()
 {
 	IConfigManager *pConfigManager = Kernel()->RequestInterface<IConfigManager>();
 	if(pConfigManager)
-		pConfigManager->RegisterTCallback(ConfigSaveCallback, this);
+		pConfigManager->RegisterCallback(ConfigSaveCallback, this, CFGDOMAIN_TCLIENT);
 
 	Console()->Register("update_war_type", "s[type] s[name] i[color]", CFGFLAG_CLIENT, ConUpsertWarType, this, "Update or add a specific war entry");
 	Console()->Register("add_war_entry", "s[type] s[name] s[clan] r[reason]", CFGFLAG_CLIENT, ConAddWarEntry, this, "Adds a specific war entry");

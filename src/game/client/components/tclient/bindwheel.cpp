@@ -109,7 +109,7 @@ void CBindWheel::OnConsoleInit()
 {
 	IConfigManager *pConfigManager = Kernel()->RequestInterface<IConfigManager>();
 	if(pConfigManager)
-		pConfigManager->RegisterTCallback(ConfigSaveCallback, this);
+		pConfigManager->RegisterCallback(ConfigSaveCallback, this, CFGDOMAIN_TCLIENT);
 
 	Console()->Register("+bindwheel", "", CFGFLAG_CLIENT, ConOpenBindwheel, this, "Open bindwheel selector");
 	Console()->Register("+bindwheel_execute_hover", "", CFGFLAG_CLIENT, ConExecuteHover, this, "Execute hovered bindwheel bind");
@@ -237,6 +237,6 @@ void CBindWheel::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserD
 		EscapeParam(aEscapeName, Bind.m_aName, sizeof(aEscapeName));
 		EscapeParam(aEscapeCommand, Bind.m_aCommand, sizeof(aEscapeCommand));
 		str_format(aBuf, sizeof(aBuf), "add_bindwheel \"%s\" \"%s\"", aEscapeName, aEscapeCommand);
-		pConfigManager->WriteLine(aBuf);
+		pConfigManager->WriteLine(aBuf, CFGDOMAIN_TCLIENT);
 	}
 }
