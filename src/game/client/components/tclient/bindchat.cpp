@@ -115,10 +115,10 @@ int CBindchat::GetBind(const char *pCommand)
 {
 	if(pCommand[0] == '\0')
 		return -1;
-	for (auto It = m_vBinds.begin(); It != m_vBinds.end(); ++It)
+	for(auto It = m_vBinds.begin(); It != m_vBinds.end(); ++It)
 	{
 		if(str_comp_nocase(It->m_aCommand, pCommand) == 0)
-			return &*It - &m_vBinds[0];
+			return &*It - m_vBinds.data();
 	}
 	return -1;
 }
@@ -160,11 +160,11 @@ bool CBindchat::ChatDoBinds(const char *pText)
 	CChat &Chat = GameClient()->m_Chat;
 	const char *pSpace = str_find(pText, " ");
 	size_t SpaceIndex = pSpace ? pSpace - pText : strlen(pText);
-	for (const CBind &Bind : m_vBinds)
+	for(const CBind &Bind : m_vBinds)
 	{
 		if(str_comp_nocase_num(pText, Bind.m_aName, SpaceIndex) == 0)
 		{
-			ExecuteBind(&Bind - &m_vBinds[0], pSpace ? pSpace + 1 : nullptr);
+			ExecuteBind(&Bind - m_vBinds.data(), pSpace ? pSpace + 1 : nullptr);
 			// Add to history (see CChat::SendChatQueued)
 			const int Length = str_length(pText);
 			CChat::CHistoryEntry *pEntry = Chat.m_History.Allocate(sizeof(CChat::CHistoryEntry) + Length);
@@ -178,7 +178,9 @@ bool CBindchat::ChatDoBinds(const char *pText)
 
 bool CBindchat::ChatDoAutocomplete(bool ShiftPressed) {
 	CChat &Chat = GameClient()->m_Chat;
-
+	
+	if(m_vBinds.size() == 0)
+		return false;
 	if(*Chat.m_aCompletionBuffer == '\0')
 		return false;
 
@@ -188,7 +190,7 @@ bool CBindchat::ChatDoAutocomplete(bool ShiftPressed) {
 		Chat.m_CompletionChosen--;
 	else if(!ShiftPressed)
 		Chat.m_CompletionChosen++;
-	Chat.m_CompletionChosen = (Chat.m_CompletionChosen + m_vBinds.size()) % m_vBinds.size();
+	Chat.m_CompletionChosen = (Chat.m_CompletionChosen + m_vBinds.size()) % m_vBinds.size(); // size != 0
 
 	Chat.m_CompletionUsed = true;
 	for(const CBind &Bind : m_vBinds)
@@ -196,7 +198,7 @@ bool CBindchat::ChatDoAutocomplete(bool ShiftPressed) {
 		if(str_startswith_nocase(Bind.m_aName, Chat.m_aCompletionBuffer))
 		{
 			pCompletionBind = &Bind;
-			Chat.m_CompletionChosen = &Bind - &m_vBinds[0];
+			Chat.m_CompletionChosen = &Bind - m_vBinds.data();
 			break;
 		}
 	}
