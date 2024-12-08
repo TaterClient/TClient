@@ -153,6 +153,7 @@ void CGameClient::OnConsoleInit()
 					      &m_Chat,
 					      &m_Broadcast,
 					      &m_DebugHud,
+					      &m_TouchControls,
 					      &m_Scoreboard,
 					      &m_Statboard,
 					      &m_Motd,
@@ -173,6 +174,7 @@ void CGameClient::OnConsoleInit()
 						  &m_Emoticon,
 						  &m_Menus,
 						  &m_Controls,
+						  &m_TouchControls,
 						  &m_Binds});
 
 	// add basic console commands
@@ -273,6 +275,15 @@ static void GenerateTimeoutCode(char *pTimeoutCode)
 	}
 }
 
+void CGameClient::InitializeLanguage()
+{
+	// set the language
+	g_Localization.LoadIndexfile(Storage(), Console());
+	if(g_Config.m_ClShowWelcome)
+		g_Localization.SelectDefaultLanguage(Console(), g_Config.m_ClLanguagefile, sizeof(g_Config.m_ClLanguagefile));
+	g_Localization.Load(g_Config.m_ClLanguagefile, Storage(), Console());
+}
+
 void CGameClient::OnInit()
 {
 	const int64_t OnInitStart = time_get();
@@ -318,12 +329,6 @@ void CGameClient::OnInit()
 	{
 		str_format(m_aDDNetVersionStr, sizeof(m_aDDNetVersionStr), "%s %s", CLIENT_NAME, GAME_RELEASE_VERSION);
 	}
-
-	// set the language
-	g_Localization.LoadIndexfile(Storage(), Console());
-	if(g_Config.m_ClShowWelcome)
-		g_Localization.SelectDefaultLanguage(Console(), g_Config.m_ClLanguagefile, sizeof(g_Config.m_ClLanguagefile));
-	g_Localization.Load(g_Config.m_ClLanguagefile, Storage(), Console());
 
 	// TODO: this should be different
 	// setup item sizes
@@ -449,6 +454,23 @@ void CGameClient::OnUpdate()
 		{
 			if(pComponent->OnCursorMove(x, y, CursorType))
 				break;
+		}
+	}
+
+	// handle touch events
+	const std::vector<IInput::CTouchFingerState> &vTouchFingerStates = Input()->TouchFingerStates();
+	bool TouchHandled = false;
+	for(auto &pComponent : m_vpInput)
+	{
+		if(TouchHandled)
+		{
+			// Also update inactive components so they can handle touch fingers being released.
+			pComponent->OnTouchState({});
+		}
+		else if(pComponent->OnTouchState(vTouchFingerStates))
+		{
+			Input()->ClearTouchDeltas();
+			TouchHandled = true;
 		}
 	}
 
@@ -651,11 +673,14 @@ void CGameClient::OnReset()
 
 	// m_aTuningList is reset in LoadMapSettings
 
+	m_LastShowDistanceZoom = 0.0f;
 	m_LastZoom = 0.0f;
 	m_LastScreenAspect = 0.0f;
+	m_LastDeadzone = 0.0f;
+	m_LastFollowFactor = 0.0f;
 	m_LastDummyConnected = false;
 
-	m_MultiViewPersonalZoom = 0;
+	m_MultiViewPersonalZoom = 0.0f;
 	m_MultiViewActivated = false;
 	m_MultiView.m_IsInit = false;
 
@@ -755,15 +780,23 @@ void CGameClient::OnRender()
 	// update the local character and spectate position
 	UpdatePositions();
 
-	// display gfx & client warnings
-	for(SWarning *pWarning : {Graphics()->GetCurWarning(), Client()->GetCurWarning()})
+	// display warnings
+	if(m_Menus.CanDisplayWarning())
 	{
-		if(pWarning != nullptr && m_Menus.CanDisplayWarning())
+		std::optional<SWarning> Warning = Graphics()->CurrentWarning();
+		if(!Warning.has_value())
 		{
-			m_Menus.PopupWarning(pWarning->m_aWarningTitle[0] == '\0' ? Localize("Warning") : pWarning->m_aWarningTitle, pWarning->m_aWarningMsg, Localize("Ok"), pWarning->m_AutoHide ? 10s : 0s);
-			pWarning->m_WasShown = true;
+			Warning = Client()->CurrentWarning();
+		}
+		if(Warning.has_value())
+		{
+			const SWarning TheWarning = Warning.value();
+			m_Menus.PopupWarning(TheWarning.m_aWarningTitle[0] == '\0' ? Localize("Warning") : TheWarning.m_aWarningTitle, TheWarning.m_aWarningMsg, Localize("Ok"), TheWarning.m_AutoHide ? 10s : 0s);
 		}
 	}
+
+	// update camera data prior to CControls::OnRender to allow CControls::m_aTargetPos to compensate using camera data
+	m_Camera.UpdateCamera();
 
 	// render all systems
 	for(auto &pComponent : m_vpAll)
@@ -2034,32 +2067,82 @@ void CGameClient::OnNewSnapshot()
 		m_aShowOthers[g_Config.m_ClDummy] = g_Config.m_ClShowOthers;
 	}
 
-	float ZoomToSend = m_Camera.m_Zoom;
+	float ShowDistanceZoom = m_Camera.m_Zoom;
+	float Zoom = m_Camera.m_Zoom;
 	if(m_Camera.m_Zooming)
 	{
 		if(m_Camera.m_ZoomSmoothingTarget > m_Camera.m_Zoom) // Zooming out
-			ZoomToSend = m_Camera.m_ZoomSmoothingTarget;
-		else if(m_Camera.m_ZoomSmoothingTarget < m_Camera.m_Zoom && m_LastZoom > 0) // Zooming in
-			ZoomToSend = m_LastZoom;
+			ShowDistanceZoom = m_Camera.m_ZoomSmoothingTarget;
+		else if(m_Camera.m_ZoomSmoothingTarget < m_Camera.m_Zoom && m_LastShowDistanceZoom > 0) // Zooming in
+			ShowDistanceZoom = m_LastShowDistanceZoom;
+
+		Zoom = m_Camera.m_ZoomSmoothingTarget;
 	}
 
-	if(ZoomToSend != m_LastZoom || Graphics()->ScreenAspect() != m_LastScreenAspect || (Client()->DummyConnected() && !m_LastDummyConnected))
+	float Deadzone = m_Camera.Deadzone();
+	float FollowFactor = m_Camera.FollowFactor();
+
+	// initialize dummy vital when first connected
+	if(Client()->DummyConnected() && !m_LastDummyConnected)
+	{
+		{
+			CNetMsg_Cl_ShowDistance Msg;
+			float x, y;
+			RenderTools()->CalcScreenParams(Graphics()->ScreenAspect(), ShowDistanceZoom, &x, &y);
+			Msg.m_X = x;
+			Msg.m_Y = y;
+			CMsgPacker Packer(&Msg);
+			Msg.Pack(&Packer);
+			Client()->SendMsg(IClient::CONN_DUMMY, &Packer, MSGFLAG_VITAL);
+		}
+		{
+			CNetMsg_Cl_CameraInfo Msg;
+			Msg.m_Zoom = round_truncate(Zoom * 1000.f);
+			Msg.m_Deadzone = Deadzone;
+			Msg.m_FollowFactor = FollowFactor;
+			CMsgPacker Packer(&Msg);
+			Msg.Pack(&Packer);
+			Client()->SendMsg(IClient::CONN_DUMMY, &Packer, MSGFLAG_VITAL);
+		}
+	}
+
+	// send show distance
+	if(ShowDistanceZoom != m_LastShowDistanceZoom || Graphics()->ScreenAspect() != m_LastScreenAspect)
 	{
 		CNetMsg_Cl_ShowDistance Msg;
 		float x, y;
-		RenderTools()->CalcScreenParams(Graphics()->ScreenAspect(), ZoomToSend, &x, &y);
+		RenderTools()->CalcScreenParams(Graphics()->ScreenAspect(), ShowDistanceZoom, &x, &y);
 		Msg.m_X = x;
 		Msg.m_Y = y;
-		Client()->ChecksumData()->m_Zoom = ZoomToSend;
+		Client()->ChecksumData()->m_Zoom = ShowDistanceZoom;
 		CMsgPacker Packer(&Msg);
 		Msg.Pack(&Packer);
-		if(ZoomToSend != m_LastZoom)
-			Client()->SendMsg(IClient::CONN_MAIN, &Packer, MSGFLAG_VITAL);
-		if(Client()->DummyConnected())
+
+		Client()->SendMsg(IClient::CONN_MAIN, &Packer, MSGFLAG_VITAL);
+		if(Client()->DummyConnected() && m_LastDummyConnected)
 			Client()->SendMsg(IClient::CONN_DUMMY, &Packer, MSGFLAG_VITAL);
-		m_LastZoom = ZoomToSend;
-		m_LastScreenAspect = Graphics()->ScreenAspect();
 	}
+
+	// send camera info
+	if(Zoom != m_LastZoom || Deadzone != m_LastDeadzone || FollowFactor != m_LastFollowFactor)
+	{
+		CNetMsg_Cl_CameraInfo Msg;
+		Msg.m_Zoom = round_truncate(Zoom * 1000.f);
+		Msg.m_Deadzone = Deadzone;
+		Msg.m_FollowFactor = FollowFactor;
+		CMsgPacker Packer(&Msg);
+		Msg.Pack(&Packer);
+
+		Client()->SendMsg(IClient::CONN_MAIN, &Packer, MSGFLAG_VITAL);
+		if(Client()->DummyConnected() && m_LastDummyConnected)
+			Client()->SendMsg(IClient::CONN_DUMMY, &Packer, MSGFLAG_VITAL);
+	}
+
+	m_LastShowDistanceZoom = ShowDistanceZoom;
+	m_LastZoom = Zoom;
+	m_LastScreenAspect = Graphics()->ScreenAspect();
+	m_LastDeadzone = Deadzone;
+	m_LastFollowFactor = FollowFactor;
 	m_LastDummyConnected = Client()->DummyConnected();
 
 	for(auto &pComponent : m_vpAll)
@@ -4362,7 +4445,7 @@ float CGameClient::MapValue(float MaxValue, float MinValue, float MaxRange, floa
 void CGameClient::ResetMultiView()
 {
 	m_Camera.SetZoom(std::pow(CCamera::ZOOM_STEP, g_Config.m_ClDefaultZoom - 10), g_Config.m_ClSmoothZoomTime);
-	m_MultiViewPersonalZoom = 0;
+	m_MultiViewPersonalZoom = 0.0f;
 	m_MultiViewActivated = false;
 	m_MultiView.m_Solo = false;
 	m_MultiView.m_IsInit = false;

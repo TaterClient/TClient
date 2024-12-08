@@ -65,6 +65,7 @@
 #include "components/tclient/skinprofiles.h"
 #include "components/tclient/tater.h"
 #include "components/tclient/verify.h"
+#include "components/touch_controls.h"
 #include "components/voting.h"
 
 class CGameInfo
@@ -156,6 +157,7 @@ public:
 	CBindWheel m_Bindwheel;
 	CTater m_Tater;
 	CDamageInd m_DamageInd;
+	CTouchControls m_TouchControls;
 	CVoting m_Voting;
 	CVerify m_Verify;
 	CSpectator m_Spectator;
@@ -548,6 +550,7 @@ public:
 	virtual void OnFlagGrab(int TeamId);
 	void OnWindowResize() override;
 
+	void InitializeLanguage() override;
 	bool m_LanguageChanged = false;
 	void OnLanguageChange();
 	void HandleLanguageChanged();
@@ -798,7 +801,7 @@ public:
 	vec2 GetSmoothPos(int ClientId);
 	vec2 GetFreezePos(int ClientId);
 	int m_MultiViewTeam;
-	int m_MultiViewPersonalZoom;
+	float m_MultiViewPersonalZoom;
 	bool m_MultiViewShowHud;
 	bool m_MultiViewActivated;
 	bool m_aMultiViewId[MAX_CLIENTS];
@@ -833,8 +836,11 @@ private:
 	CTuningParams m_aTuningList[NUM_TUNEZONES];
 	CTuningParams *TuningList() { return m_aTuningList; }
 
+	float m_LastShowDistanceZoom;
 	float m_LastZoom;
 	float m_LastScreenAspect;
+	float m_LastDeadzone;
+	float m_LastFollowFactor;
 	bool m_LastDummyConnected;
 
 	void HandleMultiView();

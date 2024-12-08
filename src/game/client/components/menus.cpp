@@ -6,6 +6,7 @@
 #include <cmath>
 #include <vector>
 
+#include <base/log.h>
 #include <base/math.h>
 #include <base/system.h>
 #include <base/vmath.h>
@@ -806,6 +807,8 @@ void CMenus::RenderLoading(const char *pCaption, const char *pContent, int Incre
 		Ui()->RenderProgressBar(ProgressBar, CurLoadRenderCount / (float)m_LoadingState.m_Total);
 	}
 
+	Graphics()->SetColor(1.0, 1.0, 1.0, 1.0);
+
 	Client()->UpdateAndSwap();
 }
 
@@ -986,10 +989,11 @@ void CMenus::PopupWarning(const char *pTopic, const char *pBody, const char *pBu
 	// no multiline support for console
 	std::string BodyStr = pBody;
 	while(BodyStr.find('\n') != std::string::npos)
+	{
 		BodyStr.replace(BodyStr.find('\n'), 1, " ");
-	dbg_msg(pTopic, "%s", BodyStr.c_str());
+	}
+	log_warn("client", "%s: %s", pTopic, BodyStr.c_str());
 
-	// reset active item
 	Ui()->SetActiveItem(nullptr);
 
 	str_copy(m_aMessageTopic, pTopic);
@@ -1815,7 +1819,7 @@ void CMenus::RenderPopupFullscreen(CUIRect Screen)
 					if(m_pClient->m_Skins7.SaveSkinfile(m_SkinNameInput.GetString(), m_Dummy))
 					{
 						m_Popup = POPUP_NONE;
-						m_SkinListNeedsUpdate = true;
+						m_SkinList7LastRefreshTime = std::nullopt;
 					}
 					else
 						PopupMessage(Localize("Error"), Localize("Unable to save the skin"), Localize("Ok"), POPUP_SAVE_SKIN);
