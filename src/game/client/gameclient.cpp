@@ -2260,6 +2260,7 @@ void CGameClient::OnPredict()
 	bool Dummy = g_Config.m_ClDummy ^ m_IsDummySwapping;
 	m_PredictedWorld.CopyWorld(&m_GameWorld);
 
+	m_DoesNothingWorld.CopyWorld(&m_PredictedWorld);
 	// don't predict inactive players, or entities from other teams
 	for(int i = 0; i < MAX_CLIENTS; i++)
 		if(CCharacter *pChar = m_PredictedWorld.GetCharacterById(i))
