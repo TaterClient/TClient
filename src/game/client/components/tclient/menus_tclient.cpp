@@ -639,8 +639,8 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			}
 			else if(Ui()->MouseButtonClicked(1) && s_SelectedBindIndex >= 0 && HoveringIndex >= 0 && HoveringIndex != s_SelectedBindIndex)
 			{
-				CBindwheel::CBind BindA = GameClient()->m_Bindwheel.m_vBinds[s_SelectedBindIndex];
-				CBindwheel::CBind BindB = GameClient()->m_Bindwheel.m_vBinds[HoveringIndex];
+				CBindWheel::CBind BindA = GameClient()->m_Bindwheel.m_vBinds[s_SelectedBindIndex];
+				CBindWheel::CBind BindB = GameClient()->m_Bindwheel.m_vBinds[HoveringIndex];
 				str_copy(GameClient()->m_Bindwheel.m_vBinds[s_SelectedBindIndex].m_aName, BindB.m_aName);
 				str_copy(GameClient()->m_Bindwheel.m_vBinds[s_SelectedBindIndex].m_aCommand, BindB.m_aCommand);
 				str_copy(GameClient()->m_Bindwheel.m_vBinds[HoveringIndex].m_aName, BindA.m_aName);
@@ -670,7 +670,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			else if(i == HoveringIndex)
 				SegmentFontSize = FontSize;
 
-			const CBindwheel::CBind Bind = GameClient()->m_Bindwheel.m_vBinds[i];
+			const CBindWheel::CBind Bind = GameClient()->m_Bindwheel.m_vBinds[i];
 			const float Angle = Theta * i;
 			vec2 TextPos = direction(Angle);
 			TextPos *= Radius * 0.75f;
@@ -705,7 +705,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		LeftView.HSplitTop(LineSize, &Button, &LeftView);
 		if(DoButton_Menu(&s_OverrideButton, Localize("Override Selected"), 0, &Button) && s_SelectedBindIndex >= 0)
 		{
-			CBindwheel::CBind TempBind;
+			CBindWheel::CBind TempBind;
 			if(str_length(s_aBindName) == 0)
 				str_copy(TempBind.m_aName, "*");
 			else
@@ -720,7 +720,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		Button.VSplitMid(&ButtonRemove, &ButtonAdd, MarginSmall);
 		if(DoButton_Menu(&s_AddButton, Localize("Add Bind"), 0, &ButtonAdd))
 		{
-			CBindwheel::CBind TempBind;
+			CBindWheel::CBind TempBind;
 			if(str_length(s_aBindName) == 0)
 				str_copy(TempBind.m_aName, "*");
 			else
@@ -823,6 +823,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		RightView.HSplitTop(MarginSmall, nullptr, &RightView);
 
 		const float TeeSize = 50.0f;
+		const float CardSize = TeeSize + MarginSmall;
 		CUIRect TeeRect, DevCardRect;
 		static CButtonContainer s_LinkButton1, s_LinkButton2, s_LinkButton3, s_LinkButton4;
 		bool WhiteFeetTemp = g_Config.m_ClWhiteFeet;
