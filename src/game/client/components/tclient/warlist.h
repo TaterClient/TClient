@@ -18,14 +18,15 @@ enum
 class CWarType
 {
 public:
-	char m_aWarType[MAX_WARLIST_TYPE_LENGTH] = "";
+	// Intentionally named redundantly because it was confusing otherwise
+	char m_aWarName[MAX_WARLIST_TYPE_LENGTH] = "";
 	ColorRGBA m_Color = ColorRGBA(1, 1, 1, 1);
 	bool m_Removable = true;
 	bool m_Imported = false;
 
 	CWarType(const char *pName, ColorRGBA Color = ColorRGBA(1, 1, 1, 1), bool Removable = true, bool IsImport = false)
 	{
-		str_copy(m_aWarType, pName);
+		str_copy(m_aWarName, pName);
 		m_Color = Color;
 		m_Removable = Removable;
 		m_Imported = IsImport;
@@ -33,7 +34,7 @@ public:
 
 	bool operator==(const CWarType &Other) const
 	{
-		return str_comp(m_aWarType, Other.m_aWarType) == 0;
+		return str_comp(m_aWarName, Other.m_aWarName) == 0;
 	}
 };
 
@@ -127,15 +128,24 @@ class CWarList : public CComponent
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 
 	void WriteLine(const char *pLine);
-	class IStorage *m_pStorage;
-	IOHANDLE m_WarlistFile;
+	class IStorage *m_pStorage = nullptr;
+	IOHANDLE m_WarlistFile = nullptr;
 
 public:
-	// None type war entries will float to the top of the list, so they can be assigned a type
-	CWarType m_WarTypeNone = CWarType("none", ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f), false);
+	CWarList();
+	~CWarList();
+
 
 	// duplicate war types are NOT allowed
-	std::vector<CWarType> m_WarTypes = {CWarType("war", ColorRGBA(1.0f, 0.2f, 0.2f, 1.0f), false), CWarType("team", ColorRGBA(0.0f, 0.9f, 0.2f, 1.0f), false)};
+	std::vector<CWarType *> m_WarTypes = {
+		new CWarType("none", ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f), false),
+		new CWarType("enemy", ColorRGBA(1.0f, 0.2f, 0.2f, 1.0f), false),
+		new CWarType("team", ColorRGBA(0.0f, 0.9f, 0.2f, 1.0f), false),
+		new CWarType("aaaaaa", ColorRGBA(1.0f, 0.9f, 0.2f, 1.0f), true)
+	};
+
+	// None type war entries will float to the top of the list, so they can be assigned a type
+	CWarType *m_pWarTypeNone = m_WarTypes[0];
 
 	// TODO: add a special backend command that allows for changing the names of the default war types
 
@@ -163,11 +173,16 @@ public:
 	void RemoveWarEntry(const char *pName, const char *pClan, const char *pType);
 	void RemoveWarType(const char *pType);
 
+	void RemoveWarEntry(CWarEntry *Entry);
+
 	void RemoveWarEntry(int Index);
 	void RemoveWarType(int Index);
 
+	ColorRGBA GetPriorityColor(int ClientId);
 	ColorRGBA GetNameplateColor(int ClientId);
 	ColorRGBA GetClanColor(int ClientId);
+	bool GetAnyWar(int ClientId);
+
 
 	void GetReason(char *pReason, int ClientId);
 	CWarDataCache GetWarData(int ClientId);

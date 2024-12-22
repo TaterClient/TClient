@@ -8,6 +8,7 @@
 
 #include <chrono>
 #include <deque>
+#include <optional>
 #include <unordered_set>
 #include <vector>
 
@@ -29,10 +30,13 @@
 #include <game/voting.h>
 
 #include <game/client/components/skins7.h>
+#include <game/client/components/tclient/warlist.h>
 
 struct CServerProcess
 {
-	PROCESS m_Process;
+#if !defined(CONF_PLATFORM_ANDROID)
+	PROCESS m_Process = INVALID_PROCESS;
+#endif
 };
 
 // component to fetch keypresses, override all other input
@@ -97,8 +101,10 @@ class CMenus : public CComponent
 	void DoJoystickAxisPicker(CUIRect View);
 	void DoJoystickBar(const CUIRect *pRect, float Current, float Tolerance, bool Active);
 
-	bool m_SkinListNeedsUpdate = false;
+	std::optional<std::chrono::nanoseconds> m_SkinListLastRefreshTime;
 	bool m_SkinListScrollToSelected = false;
+	std::optional<std::chrono::nanoseconds> m_SkinList7LastRefreshTime;
+	std::optional<std::chrono::nanoseconds> m_SkinPartsList7LastRefreshTime;
 
 	int m_DirectionQuadContainerIndex;
 
@@ -476,14 +482,16 @@ protected:
 
 	// found in menus_start.cpp
 	void RenderStartMenu(CUIRect MainView);
-	bool m_EditorHotkeyWasPressed = true;
-	float m_EditorHotKeyChecktime = 0.0f;
 
 	// found in menus_ingame.cpp
 	STextContainerIndex m_MotdTextContainerIndex;
 	void RenderGame(CUIRect MainView);
+	void RenderTouchControlsEditor(CUIRect MainView);
 	void PopupConfirmDisconnect();
 	void PopupConfirmDisconnectDummy();
+	void PopupConfirmDiscardTouchControlsChanges();
+	void PopupConfirmResetTouchControls();
+	void PopupConfirmImportTouchControlsClipboard();
 	void RenderPlayers(CUIRect MainView);
 	void RenderServerInfo(CUIRect MainView);
 	void RenderServerInfoMotd(CUIRect Motd);
@@ -589,7 +597,6 @@ protected:
 	void UpdateCommunityIcons();
 
 	// skin favorite list
-	bool m_SkinFavoritesChanged = false;
 	std::unordered_set<std::string> m_SkinFavorites;
 	static void Con_AddFavoriteSkin(IConsole::IResult *pResult, void *pUserData);
 	static void Con_RemFavoriteSkin(IConsole::IResult *pResult, void *pUserData);
@@ -645,7 +652,6 @@ protected:
 	static CUi::EPopupMenuFunctionResult PopupMapPicker(void *pContext, CUIRect View, bool Active);
 
 	void SetNeedSendInfo();
-	void SetActive(bool Active);
 	void UpdateColors();
 
 	IGraphics::CTextureHandle m_TextureBlob;
@@ -660,19 +666,23 @@ public:
 	CMenus();
 	virtual int Sizeof() const override { return sizeof(*this); }
 
-	void RenderLoading(const char *pCaption, const char *pContent, int IncreaseCounter, bool RenderLoadingBar = true, bool RenderMenuBackgroundMap = true);
+	void RenderLoading(const char *pCaption, const char *pContent, int IncreaseCounter);
+	void FinishLoading();
 
 	bool IsInit() { return m_IsInit; }
 
 	bool IsActive() const { return m_MenuActive; }
+	void SetActive(bool Active);
+
+	void RunServer();
 	void KillServer();
+	bool IsServerRunning() const;
 
 	virtual void OnInit() override;
 	void OnConsoleInit() override;
 
 	virtual void OnStateChange(int NewState, int OldState) override;
 	virtual void OnWindowResize() override;
-	virtual void OnRefreshSkins() override;
 	virtual void OnReset() override;
 	virtual void OnRender() override;
 	virtual bool OnInput(const IInput::CEvent &Event) override;
@@ -844,11 +854,19 @@ private:
 	// found in menus_tclient.cpp
 	void RenderSettingsTClient(CUIRect MainView);
 	void RenderSettingsProfiles(CUIRect MainView);
-	void RenderDevSkin(vec2 RenderPos, float Size, const char *pSkinName, const char *pBackupSkin, bool CustomColors, int FeetColor, int BodyColor, int Emote, bool Rainbow);
+	void RenderSettingsWarList(CUIRect MainView);
+	void RenderSettingsInfo(CUIRect MainView);
+	const CWarType *m_pRemoveWarType = nullptr;
+	void PopupConfirmRemoveWarType();
+	void RenderDevSkin(vec2 RenderPos, float Size, const char *pSkinName, const char *pBackupSkin, bool CustomColors, int FeetColor, int BodyColor, int Emote, bool Rainbow, 
+		ColorRGBA ColorFeet = ColorRGBA(0, 0, 0, 0), ColorRGBA ColorBody = ColorRGBA(0, 0, 0, 0));
+	void RenderFontIcon(const CUIRect Rect, const char *pText, float Size, int Align);
+	int DoButtonNoRect_FontIcon(CButtonContainer *pButtonContainer, const char *pText, int Checked, const CUIRect *pRect, int Corners = IGraphics::CORNER_ALL);
 
 
 	ColorHSLA RenderHSLColorPicker(const CUIRect *pRect, unsigned int *pColor, bool Alpha);
 	bool RenderHslaScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alpha, float DarkestLight);
+	int DoButtonLineSize_Menu(CButtonContainer *pButtonContainer, const char *pText, int Checked, const CUIRect *pRect, float LineSize, bool Fake = false, const char *pImageName = nullptr, int Corners = IGraphics::CORNER_ALL, float Rounding = 5.0f, float FontFactor = 0.0f, ColorRGBA Color = ColorRGBA(1.0f, 1.0f, 1.0f, 0.5f));
 
 	CServerProcess m_ServerProcess;
 };
