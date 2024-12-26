@@ -79,6 +79,8 @@ MAYBE_UNUSED static const char *FONT_ICON_FLAG_CHECKERED = "\xEF\x84\x9E";
 MAYBE_UNUSED static const char *FONT_ICON_BAN = "\xEF\x81\x9E";
 MAYBE_UNUSED static const char *FONT_ICON_CIRCLE_CHEVRON_DOWN = "\xEF\x84\xBA";
 MAYBE_UNUSED static const char *FONT_ICON_KEY = "\xEF\x82\x84";
+MAYBE_UNUSED static const char *FONT_ICON_USERS = "\xEF\x83\x80";
+MAYBE_UNUSED static const char *FONT_ICON_COMMENT = "\xEF\x81\xB5";
 MAYBE_UNUSED static const char *FONT_ICON_SQUARE_MINUS = "\xEF\x85\x86";
 MAYBE_UNUSED static const char *FONT_ICON_SQUARE_PLUS = "\xEF\x83\xBE";
 MAYBE_UNUSED static const char *FONT_ICON_SORT_UP = "\xEF\x83\x9E";
@@ -150,6 +152,8 @@ MAYBE_UNUSED static const char *FONT_ICON_REDO = "\xEF\x8B\xB9";
 
 MAYBE_UNUSED static const char *FONT_ICON_ARROWS_ROTATE = "\xEF\x80\xA1";
 MAYBE_UNUSED static const char *FONT_ICON_QUESTION = "?";
+
+MAYBE_UNUSED static const char *FONT_ICON_CAMERA = "\xEF\x80\xB0";
 } // end namespace FontIcons
 
 enum ETextCursorSelectionMode
@@ -316,6 +320,9 @@ public:
 	virtual void SetCursor(CTextCursor *pCursor, float x, float y, float FontSize, int Flags) const = 0;
 	virtual void MoveCursor(CTextCursor *pCursor, float x, float y) const = 0;
 	virtual void SetCursorPosition(CTextCursor *pCursor, float x, float y) const = 0;
+
+	virtual std::vector<std::string> *GetCustomFaces() = 0; // TClient
+	virtual void SetCustomFace(const char *pFace) = 0; // TClient
 
 	virtual bool LoadFonts() = 0;
 	virtual void SetFontPreset(EFontPreset FontPreset) = 0;

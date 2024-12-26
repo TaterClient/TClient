@@ -58,13 +58,17 @@
 #include "components/spectator.h"
 #include "components/statboard.h"
 #include "components/tooltips.h"
+#include "components/tclient/bindchat.h"
 #include "components/tclient/bindwheel.h"
 #include "components/tclient/outlines.h"
 #include "components/tclient/player_indicator.h"
 #include "components/tclient/rainbow.h"
 #include "components/tclient/skinprofiles.h"
+#include "components/tclient/statusbar.h"
 #include "components/tclient/tater.h"
 #include "components/tclient/verify.h"
+#include "components/tclient/warlist.h"
+#include "components/touch_controls.h"
 #include "components/voting.h"
 
 class CGameInfo
@@ -138,7 +142,6 @@ public:
 	CBroadcast m_Broadcast;
 	CGameConsole m_GameConsole;
 	CBinds m_Binds;
-	CSkinProfiles m_SkinProfiles;
 	CParticles m_Particles;
 	CMenus m_Menus;
 	CSkins m_Skins;
@@ -153,16 +156,14 @@ public:
 	CStatboard m_Statboard;
 	CSounds m_Sounds;
 	CEmoticon m_Emoticon;
-	CBindWheel m_Bindwheel;
-	CTater m_Tater;
+	
 	CDamageInd m_DamageInd;
+	CTouchControls m_TouchControls;
 	CVoting m_Voting;
 	CVerify m_Verify;
 	CSpectator m_Spectator;
 
 	CPlayers m_Players;
-	CPlayerIndicator m_PlayerIndicator;
-	COutlines m_Outlines;
 	CNamePlates m_NamePlates;
 	CFreezeBars m_FreezeBars;
 	CItems m_Items;
@@ -176,10 +177,20 @@ public:
 	CMapSounds m_MapSounds;
 
 	CRaceDemo m_RaceDemo;
-	CRainbow m_Rainbow;
 	CGhost m_Ghost;
 
 	CTooltips m_Tooltips;
+
+	// TClient Components
+	CSkinProfiles m_SkinProfiles;
+	CStatusBar m_StatusBar;
+	CBindchat m_Bindchat;
+	CBindWheel m_Bindwheel;
+	CTater m_Tater;
+	CPlayerIndicator m_PlayerIndicator;
+	COutlines m_Outlines;
+	CRainbow m_Rainbow;
+	CWarList m_WarList;
 
 private:
 	std::vector<class CComponent *> m_vpAll;
@@ -343,12 +354,18 @@ public:
 		int m_HighestClientId;
 
 		// spectate data
-		struct CSpectateInfo
+		class CSpectateInfo
 		{
+		public:
 			bool m_Active;
 			int m_SpectatorId;
 			bool m_UsePosition;
 			vec2 m_Position;
+
+			bool m_HasCameraInfo;
+			float m_Zoom;
+			int m_Deadzone;
+			int m_FollowFactor;
 		} m_SpecInfo;
 
 		//
@@ -378,6 +395,35 @@ public:
 	int m_aExpectingTuningForZone[NUM_DUMMIES];
 	int m_aExpectingTuningSince[NUM_DUMMIES];
 	CTuningParams m_aTuning[NUM_DUMMIES];
+
+	// spectate cursor data
+	class CCursorInfo
+	{
+		friend class CGameClient;
+		static constexpr int CURSOR_SAMPLES = 8; // how many samples to keep
+		static constexpr int SAMPLE_FRAME_WINDOW = 3; // how many samples should be used for polynomial interpolation
+		static constexpr int SAMPLE_FRAME_OFFSET = 2; // how many samples in the past should be included
+		static constexpr double INTERP_DELAY = 4.25; // how many ticks in the past to show, enables extrapolation with smaller value (<= SAMPLE_FRAME_WINDOW - SAMPLE_FRAME_OFFSET + 3)
+		static constexpr double REST_THRESHOLD = 3.0; // how many ticks of the same samples are considered to be resting
+
+		int m_CursorOwnerId;
+		double m_aTargetSamplesTime[CURSOR_SAMPLES];
+		vec2 m_aTargetSamplesData[CURSOR_SAMPLES];
+		int m_NumSamples;
+
+		bool m_Available;
+		int m_Weapon;
+		vec2 m_Target;
+		vec2 m_WorldTarget;
+		vec2 m_Position;
+
+	public:
+		bool IsAvailable() const { return m_Available; }
+		int Weapon() const { return m_Weapon; }
+		vec2 Target() const { return m_Target; }
+		vec2 WorldTarget() const { return m_WorldTarget; }
+		vec2 Position() const { return m_Position; }
+	} m_CursorInfo;
 
 	// client data
 	struct CClientData
@@ -417,6 +463,14 @@ public:
 
 		CCharacterCore m_Predicted;
 		CCharacterCore m_PrevPredicted;
+
+		//TClient
+		vec2 m_ImprovedPredPos = vec2(0, 0);
+		vec2 m_PrevImprovedPredPos = vec2(0, 0);
+		//vec2 m_DebugVector = vec2(0, 0);
+		//vec2 m_DebugVector2 = vec2(0, 0);
+		//vec2 m_DebugVector3 = vec2(0, 0);
+		float m_Uncertainty = 0.0f;
 
 		CTeeRenderInfo m_SkinInfo; // this is what the server reports
 		CTeeRenderInfo m_RenderInfo; // this is what we use
@@ -548,6 +602,7 @@ public:
 	virtual void OnFlagGrab(int TeamId);
 	void OnWindowResize() override;
 
+	void InitializeLanguage() override;
 	bool m_LanguageChanged = false;
 	void OnLanguageChange();
 	void HandleLanguageChanged();
@@ -610,7 +665,9 @@ public:
 	CGameWorld m_GameWorld;
 	CGameWorld m_PredictedWorld;
 	CGameWorld m_PrevPredictedWorld;
+	//TClient
 	CGameWorld m_ExtraPredictedWorld;
+	CGameWorld m_PredSmoothingWorld;
 
 	std::vector<SSwitchers> &Switchers() { return m_GameWorld.m_Core.m_vSwitchers; }
 	std::vector<SSwitchers> &PredSwitchers() { return m_PredictedWorld.m_Core.m_vSwitchers; }
@@ -798,7 +855,7 @@ public:
 	vec2 GetSmoothPos(int ClientId);
 	vec2 GetFreezePos(int ClientId);
 	int m_MultiViewTeam;
-	int m_MultiViewPersonalZoom;
+	float m_MultiViewPersonalZoom;
 	bool m_MultiViewShowHud;
 	bool m_MultiViewActivated;
 	bool m_aMultiViewId[MAX_CLIENTS];
@@ -815,6 +872,7 @@ private:
 	int m_aShowOthers[NUM_DUMMIES];
 
 	void UpdatePrediction();
+	void UpdateSpectatorCursor();
 	void UpdateRenderedCharacters();
 
 	int m_aLastUpdateTick[MAX_CLIENTS] = {0};
@@ -833,8 +891,11 @@ private:
 	CTuningParams m_aTuningList[NUM_TUNEZONES];
 	CTuningParams *TuningList() { return m_aTuningList; }
 
+	float m_LastShowDistanceZoom;
 	float m_LastZoom;
 	float m_LastScreenAspect;
+	float m_LastDeadzone;
+	float m_LastFollowFactor;
 	bool m_LastDummyConnected;
 
 	void HandleMultiView();

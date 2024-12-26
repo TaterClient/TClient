@@ -262,7 +262,10 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			m_CommandsNeedSorting = false;
 		}
 
-		SendChatQueued(m_Input.GetString());
+		if (m_pClient->m_Bindchat.ChatDoBinds(m_Input.GetString()))
+			; // Do nothing as bindchat was executed
+		else
+			SendChatQueued(m_Input.GetString());
 		m_pHistoryEntry = nullptr;
 		DisableMode();
 		m_pClient->OnRelease();
@@ -312,7 +315,11 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 				});
 		}
 
-		if(m_aCompletionBuffer[0] == '/' && !m_vCommands.empty())
+		if (m_pClient->m_Bindchat.ChatDoAutocomplete(ShiftPressed))
+		{
+
+		}
+		else if(m_aCompletionBuffer[0] == '/' && !m_vCommands.empty())
 		{
 			CCommand *pCompletionCommand = 0;
 
@@ -421,7 +428,7 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 
 				// quote the name
 				char aQuoted[128];
-				if(m_Input.GetString()[0] == '/' && (str_find(pCompletionString, " ") || str_find(pCompletionString, "\"")))
+				if((m_Input.GetString()[0] == '/' || m_pClient->m_Bindchat.CheckBindChat(m_Input.GetString())) && (str_find(pCompletionString, " ") || str_find(pCompletionString, "\"")))
 				{
 					// escape the name
 					str_copy(aQuoted, "\"");
@@ -733,13 +740,18 @@ void CChat::AddLine(int ClientId, int Team, const char *pLine)
 		Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, pFrom, aBuf, ChatLogColor);
 	};
 
+	// Custom color for new line
+	std::optional<ColorRGBA> CustomColor = std::nullopt;
+	if(ClientId == CLIENT_MSG)
+		CustomColor = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageClientColor));
+
 	CLine *pCurrentLine = &m_aLines[m_CurrentLine];
 
 	// Team Number:
 	// 0 = global; 1 = team; 2 = sending whisper; 3 = receiving whisper
 
 	// If it's a client message, m_aText will have ": " prepended so we have to work around it.
-	if(pCurrentLine->m_TeamNumber == Team && pCurrentLine->m_ClientId == ClientId && str_comp(pCurrentLine->m_aText, pLine) == 0)
+	if(pCurrentLine->m_TeamNumber == Team && pCurrentLine->m_ClientId == ClientId && str_comp(pCurrentLine->m_aText, pLine) == 0 && pCurrentLine->m_CustomColor == CustomColor)
 	{
 		pCurrentLine->m_TimesRepeated++;
 		TextRender()->DeleteTextContainer(pCurrentLine->m_TextContainerIndex);
@@ -766,7 +778,7 @@ void CChat::AddLine(int ClientId, int Team, const char *pLine)
 	pCurrentLine->m_NameColor = -2;
 	pCurrentLine->m_Friend = false;
 	pCurrentLine->m_HasRenderTee = false;
-	pCurrentLine->m_CustomColor = std::nullopt;
+	pCurrentLine->m_CustomColor = CustomColor;
 
 	TextRender()->DeleteTextContainer(pCurrentLine->m_TextContainerIndex);
 	Graphics()->DeleteQuadContainer(pCurrentLine->m_QuadContainerIndex);
@@ -800,8 +812,6 @@ void CChat::AddLine(int ClientId, int Team, const char *pLine)
 	{
 		str_copy(pCurrentLine->m_aName, "— ");
 		str_copy(pCurrentLine->m_aText, pLine);
-		// Set custom color
-		pCurrentLine->m_CustomColor = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageClientColor));
 	}
 	else
 	{
@@ -1076,6 +1086,8 @@ void CChat::OnPrepareLines(float y)
 			NameColor = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageSystemColor));
 		else if(Line.m_ClientId == CLIENT_MSG)
 			NameColor = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageClientColor));
+		else if(Line.m_ClientId >= 0 && g_Config.m_ClWarList && g_Config.m_ClWarListChat && GameClient()->m_WarList.GetAnyWar(Line.m_ClientId)) // TClient
+			NameColor = GameClient()->m_WarList.GetPriorityColor(Line.m_ClientId);
 		else if(Line.m_Team)
 			NameColor = CalculateNameColor(ColorHSLA(g_Config.m_ClMessageTeamColor));
 		else if(Line.m_NameColor == TEAM_RED)
@@ -1178,7 +1190,12 @@ void CChat::OnRender()
 	Graphics()->MapScreen(0.0f, 0.0f, Width, Height);
 
 	float x = 5.0f;
-	float y = 300.0f - 20.0f * FontSize() / 6.f;
+
+
+	// TClient
+	float y = 300.0f - (20.0f * FontSize() / 6.f + (g_Config.m_ClStatusBar ? g_Config.m_ClStatusBarHeight : 0)); 
+	// float y = 300.0f - 20.0f * FontSize() / 6.f;
+
 	float ScaledFontSize = FontSize() * (8 / 6.f);
 	if(m_Mode != MODE_NONE)
 	{

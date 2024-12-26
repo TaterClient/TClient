@@ -134,6 +134,8 @@ nav {
     display: flex;
     align-items: center;
     gap: 12px;
+    font-size: 18px;
+    font-weight: 500;
 }
 
 
@@ -473,8 +475,8 @@ footer {
     word-wrap: break-word;
 }
 
-/* Mobile Specific */
-@media (max-width: 768px) {
+
+@media (max-width: 1040px) {
     nav {
         padding: 10px;
     }
@@ -510,6 +512,11 @@ footer {
     .donate-icon {
         margin-top: 10px;
     }
+}
+
+/* Mobile Specific */
+@media (max-width: 768px) {
+
 
     .hero-logo {
         max-width: 100%;

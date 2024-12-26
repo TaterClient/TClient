@@ -49,13 +49,17 @@ MACRO_CONFIG_INT(ClRenderGhostAsCircle, tc_render_ghost_as_circle, 0, 0, 1, CFGF
 // MACRO_CONFIG_INT(ClHookLineSize, tc_hook_line_width, 0, 0, 20, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Adjustable hookline width, set to 0 for old default rendering")
 
 MACRO_CONFIG_INT(ClShowCenterLines, tc_show_center, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Draws lines to show the center of your screen/hitbox")
-
 MACRO_CONFIG_INT(ClShowSkinName, tc_skin_name, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Shows skin names in nameplates, good for finding missing skins")
 
 // MACRO_CONFIG_INT(ClFreeGhost, tc_freeghost, 0, 0, 1, CFGFLAG_CLIENT , "")
 
-MACRO_CONFIG_INT(ClFastInput, tc_fast_input, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Uses input for prediction up to 20ms faster")
+MACRO_CONFIG_INT(ClFastInput, tc_fast_input, 0, 0, 5, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Uses input for prediction up to 20ms faster")
 MACRO_CONFIG_INT(ClFastInputOthers, tc_fast_input_others, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Do an extra 1 tick (20ms) for other tees with your fast inputs. (increases visual latency, makes dragging easier)")
+
+MACRO_CONFIG_INT(ClAntiPingImproved, tc_antiping_improved, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Different antiping smoothing algorithm, not compatible with cl_antiping_smooth")
+MACRO_CONFIG_INT(ClAntiPingNevativeBuffer, tc_antiping_negative_buffer, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Helps in Gores. Allows internal certainty value to be negative which causes more conservative prediction")
+MACRO_CONFIG_INT(ClAntiPingStableDirection, tc_antiping_stable_direction, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Predicts optimistically along the tees stable axis to reduce delay in gaining overall stability")
+MACRO_CONFIG_INT(ClAntiPingUncertaintyScale, tc_antiping_uncertainty_scale, 150, 25, 400, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Determines uncertainty duration as a factor of ping, 100 = 1.0")
 
 MACRO_CONFIG_INT(ClColorFreeze, tc_color_freeze, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Use skin colors for frozen tees")
 MACRO_CONFIG_INT(ClColorFreezeDarken, tc_color_freeze_darken, 90, 0, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Makes color of tees darker when in freeze (0-100)")
@@ -64,7 +68,6 @@ MACRO_CONFIG_INT(ClColorFreezeFeet, tc_color_freeze_feet, 0, 0, 1, CFGFLAG_CLIEN
 // Revert Variables
 MACRO_CONFIG_INT(ClSmoothPredictionMargin, tc_prediction_margin_smooth, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Makes prediction margin transition smooth, causes worse ping jitter adjustment (reverts a ddnet change)")
 // MACRO_CONFIG_INT(ClFreezeStars, tc_freeze_stars, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show old freeze stars")
-MACRO_CONFIG_INT(ClOldMouseZoom, tc_old_mouse_zoom, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Does not zoom mouse based on camera to prevent precision loss at low zoom levels")
 
 // Outline Variables
 MACRO_CONFIG_INT(ClOutline, tc_outline, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Draws outlines")
@@ -102,6 +105,7 @@ MACRO_CONFIG_INT(ClResetBindWheelMouse, tc_reset_bindwheel_mouse, 0, 0, 1, CFGFL
 // Regex chat matching
 MACRO_CONFIG_STR(ClRegexChatIgnore, tc_regex_chat_ignore, 512, "", CFGFLAG_CLIENT | CFGFLAG_SAVE, "Filters out chat messages based on a regular expression.")
 
+// Misc visual
 MACRO_CONFIG_INT(ClWhiteFeet, tc_white_feet, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Render all feet as perfectly white base color")
 MACRO_CONFIG_STR(ClWhiteFeetSkin, tc_white_feet_skin, 255, "x_ninja", CFGFLAG_CLIENT | CFGFLAG_SAVE, "Base skin for white feet")
 
@@ -112,9 +116,11 @@ MACRO_CONFIG_STR(ClNotifyWhenLastText, tc_last_notify_text, 64, "Last!", CFGFLAG
 MACRO_CONFIG_COL(ClNotifyWhenLastColor, tc_last_notify_color, 256, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Color for last notify")
 
 MACRO_CONFIG_INT(ClRenderCursorSpec, tc_cursor_in_spec, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Render your gun cursor when spectating in freeview")
+MACRO_CONFIG_INT(ClRenderCursorSpecAlpha, tc_cursor_in_spec_alpha, 100, 0, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Alpha of cursor in freeview")
 
 MACRO_CONFIG_INT(ClRenderNameplateSpec, tc_render_nameplate_spec, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Render nameplates when spectating")
 
+//Profiles
 MACRO_CONFIG_INT(ClApplyProfileSkin, tc_profile_skin, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Apply skin in profiles")
 MACRO_CONFIG_INT(ClApplyProfileName, tc_profile_name, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Apply name in profiles")
 MACRO_CONFIG_INT(ClApplyProfileClan, tc_profile_clan, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Apply clan in profiles")
@@ -130,6 +136,31 @@ MACRO_CONFIG_INT(ClRainbow, tc_rainbow, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, 
 MACRO_CONFIG_INT(ClRainbowOthers, tc_rainbow_others, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Turn on rainbow client side for others")
 MACRO_CONFIG_INT(ClRainbowMode, tc_rainbow_mode, 1, 1, 4, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Rainbow mode (1: rainbow, 2: pulse, 3: darkness, 4: random)")
 MACRO_CONFIG_INT(ClRainbowSpeed, tc_rainbow_speed, 100, 0, 10000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Rainbow speed as a percentage (50 = half speed, 200 = double speed)")
+
+// War List
+MACRO_CONFIG_INT(ClWarList, tc_warlist, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Toggles war list visuals")
+MACRO_CONFIG_INT(ClWarListShowClan, tc_warlist_show_clan_if_war, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show clan in nameplate if there is a war")
+MACRO_CONFIG_INT(ClWarListReason, tc_warlist_reason, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show war reason")
+MACRO_CONFIG_INT(ClWarListChat, tc_warlist_chat, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show war colors in chat")
+MACRO_CONFIG_INT(ClWarListScoreboard, tc_warlist_scoreboard, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show war colors in scoreboard")
+MACRO_CONFIG_INT(ClWarListAllowDuplicates, tc_warlist_allow_duplicates, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Allow duplicate war entrys")
+
+// Status Bar
+MACRO_CONFIG_INT(ClStatusBar, tc_statusbar, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable status bar")
+
+MACRO_CONFIG_INT(ClStatusBar12HourClock, tc_statusbar_12_hour_clock, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Use 12 hour clock in local time")
+MACRO_CONFIG_INT(ClStatusBarLocalTimeSeocnds, tc_statusbar_local_time_seconds, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show seconds in local time")
+MACRO_CONFIG_INT(ClStatusBarHeight, tc_statusbar_height, 8, 0, 16, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Height of the status bar")
+
+MACRO_CONFIG_COL(ClStatusBarColor, tc_statusbar_color, 3221225472, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Status bar background color")
+MACRO_CONFIG_COL(ClStatusBarTextColor, tc_statusbar_text_color, 4278190335, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Status bar text color")
+MACRO_CONFIG_COL(ClStatusBarAlpha, tc_statusbar_alpha, 75, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Status bar background alpha")
+MACRO_CONFIG_COL(ClStatusBarTextAlpha, tc_statusbar_text_alpha, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Status bar text alpha")
+
+// Font
+MACRO_CONFIG_STR(ClCustomFont, tc_custom_font, 255, "DejaVu Sans", CFGFLAG_CLIENT | CFGFLAG_SAVE, "Custom font face")
+
+
 
 // AAAAAAA
 MACRO_CONFIG_INT(ClAmIFrozen, EEEfrz, 0, 0, 1, CFGFLAG_CLIENT, "")

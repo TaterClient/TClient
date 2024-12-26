@@ -1,4 +1,3 @@
-
 #ifndef GAME_CLIENT_COMPONENTS_BINDWHEEL_H
 #define GAME_CLIENT_COMPONENTS_BINDWHEEL_H
 #include <game/client/component.h>
@@ -8,7 +7,7 @@ enum
 {
 	BINDWHEEL_MAX_NAME = 64,
 	BINDWHEEL_MAX_CMD = 1024,
-	MAX_BINDS = 64
+	BINDWHEEL_MAX_BINDS = 64
 };
 
 class CBindWheel : public CComponent
@@ -25,24 +24,25 @@ class CBindWheel : public CComponent
 	static void ConAddBindwheelLegacy(IConsole::IResult *pResult, void *pUserData);
 	static void ConAddBindwheel(IConsole::IResult *pResult, void *pUserData);
 	static void ConRemoveBindwheel(IConsole::IResult *pResult, void *pUserData);
-	static void ConRemoveAllBinds(IConsole::IResult *pResult, void *pUserData);
-	static void ConExecuteHover(IConsole::IResult *pResult, void *pUserData);
+	static void ConRemoveAllBindwheelBinds(IConsole::IResult *pResult, void *pUserData);
+	static void ConBindwheelExecuteHover(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData);
 
 public:
-	struct SBind
+	class CBind
 	{
+	public:
 		char m_aName[BINDWHEEL_MAX_NAME];
 		char m_aCommand[BINDWHEEL_MAX_CMD];
 
-		bool operator==(const SBind &Other) const
+		bool operator==(const CBind &Other) const
 		{
 			return str_comp(m_aName, Other.m_aName) == 0 && str_comp(m_aCommand, Other.m_aCommand) == 0;
 		}
 	};
 
-	std::vector<SBind> m_vBinds;
+	std::vector<CBind> m_vBinds;
 
 	CBindWheel();
 	virtual int Sizeof() const override { return sizeof(*this); }
@@ -58,8 +58,8 @@ public:
 	void RemoveBind(int Index);
 	void RemoveAllBinds();
 
-	void ExecuteHover();
-	void ExecuteBindwheel(int Bind);
+	void ExecuteHoveredBind();
+	void ExecuteBind(int Bind);
 };
 
 #endif

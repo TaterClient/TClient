@@ -2,10 +2,13 @@
 #define ENGINE_CLIENT_GRAPHICS_THREADED_H
 
 #include <base/system.h>
+
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
+#include <atomic>
 #include <cstddef>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -798,8 +801,9 @@ class CGraphics_Threaded : public IEngineGraphics
 	size_t m_FirstFreeTexture;
 	int m_TextureMemoryUsage;
 
-	bool m_WarnPngliteIncompatibleImages = false;
+	std::atomic<bool> m_WarnPngliteIncompatibleImages = false;
 
+	std::mutex m_WarningsMutex;
 	std::vector<SWarning> m_vWarnings;
 
 	// is a non full windowed (in a sense that the viewport won't include the whole window),
@@ -945,6 +949,7 @@ public:
 	IGraphics::CTextureHandle FindFreeTextureIndex();
 	void FreeTextureIndex(CTextureHandle *pIndex);
 	void UnloadTexture(IGraphics::CTextureHandle *pIndex) override;
+	void LoadTextureAddWarning(size_t Width, size_t Height, int Flags, const char *pTexName);
 	IGraphics::CTextureHandle LoadTextureRaw(const CImageInfo &Image, int Flags, const char *pTexName = nullptr) override;
 	IGraphics::CTextureHandle LoadTextureRawMove(CImageInfo &Image, int Flags, const char *pTexName = nullptr) override;
 
@@ -1107,16 +1112,6 @@ public:
 	void DrawRect4(float x, float y, float w, float h, ColorRGBA ColorTopLeft, ColorRGBA ColorTopRight, ColorRGBA ColorBottomLeft, ColorRGBA ColorBottomRight, int Corners, float Rounding) override;
 	void DrawCircle(float CenterX, float CenterY, float Radius, int Segments) override;
 
-	const GL_STexCoord *GetCurTextureCoordinates() override
-	{
-		return m_aTexture;
-	}
-
-	const GL_SColor *GetCurColor() override
-	{
-		return m_aColor;
-	}
-
 	int CreateQuadContainer(bool AutomaticUpload = true) override;
 	void QuadContainerChangeAutomaticUpload(int ContainerIndex, bool AutomaticUpload) override;
 	void QuadContainerUpload(int ContainerIndex) override;
@@ -1250,7 +1245,9 @@ public:
 	bool IsIdle() const override;
 	void WaitForIdle() override;
 
-	SWarning *GetCurWarning() override;
+	void AddWarning(const SWarning &Warning);
+	std::optional<SWarning> CurrentWarning() override;
+
 	bool ShowMessageBox(unsigned Type, const char *pTitle, const char *pMsg) override;
 	bool IsBackendInitialized() override;
 

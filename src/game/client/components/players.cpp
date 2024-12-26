@@ -190,7 +190,7 @@ void CPlayers::RenderHookCollLine(
 		IntraTick = m_pClient->m_aClients[ClientId].m_IsPredicted ? Client()->PredIntraGameTick(g_Config.m_ClDummy) : Client()->IntraGameTick(g_Config.m_ClDummy);
 
 	float Angle;
-	if(Local && (!m_pClient->m_Snap.m_SpecInfo.m_Active || m_pClient->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW) && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+	if(Local && !m_pClient->m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 	{
 		// just use the direct input if it's the local player we are rendering
 		vec2 Pos = m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy];
@@ -199,8 +199,6 @@ void CPlayers::RenderHookCollLine(
 		{
 			if(g_Config.m_ClImproveMousePrecision && MaxDistance < 1000) // Don't scale if it would reduce precision
 				Pos *= length(Pos) * 1000.0f / (float)MaxDistance;
-			if(!m_pClient->m_Snap.m_SpecInfo.m_Active && !g_Config.m_ClOldMouseZoom)
-				Pos *= m_pClient->m_Camera.m_Zoom;
 		}
 		Pos.x = (int)Pos.x;
 		Pos.y = (int)Pos.y;
@@ -243,6 +241,16 @@ void CPlayers::RenderHookCollLine(
 #endif
 		if((AlwaysRenderHookColl || RenderHookCollPlayer) && RenderHookCollVideo)
 		{
+			if(Local && !m_pClient->m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+			{
+				ExDirection = normalize(
+					vec2((int)((int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].x * m_pClient->m_Camera.m_Zoom),
+						(int)((int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].y * m_pClient->m_Camera.m_Zoom)));
+
+				// fix direction if mouse is exactly in the center
+				if(!(int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].x && !(int)m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy].y)
+					ExDirection = vec2(1, 0);
+			}
 			Graphics()->TextureClear();
 			vec2 InitPos = Position;
 			vec2 FinishPos = InitPos + ExDirection * (m_pClient->m_aTuning[g_Config.m_ClDummy].m_HookLength - 42.0f);
@@ -473,7 +481,7 @@ void CPlayers::RenderPlayer(
 	float AttackTicksPassed = AttackTime * (float)Client()->GameTickSpeed();
 
 	float Angle;
-	if(Local && (!m_pClient->m_Snap.m_SpecInfo.m_Active || m_pClient->m_Snap.m_SpecInfo.m_SpectatorId != SPEC_FREEVIEW) && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+	if(Local && !m_pClient->m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 	{
 		// just use the direct input if it's the local player we are rendering
 		vec2 Pos = m_pClient->m_Controls.m_aMousePos[g_Config.m_ClDummy];
@@ -482,8 +490,6 @@ void CPlayers::RenderPlayer(
 		{
 			if(g_Config.m_ClImproveMousePrecision && MaxDistance < 1000) // Don't scale if it would reduce precision
 				Pos *= length(Pos) * 1000.0f / (float)MaxDistance;
-			if(!m_pClient->m_Snap.m_SpecInfo.m_Active && !g_Config.m_ClOldMouseZoom)
-				Pos *= m_pClient->m_Camera.m_Zoom;
 		}
 		Pos.x = (int)Pos.x;
 		Pos.y = (int)Pos.y;
@@ -518,6 +524,8 @@ void CPlayers::RenderPlayer(
 
 	bool Stationary = Player.m_VelX <= 1 && Player.m_VelX >= -1;
 	bool InAir = !Collision()->CheckPoint(Player.m_X, Player.m_Y + 16);
+	if(g_Config.m_ClAntiPingImproved && !Local)
+		InAir = !Collision()->CheckPoint(Position.x, Position.y + 16);
 	bool Running = Player.m_VelX >= 5000 || Player.m_VelX <= -5000;
 	bool WantOtherDir = (Player.m_Direction == -1 && Vel.x > 0) || (Player.m_Direction == 1 && Vel.x < 0);
 	bool Inactive = ClientId >= 0 && (m_pClient->m_aClients[ClientId].m_Afk || m_pClient->m_aClients[ClientId].m_Paused);
@@ -779,7 +787,6 @@ void CPlayers::RenderPlayer(
 		CTeeRenderInfo Shadow = RenderInfo;
 		RenderTools()->RenderTee(&State, &Shadow, Player.m_Emote, Direction, ShadowPosition, 0.5f); // render ghost
 	}
-
 	RenderTools()->RenderTee(&State, &RenderInfo, Player.m_Emote, Direction, Position, Alpha);
 
 	float TeeAnimScale, TeeBaseSize;
@@ -922,8 +929,6 @@ void CPlayers::RenderPlayerGhost(
 		{
 			if(g_Config.m_ClImproveMousePrecision && MaxDistance < 1000) // Don't scale if it would reduce precision
 				Pos *= length(Pos) * 1000.0f / (float)MaxDistance;
-			if(!m_pClient->m_Snap.m_SpecInfo.m_Active && !g_Config.m_ClOldMouseZoom)
-				Pos *= m_pClient->m_Camera.m_Zoom;
 		}
 		Pos.x = (int)Pos.x;
 		Pos.y = (int)Pos.y;

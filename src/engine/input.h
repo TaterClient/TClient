@@ -8,13 +8,11 @@
 #include <base/types.h>
 #include <base/vmath.h>
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 #include <string>
 #include <vector>
-
-const int g_MaxKeys = 512;
-extern const char g_aaKeyStrings[g_MaxKeys][20];
 
 class IInput : public IInterface
 {
@@ -44,6 +42,9 @@ public:
 
 	// events
 	virtual void ConsumeEvents(std::function<void(const CEvent &Event)> Consumer) const = 0;
+	/**
+	 * Clears the events and @link KeyPress @endlink state for this frame. Must be called at the end of each frame.
+	 */
 	virtual void Clear() = 0;
 
 	/**
@@ -56,9 +57,31 @@ public:
 	virtual bool ModifierIsPressed() const = 0;
 	virtual bool ShiftIsPressed() const = 0;
 	virtual bool AltIsPressed() const = 0;
+	/**
+	 * Returns whether the given key is currently pressed down. This directly represents the state of pressed keys
+	 * based on all handled input events.
+	 *
+	 * This function should be used to trigger behavior continuously while a specific key is held down, e.g. for
+	 * showing a list of all keys that are currently being pressed.
+	 *
+	 * @param Key The key code (see `keys.h`).
+	 *
+	 * @return `true` if key is currently pressed down, `false` otherwise.
+	 */
 	virtual bool KeyIsPressed(int Key) const = 0;
-	virtual bool KeyPress(int Key, bool CheckCounter = false) const = 0;
-	const char *KeyName(int Key) const { return (Key >= 0 && Key < g_MaxKeys) ? g_aaKeyStrings[Key] : g_aaKeyStrings[0]; }
+	/**
+	 * Returns whether the given key was pressed down during input updates for current frame. This state is
+	 * cleared at the end of each frame by calling the @link Clear @endlink function.
+	 *
+	 * This function should be used to trigger behavior only once per key press event per frame, e.g. for menu
+	 * hotkeys that should activate behavior once per key press.
+	 *
+	 * @param Key The key code (see `keys.h`).
+	 *
+	 * @return `true` if key was pressed down during input updates for the current frame, `false` otherwise.
+	 */
+	virtual bool KeyPress(int Key) const = 0;
+	virtual const char *KeyName(int Key) const = 0;
 	virtual int FindKeyByName(const char *pKeyName) const = 0;
 
 	// joystick
@@ -128,6 +151,10 @@ public:
 		 * @remark This is reset to zero at the end of each frame.
 		 */
 		vec2 m_Delta;
+		/**
+		 * The time when this finger was first pressed down.
+		 */
+		std::chrono::nanoseconds m_PressTime;
 	};
 	/**
 	 * Returns a vector of the states of all touch fingers currently being pressed down on touch devices.
@@ -137,6 +164,12 @@ public:
 	 * @return vector of all touch finger states
 	 */
 	virtual const std::vector<CTouchFingerState> &TouchFingerStates() const = 0;
+	/**
+	 * Must be called after the touch finger states have been used during the client update to ensure that
+	 * touch deltas are only accumulated until the next update. If the touch states are only used during
+	 * rendering, i.e. for user interfaces, then this is called automatically by calling @link Clear @endlink.
+	 */
+	virtual void ClearTouchDeltas() = 0;
 
 	// clipboard
 	virtual std::string GetClipboardText() = 0;
