@@ -1,5 +1,7 @@
 #ifndef GAME_CLIENT_COMPONENTS_TRAILS_H
 #define GAME_CLIENT_COMPONENTS_TRAILS_H
+#include "base/color.h"
+#include "engine/shared/protocol.h"
 #include <game/client/component.h>
 
 struct STrailPart
@@ -14,7 +16,6 @@ struct STrailPart
 	bool Flip = false;
 	float Progress = 1.0f;
 
-
 	bool operator==(const STrailPart &Other) const
 	{
 		return Pos == Other.Pos;
@@ -24,10 +25,10 @@ struct STrailPart
 class CTrails : public CComponent
 {
 public:
-	CTrails();
-	virtual int Sizeof() const override { return sizeof(*this); }
-	virtual void OnRender() override;
-	virtual void OnReset() override;
+	CTrails() = default;
+	int Sizeof() const override { return sizeof(*this); }
+	void OnRender() override;
+	void OnReset() override;
 
 private:
 	vec2 m_PositionHistory[MAX_CLIENTS][200];
