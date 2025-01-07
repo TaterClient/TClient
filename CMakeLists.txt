@@ -130,6 +130,12 @@ if(TARGET_OS STREQUAL "android")
     set(DISCORD OFF)
 endif()
 
+option(USE_VELOPACK "Build with Velopack library" OFF)
+
+if(USE_VELOPACK AND NOT TARGET_OS STREQUAL "windows")
+    set(USE_VELOPACK OFF)
+endif()
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
   include(${PROJECT_SOURCE_DIR}/cmake/toolchains/Emscripten.toolchain)
 endif()
@@ -2704,6 +2710,44 @@ if(CLIENT)
   list(APPEND TARGETS_LINK game-client)
 endif()
 
+########################################################################
+# TClient
+########################################################################
+
+if(USE_VELOPACK)
+    message(STATUS "Velopack integration enabled")
+
+    set(VELOPACK_DIR "tclient/libs/velopack")
+    set(VELOPACK_ROOT "${PROJECT_SOURCE_DIR}/${VELOPACK_DIR}")
+    set(VELOPACK_INCLUDE_DIR  "${VELOPACK_DIR}/include")
+    set(VELOPACK_SHARED_LIB_DIR "${VELOPACK_DIR}/lib")
+
+    set(VELOPACK_CONFIG "debug")
+
+    if(TARGET_OS STREQUAL "windows" AND TARGET_BITS STREQUAL "64")
+        set(VELOPACK_LIB_PATH "${VELOPACK_SHARED_LIB_DIR}/velopack_libc.lib")
+        set(VELOPACK_DLL_PATH "${VELOPACK_SHARED_LIB_DIR}/velopack_libc.dll")
+    elseif(TARGET_OS STREQUAL "windows" AND TARGET_BITS STREQUAL "32")
+        set(VELOPACK_LIB_PATH "${VELOPACK_SHARED_LIB_DIR}/velopack_libc_win_x86_msvc.dll.lib")
+        set(VELOPACK_DLL_PATH "${VELOPACK_SHARED_LIB_DIR}/velopack_libc_win_x86_msvc.dll")
+    endif()
+
+    if(TARGET game-client)
+        target_include_directories(game-client PRIVATE "${PROJECT_SOURCE_DIR}/${VELOPACK_INCLUDE_DIR}")
+        target_link_libraries(game-client "${PROJECT_SOURCE_DIR}/${VELOPACK_LIB_PATH}")
+
+        if(WIN32)
+            add_custom_command(TARGET game-client POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                    "${PROJECT_SOURCE_DIR}/${VELOPACK_DLL_PATH}"
+                    "$<TARGET_FILE_DIR:game-client>"
+            )
+        endif()
+
+    else()
+        message(WARNING "USE_VELOPACK=ON, but no game-client target found! Velopack not linked.")
+    endif()
+endif()
 
 ########################################################################
 # SERVER
@@ -3304,6 +3348,9 @@ set(CPACK_FILES
   steam_appid.txt
   ${COPY_FILES}
 )
+if(USE_VELOPACK)
+      list(APPEND CPACK_FILES ${VELOPACK_DLL_PATH})
+endif()
 
 set(CPACK_GEN_FILES
   ${VULKAN_SHADER_FILE_LIST}

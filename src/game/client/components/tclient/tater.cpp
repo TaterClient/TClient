@@ -12,6 +12,8 @@
 #include "tater.h"
 #include <game/client/gameclient.h>
 
+#include "Velopack.hpp"
+
 CTater::CTater()
 {
 	OnReset();
@@ -89,6 +91,37 @@ void CTater::ConchainRandomColor(IConsole::IResult *pResult, void *pUserData, IC
 void CTater::OnInit()
 {
 	TextRender()->SetCustomFace(g_Config.m_ClCustomFont);
+	CheckUpdates();
+}
+
+void CTater::CheckUpdates()
+{
+	Logger myLogger("my_log.txt");
+	vpkc_set_logger(Logger::LogCallback, &myLogger);
+
+	Velopack::UpdateManager manager("https://update.tclient.app/");
+	size_t neededSize = vpkc_get_last_error(nullptr, 0);
+	std::string strError(neededSize, '\0');
+	vpkc_get_last_error(&strError[0], neededSize);
+	if(str_comp(strError.c_str(), "") != 0)
+		return;
+
+	GameClient()->Echo("Initialized Update Manager");
+	auto updInfo = manager.CheckForUpdates();
+
+	vpkc_get_last_error(&strError[0], neededSize);
+	if(str_comp(strError.c_str(), "") != 0)
+		return;
+
+	if(!updInfo.has_value())
+	{
+		return;
+	}
+
+	manager.DownloadUpdates(updInfo.value());
+
+	manager.WaitExitThenApplyUpdate(updInfo.value());
+	//exit(0);
 }
 
 void CTater::OnConsoleInit()

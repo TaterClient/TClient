@@ -111,7 +111,8 @@ void CGameClient::OnConsoleInit()
 	m_pHttp = Kernel()->RequestInterface<IHttp>();
 
 	// make a list of all the systems, make sure to add them in the correct render order
-	m_vpAll.insert(m_vpAll.end(), {&m_Skins,
+	m_vpAll.insert(m_vpAll.end(), {&m_Tater,
+					      &m_Skins,
 					      &m_Skins7,
 					      &m_CountryFlags,
 					      &m_MapImages,
@@ -145,7 +146,6 @@ void CGameClient::OnConsoleInit()
 					      &m_DamageInd,
 					      &m_PlayerIndicator,
 					      &m_Verify,
-					      &m_Tater,
 					      &m_Hud,
 					      &m_Spectator,
 					      &m_Emoticon,

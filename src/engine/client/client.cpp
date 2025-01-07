@@ -58,6 +58,8 @@
 #include "notifications.h"
 #include "serverbrowser.h"
 
+#include "Velopack.hpp"
+
 #if defined(CONF_VIDEORECORDER)
 #include "video.h"
 #endif
@@ -4684,6 +4686,8 @@ int main(int argc, const char **argv)
 		PerformCleanup();
 		PerformFinalCleanup();
 	};
+
+	Velopack::VelopackApp::Build().Run(); // TClient
 
 	const bool RandInitFailed = secure_random_init() != 0;
 	if(!RandInitFailed)
