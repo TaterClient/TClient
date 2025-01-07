@@ -27,3 +27,24 @@ document.addEventListener('DOMContentLoaded', () => {
     
     fetchLatestVersion();
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    document.body.appendChild(overlay);
+
+    const downloadButtons = document.querySelectorAll('.download-btn, .mac-download');
+    const notification = document.getElementById('download-notification');
+
+    downloadButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            overlay.classList.add('show');
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                notification.classList.remove('show');
+            }, 5000);
+        });
+    });
+});

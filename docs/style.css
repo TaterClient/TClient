@@ -251,7 +251,6 @@ h2 {
 }
 
 /* Latest release */
-
 #latest-release {
     margin-bottom: 80px;
 }
@@ -456,6 +455,66 @@ h2 {
     color: #101010;
     font-size: 20px;
     font-weight: 700;
+}
+
+/* Download message */
+.download-notification {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
+    color: #FFFFFF;
+    padding: 60px 80px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+    font-family: Druk Wide Cyr;
+    font-weight: 700;
+    font-size: 32px;
+}
+
+.download-notification.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.notification-icon {
+    width: 64px;
+    height: 64px;
+    animation: spin 2.5s linear infinite;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Footer */
