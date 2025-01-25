@@ -117,6 +117,12 @@ void CTrails::OnRender()
 		bool LineMode = g_Config.m_ClTeeTrailWidth == 0;
 
 		float Alpha = g_Config.m_ClTeeTrailAlpha / 100.0f;
+		// Taken from players.cpp
+		if(ClientId == -2)
+			Alpha *= g_Config.m_ClRaceGhostAlpha / 100.0f;
+		else if(ClientId < 0 || m_pClient->IsOtherTeam(ClientId))
+			Alpha *= g_Config.m_ClShowOthersAlpha / 100.0f;
+
 		ColorRGBA Col = color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClTeeTrailColor));
 		if(TeeInfo.m_CustomColoredSkin && g_Config.m_ClTeeTrailUseTeeColor)
 			Col = TeeInfo.m_ColorBody;
