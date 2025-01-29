@@ -3,7 +3,7 @@
 # 2025-01-16 潘潘NO.1
 # 2025-01-16 EdEnd
 # 2025-01-27 LuoChu
-
+# 2025-01-29 潘潘NO.1
 ##### /authors #####
 
 ##### translated strings #####
@@ -590,7 +590,7 @@ Remove [group] [clan]
 Command
 == 命令
 
-Extra tick other tees (increases other tees latency, \nmakes dragging slightly easier when using fast input)
+Extra tick other tees (increases other tees latency, makes dragging slightly easier when using fast input)
 == 对其他tee增加帧（增加其他tee的延迟，\n使用更快的输入时使钩其他tee稍微容易一些）
 
 Prediction Margin
@@ -663,37 +663,43 @@ _ or \' \' = Space
 == _ 或 \' \' = 置空（占位）
 
 Voting
-== 
+== 投票
 
 Auto vote no to map changes when far
-== 
+== 自动拒绝地图修改
 
 Minimum Time
-== 
+== 最短时间
 
 Leave empty to disable
-== 
+== 留空表示禁用
 
 Message to send in chat:
-== 
+== 要在聊天中发送的信息：
 
 Auto Reply
-== 
+== 自动回复
 
 Auto reply to muted players
-== 
+== 自动回复静音玩家
 
 Auto reply when tabbed out
-== 
+== 弹出标签时自动回复
 
 Show other tees' trails
-== 
+== 显示其他Tee的轨迹
 
 Solid
-== 
+== 纯色
 
 Tee
-== 
+== Tee
 
 Speed
-== 
+== 速度
+
+Toggle ghosts key
+== 切换影子键
+
+Bind Wheel Key
+== 唤出滚轮绑键
