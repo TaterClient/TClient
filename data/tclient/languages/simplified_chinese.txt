@@ -3,7 +3,7 @@
 # 2025-01-16 潘潘NO.1
 # 2025-01-16 EdEnd
 # 2025-01-27 LuoChu
-# 2025-01-29 潘潘NO.1
+# 2025-01-30 潘潘NO.1 & EdEnd
 ##### /authors #####
 
 ##### translated strings #####
@@ -681,10 +681,10 @@ Auto Reply
 == 自动回复
 
 Auto reply to muted players
-== 自动回复静音玩家
+== 自动回复已屏蔽的玩家
 
 Auto reply when tabbed out
-== 弹出标签时自动回复
+== 切出游戏窗口时自动回复
 
 Show other tees' trails
 == 显示其他Tee的轨迹
