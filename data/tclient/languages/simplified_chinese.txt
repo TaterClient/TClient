@@ -590,7 +590,7 @@ Remove [group] [clan]
 Command
 == 命令
 
-Extra tick other tees (increases other tees latency, makes dragging slightly easier when using fast input)
+Extra tick other tees (increases other tees latency, \nmakes dragging slightly easier when using fast input)
 == 对其他tee增加帧（增加其他tee的延迟，\n使用更快的输入时使钩其他tee稍微容易一些）
 
 Prediction Margin
