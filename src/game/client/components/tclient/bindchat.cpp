@@ -68,6 +68,7 @@ void CBindchat::ConBindchatDefaults(IConsole::IResult *pResult, void *pUserData)
 	pThis->AddBind("!shrug", "say ¯\\_(ツ)_/¯");
 	pThis->AddBind("!flip", "say (╯°□°)╯︵ ┻━┻");
 	pThis->AddBind("!unflip", "say ┬─┬ノ( º _ ºノ)");
+	pThis->AddBind("!translate", "translate");
 }
 
 void CBindchat::AddBind(const char *pName, const char *pCommand)
@@ -211,6 +212,10 @@ void CBindchat::OnConsoleInit()
 
 	AddBindDefault("!mute", "add_foe");
 	AddBindDefault("!unmute", "remove_foe");
+
+	AddBindDefault("!translate", "translate");
+
+	// TODO: this is not how defaults were meant to be done silly
 }
 
 void CBindchat::ExecuteBind(int Bind, const char *pArgs)
