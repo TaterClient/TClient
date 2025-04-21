@@ -472,7 +472,7 @@ int CMenus::DoButton_CheckBoxAutoVMarginAndSet(const void *pId, const char *pTex
 	int Logic = DoButton_CheckBox_Common(pId, pText, *pValue ? "X" : "", &CheckBoxRect, BUTTONFLAG_LEFT);
 
 	if(Logic)
-		*pValue ^= 1;
+		*pValue = !*pValue;
 
 	return Logic;
 }
