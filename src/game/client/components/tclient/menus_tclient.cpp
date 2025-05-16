@@ -894,6 +894,16 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 		Ui()->DoEditBox(&s_LastInput, &Button, EditBoxFontSize);
 		static CButtonContainer s_ClientNotifyWhenLastColor;
 		DoLine_ColorPicker(&s_ClientNotifyWhenLastColor, ColorPickerLineSize, ColorPickerLabelSize, ColorPickerLineSpacing, &NotificationConfig, "", &g_Config.m_ClNotifyWhenLastColor, ColorRGBA(1.0f, 1.0f, 1.0f), false);
+		Column.HSplitTop(LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_ClNotifyWhenLastXpos, &g_Config.m_ClNotifyWhenLastXpos, &Button, TCLocalize("Horizontal Position"), 1, 100);
+		Column.HSplitTop(LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_ClNotifyWhenLastYpos, &g_Config.m_ClNotifyWhenLastYpos, &Button, TCLocalize("Vertical Position"), 1, 100);
+		Column.HSplitTop(LineSize, &Button, &Column);
+		Ui()->DoScrollbarOption(&g_Config.m_ClNotifyWhenLastSize, &g_Config.m_ClNotifyWhenLastSize, &Button, TCLocalize("Font Size"), 1, 50);
+	}
+	else
+	{
+		Column.HSplitTop(LineSize * 3, nullptr, &Column);
 	}
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;

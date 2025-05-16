@@ -651,11 +651,15 @@ void CHud::RenderTextInfo()
 		{
 			if(NumInTeam > 1 && NumInTeam - NumFrozen == 1)
 			{
-				const float Size = 11.0f;
-				CUIRect BoundingBox{m_Width / 4.0f - m_Width / 8.0f, 2.0f, m_Width / 4.0f, Size};
+				char aBuf[64];
+				str_format(aBuf, sizeof(aBuf), "%s", g_Config.m_ClNotifyWhenLastText);
 				TextRender()->TextColor(color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClNotifyWhenLastColor)));
-				Ui()->DoLabel(&BoundingBox, g_Config.m_ClNotifyWhenLastText, Size, TEXTALIGN_CENTER);
-				TextRender()->TextColor(TextRender()->DefaultTextColor());
+				float FontSize = g_Config.m_ClNotifyWhenLastSize;
+				float XPos = std::clamp((g_Config.m_ClNotifyWhenLastXpos / 100.0f) * m_Width, 1.0f, m_Width - FontSize);
+				float YPos = std::clamp((g_Config.m_ClNotifyWhenLastYpos / 100.0f) * m_Height, 1.0f, m_Height - FontSize);
+
+				TextRender()->Text(XPos, YPos, FontSize, aBuf, -1.0f);
+				TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
 			}
 		}
 		// Show freeze text
