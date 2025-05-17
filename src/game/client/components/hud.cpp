@@ -651,15 +651,13 @@ void CHud::RenderTextInfo()
 		{
 			if(NumInTeam > 1 && NumInTeam - NumFrozen == 1)
 			{
-				char aBuf[64];
-				str_format(aBuf, sizeof(aBuf), "%s", g_Config.m_ClNotifyWhenLastText);
 				TextRender()->TextColor(color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClNotifyWhenLastColor)));
 				float FontSize = g_Config.m_ClNotifyWhenLastSize;
-				float XPos = std::clamp((g_Config.m_ClNotifyWhenLastXpos / 100.0f) * m_Width, 1.0f, m_Width - FontSize);
-				float YPos = std::clamp((g_Config.m_ClNotifyWhenLastYpos / 100.0f) * m_Height, 1.0f, m_Height - FontSize);
+				float XPos = std::clamp((g_Config.m_ClNotifyWhenLastX / 100.0f) * m_Width, 1.0f, m_Width - FontSize);
+				float YPos = std::clamp((g_Config.m_ClNotifyWhenLastY / 100.0f) * m_Height, 1.0f, m_Height - FontSize);
 
-				TextRender()->Text(XPos, YPos, FontSize, aBuf, -1.0f);
-				TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
+				TextRender()->Text(XPos, YPos, FontSize, g_Config.m_ClNotifyWhenLastText, -1.0f);
+				TextRender()->TextColor(TextRender()->DefaultTextColor());
 			}
 		}
 		// Show freeze text
