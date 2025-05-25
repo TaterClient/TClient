@@ -778,3 +778,38 @@ reading
 writing
 == 正在写入
 
+Toggle ghosts key
+== 切换影子键
+
+Bind Wheel Key
+== 唤出滚轮绑键
+
+Draw where mouse is
+== 绘制鼠标所在位置
+
+Shrug:
+== 耸肩：
+
+Flip:
+== 翻转：
+
+Unflip:
+== 取消翻转：
+
+Cute:
+== 可爱：
+
+Lenny:
+== Lenny:
+
+Mute Commands
+== 静音命令
+
+Translate:
+== 翻译：
+
+Mute:
+== 禁言：
+
+Unmute:
+== 取消禁言：
