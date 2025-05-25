@@ -689,10 +689,10 @@ Custom Font:
 == 自定义字体: 
 
 Failed to create bgdraw folder
-== Failed to create bgdraw folder
+==
 
 Failed to open %s for %s
-== Failed to open %s for %s
+==
 
 Finish Name
 == 终点前改名
