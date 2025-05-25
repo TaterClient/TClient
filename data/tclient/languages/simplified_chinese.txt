@@ -4,6 +4,7 @@
 # 2025-01-16 EdEnd
 # 2025-01-27 LuoChu
 # 2025-01-30 潘潘NO.1 & EdEnd
+# 2025-05-25 LuoChu
 ##### /authors #####
 
 ##### translated strings #####
@@ -50,9 +51,6 @@ Profiles
 Visual
 == 视觉效果
 
-Custom Font: 
-==   自定义字体: 
-
 Update tee skin faster after being frozen
 == 冻结后更快更新tee外观
 
@@ -70,9 +68,6 @@ Freeze stars
 
 Color frozen tee skins
 == 冻结不再是灰黑色而是自定义的颜色（无自定义默认灰黑色）
-
-Make hammer rotate with cursor
-== 锤子跟随准星旋转
 
 Tiny tees
 == 小tee
@@ -205,12 +200,6 @@ Other
 
 Run cl_run_on_join as console command
 == 将cl_run_on_join当作控制台指令执行
-
-Auto verify
-== 自动验证
-
-Manual Verify
-== 手动验证
 
 Ghost Tools
 == 影子工具
@@ -415,24 +404,6 @@ Chat Binds
 
 Kaomoji
 == 表情符号
-
-Shrug:
-== 耸肩：
-
-Flip:
-== 翻转：
-
-Unflip:
-== 取消翻转：
-
-Mute Commands
-== 静音命令
-
-Mute:
-== 禁言：
-
-Un-Mute:
-== 取消禁言：
 
 Status Bar
 == 状态栏
@@ -698,8 +669,112 @@ Tee
 Speed
 == 速度
 
-Toggle ghosts key
-== 切换影子键
 
-Bind Wheel Key
-== 唤出滚轮绑键
+ seconds
+==  秒
+
+ seconds (never)
+==  秒 (不消失)
+
+Attempt to change your name when near finish
+== 过终点前尝试改名
+
+Background Draw
+== 背景绘制
+
+Changing name to %s near finish
+== 接近终点时改名为 %s
+
+Custom Font: 
+== 自定义字体: 
+
+Failed to create bgdraw folder
+== Failed to create bgdraw folder
+
+Failed to open %s for %s
+== Failed to open %s for %s
+
+Finish Name
+== 终点前改名
+
+Finish Name:
+== 恰分名称:
+
+Font Size
+== 字体大小
+
+Hammer Mode: 
+== 锤子模式:
+
+Horizontal Position
+== 水平位置
+
+Ingame cursor scale
+== 游戏内光标缩放
+
+Loaded %zu items
+== 加载了 %zu 项
+
+Loaded %zu items (discarded %zu items)
+== 加载了 %zu 项（丢弃了 %zu 项）
+
+Normal
+== 正常模式
+
+Opening %s for %s
+== Opening %s for %s
+
+Other Commands
+== 其他指令
+
+Pet
+== 宠物
+
+Pet Skin:
+== 宠物皮肤:
+
+Pet alpha
+== 宠物透明度
+
+Pet size
+== 宠物大小
+
+Rotate with cursor
+== 随光标旋转
+
+Rotate with cursor like gun
+== 像枪一样随光标旋转
+
+Show mini vote HUD
+== 显示小型投票HUD
+
+Show the pet
+== 显示宠物
+
+Time until strokes dissapear
+== 笔画消失时间
+
+Translated text hidden due to streamer mode
+== 由于主播模式，隐藏翻译文本
+
+Vertical Position
+== 垂直位置
+
+Wheel animate
+== 滚轮动画
+
+Width
+== 宽度
+
+Writing item %zu failed
+== 写入项目 %zu 失败
+
+Written %zu items
+== 写入了 %zu 项
+
+reading
+== 正在读取
+
+writing
+== 正在写入
+
