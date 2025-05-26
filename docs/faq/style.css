@@ -73,6 +73,12 @@ h2 {
     margin-bottom: 30px;
 }
 
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
 /* Navigation */
 nav {
     background: var(--bg-dark);
