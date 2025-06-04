@@ -252,61 +252,62 @@
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
     <script src="script.js"></script>
     <script>
-      AOS.init();
+        AOS.init();
 
-      const heroLogo = document.getElementById('heroLogo');
+        const heroLogo = document.getElementById('heroLogo');
 
-      const sounds = [
-      'assets/sounds/tee_scream1.ogg',
-      'assets/sounds/tee_scream2.ogg'
-      ];
+        const sounds = [
+            'assets/sounds/tee_scream1.ogg',
+            'assets/sounds/tee_scream2.ogg'
+        ];
 
-      let clickCount = 0;
+        let clickCount = 0;
 
-      heroLogo.addEventListener('click', () => {
-        const soundToPlay = sounds[clickCount % 2];
+        heroLogo.addEventListener('click', () => {
+            const soundToPlay = sounds[clickCount % 2];
 
-        const audio = new Audio(soundToPlay);
-        audio.volume = 0.5;
-        audio.play();
+            const audio = new Audio(soundToPlay);
+            audio.volume = 0.5;
+            audio.play();
 
-        clickCount++;
-      });
-    </script>
-    <script>
-        async function fetchLatestRelease() {
-            try {
-                const response = await fetch('https://api.github.com/repos/sjrc6/TaterClient-ddnet/releases/latest');
-                if (!response.ok) throw new Error('Failed to fetch release');
-                const release = await response.json();
-                
-                const versionElem = document.querySelector('.changelog-preview .release-version');
-                const dateElem = document.querySelector('.changelog-preview .release-date');
-                const contentElem = document.querySelector('.changelog-preview .release-content');
-                
-                versionElem.textContent = release.name || 'Unnamed Release';
-                dateElem.textContent = new Date(release.published_at).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                contentElem.innerHTML = marked.parse(release.body || 'No description provided.');
-                
-            } catch (error) {
-                console.error('Error fetching latest release:', error);
-            }
-        }
-
-        marked.setOptions({
-            breaks: true,
-            gfm: true
+            clickCount++;
         });
 
-        fetchLatestRelease();
-    </script>
-    <script>
+        let isProgrammaticScroll = false;
+
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                link.blur();
+                link.style.color = 'var(--text-color)';
+                link.style.transform = 'none';
+                setTimeout(() => {
+                    link.style.color = '';
+                    link.style.transform = '';
+                }, 100);
+            });
+        });
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                isProgrammaticScroll = true;
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                    setTimeout(() => {
+                        isProgrammaticScroll = false;
+                    }, 1000);
+                }
+            });
+        });
+
         window.addEventListener('scroll', () => {
             const nav = document.querySelector('nav');
+            if (isProgrammaticScroll) {
+                nav.classList.remove('scrolled');
+                return;
+            }
             if (window.scrollY > 150) {
                 nav.classList.add('scrolled');
             } else {
