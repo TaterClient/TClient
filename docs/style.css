@@ -33,11 +33,6 @@ a {
     color: var(--primary-color);
 }
 
-a.logo {
-    color: var(--primary-color);
-    font-family: 'Druk Wide Cyr', sans-serif !important;
-}
-
 ::selection {
     background: var(--primary-color);
     color: var(--text-color);
@@ -96,12 +91,16 @@ nav {
 
 nav.scrolled {
     opacity: 0.25;
-    pointer-events: none;
+    pointer-events: auto;
 }
 
-nav.scrolled:hover {
+nav.scrolled:hover, nav.scrolled .nav-links.active {
     opacity: 1;
     pointer-events: auto;
+}
+
+nav:not(.scrolled) {
+    opacity: 1;
 }
 
 .nav-content {
