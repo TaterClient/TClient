@@ -91,7 +91,7 @@ nav {
 
 nav.scrolled {
     opacity: 0.25;
-    pointer-events: none;
+    pointer-events: auto;
 }
 
 nav.scrolled:hover {
