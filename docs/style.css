@@ -94,9 +94,13 @@ nav.scrolled {
     pointer-events: auto;
 }
 
-nav.scrolled:hover {
+nav.scrolled:hover, nav.scrolled .nav-links.active {
     opacity: 1;
     pointer-events: auto;
+}
+
+nav:not(.scrolled) {
+    opacity: 1;
 }
 
 .nav-content {
