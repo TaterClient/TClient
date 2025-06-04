@@ -33,6 +33,11 @@ a {
     color: var(--primary-color);
 }
 
+a.logo {
+    color: var(--primary-color);
+    font-family: 'Druk Wide Cyr', sans-serif !important;
+}
+
 ::selection {
     background: var(--primary-color);
     color: var(--text-color);

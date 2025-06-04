@@ -59,7 +59,12 @@
 <body>
     <nav data-aos="fade-down" data-aos-duration="1000">
         <div class="nav-content">
-            <div class="logo"><a href="../">T-CLIENT</a></div>
+            <div class="logo">T-CLIENT</div>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
             <div class="nav-links">
                 <a href="../faq/">FAQ</a>
                 <span class="divider"></span>
@@ -110,6 +115,15 @@
             } else {
                 nav.classList.remove('scrolled');
             }
+        });
+
+        document.querySelector('.hamburger').addEventListener('click', () => {
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            const nav = document.querySelector('nav');
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+            nav.classList.toggle('hamburger-active');
         });
     </script>
 </body>
