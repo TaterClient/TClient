@@ -21,6 +21,11 @@
     <nav>
         <div class="nav-content">
             <div class="logo">T-CLIENT</div>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
             <div class="nav-links">
                 <a href="faq/">FAQ</a>
                 <span class="divider"></span>
@@ -307,6 +312,13 @@
             } else {
                 nav.classList.remove('scrolled');
             }
+        });
+
+        document.querySelector('.hamburger').addEventListener('click', () => {
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
         });
     </script>
 </body>
