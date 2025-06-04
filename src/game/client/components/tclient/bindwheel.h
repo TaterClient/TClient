@@ -39,8 +39,8 @@ public:
 	class CBind
 	{
 	public:
-		char m_aName[BINDWHEEL_MAX_NAME];
-		char m_aCommand[BINDWHEEL_MAX_CMD];
+		char m_aName[BINDWHEEL_MAX_NAME] = "EMPTY";
+		char m_aCommand[BINDWHEEL_MAX_CMD] = "";
 
 		bool operator==(const CBind &Other) const
 		{

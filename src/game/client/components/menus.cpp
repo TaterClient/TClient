@@ -354,7 +354,7 @@ void CMenus::DoLaserPreview(const CUIRect *pRect, const ColorHSLA LaserOutlineCo
 		TeeRenderInfo.m_ColorBody = ColorRGBA(1, 1, 1);
 		TeeRenderInfo.m_ColorFeet = ColorRGBA(1, 1, 1);
 		RenderTools()->RenderTee(CAnimState::GetIdle(), &TeeRenderInfo, EMOTE_PAIN, vec2(1, 0), From);
-		GameClient()->m_Effects.FreezingFlakes(From, vec2(32, 32));
+		GameClient()->m_Effects.FreezingFlakes(From, vec2(32, 32), 1.0f);
 		break;
 	}
 	default:
@@ -897,8 +897,7 @@ void CMenus::OnInit()
 	{
 		m_ShowStart = false;
 	}
-
-	SetMenuPage(g_Config.m_UiPage);
+	m_MenuPage = g_Config.m_UiPage;
 
 	m_RefreshButton.Init(Ui(), -1);
 	m_ConnectButton.Init(Ui(), -1);
@@ -1319,15 +1318,11 @@ void CMenus::RenderPopupFullscreen(CUIRect Screen)
 	else if(m_Popup == POPUP_POINTS)
 	{
 		pTitle = Localize("Existing Player");
-		if(Client()->Points() > 50)
+		if(Client()->InfoState() == IClient::EInfoState::SUCCESS && Client()->Points() > 50)
 		{
 			str_format(aBuf, sizeof(aBuf), Localize("Your nickname '%s' is already used (%d points). Do you still want to use it?"), Client()->PlayerName(), Client()->Points());
 			pExtraText = aBuf;
 			TopAlign = true;
-		}
-		else if(Client()->Points() >= 0)
-		{
-			m_Popup = POPUP_NONE;
 		}
 		else
 		{
@@ -1806,24 +1801,43 @@ void CMenus::RenderPopupFullscreen(CUIRect Screen)
 	}
 	else if(m_Popup == POPUP_POINTS)
 	{
-		CUIRect Yes, No;
+		Box.HSplitBottom(20.0f, &Box, nullptr);
+		Box.HSplitBottom(24.0f, &Box, &Part);
+		Part.VMargin(120.0f, &Part);
 
-		Box.HSplitBottom(20.f, &Box, &Part);
-		Box.HSplitBottom(24.f, &Box, &Part);
-		Part.VMargin(80.0f, &Part);
+		if(Client()->InfoState() == IClient::EInfoState::SUCCESS && Client()->Points() > 50)
+		{
+			CUIRect Yes, No;
+			Part.VSplitMid(&No, &Yes, 40.0f);
+			static CButtonContainer s_ButtonNo;
+			if(DoButton_Menu(&s_ButtonNo, Localize("No"), 0, &No) ||
+				Ui()->ConsumeHotkey(CUi::HOTKEY_ESCAPE))
+			{
+				m_Popup = POPUP_FIRST_LAUNCH;
+			}
 
-		Part.VSplitMid(&No, &Yes);
-
-		Yes.VMargin(20.0f, &Yes);
-		No.VMargin(20.0f, &No);
-
-		static CButtonContainer s_ButtonNo;
-		if(DoButton_Menu(&s_ButtonNo, Localize("No"), 0, &No) || Ui()->ConsumeHotkey(CUi::HOTKEY_ESCAPE))
-			m_Popup = POPUP_FIRST_LAUNCH;
-
-		static CButtonContainer s_ButtonYes;
-		if(DoButton_Menu(&s_ButtonYes, Localize("Yes"), 0, &Yes) || Ui()->ConsumeHotkey(CUi::HOTKEY_ENTER))
-			m_Popup = POPUP_NONE;
+			static CButtonContainer s_ButtonYes;
+			if(DoButton_Menu(&s_ButtonYes, Localize("Yes"), 0, &Yes) ||
+				Ui()->ConsumeHotkey(CUi::HOTKEY_ENTER))
+			{
+				m_Popup = POPUP_NONE;
+			}
+		}
+		else
+		{
+			static CButtonContainer s_Button;
+			if(DoButton_Menu(&s_Button, Localize("Cancel"), 0, &Part) ||
+				Ui()->ConsumeHotkey(CUi::HOTKEY_ESCAPE) ||
+				Ui()->ConsumeHotkey(CUi::HOTKEY_ENTER) ||
+				Client()->InfoState() == IClient::EInfoState::SUCCESS)
+			{
+				m_Popup = POPUP_NONE;
+			}
+			if(Client()->InfoState() == IClient::EInfoState::ERROR)
+			{
+				PopupMessage(Localize("Error checking player name"), Localize("Could not check for existing player with your name. Check your internet connection."), Localize("Ok"));
+			}
+		}
 	}
 	else if(m_Popup == POPUP_WARNING)
 	{

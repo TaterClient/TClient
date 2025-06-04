@@ -24,7 +24,8 @@ public:
 	void ConModRConKill(IConsole::IResult *pResult, const char *pCmd, bool IsName, char Unit);
 
 	int Sizeof() const override { return sizeof(*this); }
-	void OnInit() override;
+	void OnConsoleInit() override;
+	void OnRender() override;
 };
 
 #endif

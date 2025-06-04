@@ -715,6 +715,7 @@ if(TARGET_OS STREQUAL "windows")
   set(PLATFORM_LIBS)
   list(APPEND PLATFORM_LIBS shlwapi) # PathIsRelativeW
   list(APPEND PLATFORM_LIBS version ws2_32) # Windows sockets
+  list(APPEND PLATFORM_LIBS advapi32) # Reg* and Crypt* functions
   list(APPEND PLATFORM_LIBS bcrypt userenv) # for Rust (https://github.com/rust-lang/rust/issues/91974)
   list(APPEND PLATFORM_LIBS ole32) # CoInitialize(Ex)
   list(APPEND PLATFORM_LIBS shell32)
@@ -2516,6 +2517,8 @@ if(CLIENT)
     prediction/entities/laser.h
     prediction/entities/pickup.cpp
     prediction/entities/pickup.h
+    prediction/entities/plasma.cpp
+    prediction/entities/plasma.h
     prediction/entities/projectile.cpp
     prediction/entities/projectile.h
     prediction/entity.cpp
@@ -3110,6 +3113,7 @@ if((GTEST_FOUND OR DOWNLOAD_GTEST) AND SERVER)
     test.cpp
     test.h
     thread.cpp
+    time.cpp
     timestamp.cpp
     unix.cpp
     uuid.cpp

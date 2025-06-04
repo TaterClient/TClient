@@ -294,6 +294,13 @@ public:
 	virtual void DemoSliceEnd() = 0;
 	virtual void DemoSlice(const char *pDstPath, CLIENTFUNC_FILTER pfnFilter, void *pUser) = 0;
 
+	enum class EInfoState
+	{
+		LOADING,
+		SUCCESS,
+		ERROR,
+	};
+	virtual EInfoState InfoState() const = 0;
 	virtual void RequestDDNetInfo() = 0;
 	virtual bool EditorHasUnsavedData() const = 0;
 
@@ -344,6 +351,9 @@ public:
 	};
 	virtual void ShowMessageBox(const char *pTitle, const char *pMessage, EMessageBoxType Type = MESSAGE_BOX_TYPE_ERROR) = 0;
 	virtual void GetGpuInfoString(char (&aGpuInfo)[256]) = 0;
+
+	// TClient
+	bool m_IsLocalFrozen = false;
 };
 
 class IGameClient : public IInterface

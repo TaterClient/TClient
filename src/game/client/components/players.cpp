@@ -230,7 +230,7 @@ void CPlayers::RenderHookCollLine(
 		{
 			Graphics()->TextureClear();
 			vec2 InitPos = Position;
-			vec2 FinishPos = InitPos + ExDirection * (m_pClient->m_aTuning[g_Config.m_ClDummy].m_HookLength - 42.0f);
+			vec2 FinishPos = InitPos + ExDirection * (m_pClient->m_aClients[ClientId].m_Predicted.m_Tuning.m_HookLength - 42.0f);
 
 			const int HookCollSize = Local ? g_Config.m_ClHookCollSize : g_Config.m_ClHookCollSizeOther;
 			if(HookCollSize > 0)
@@ -250,11 +250,11 @@ void CPlayers::RenderHookCollLine(
 			do
 			{
 				OldPos = NewPos;
-				NewPos = OldPos + ExDirection * m_pClient->m_aTuning[g_Config.m_ClDummy].m_HookFireSpeed;
+				NewPos = OldPos + ExDirection * m_pClient->m_aClients[ClientId].m_Predicted.m_Tuning.m_HookFireSpeed;
 
-				if(distance(InitPos, NewPos) > m_pClient->m_aTuning[g_Config.m_ClDummy].m_HookLength)
+				if(distance(InitPos, NewPos) > m_pClient->m_aClients[ClientId].m_Predicted.m_Tuning.m_HookLength)
 				{
-					NewPos = InitPos + normalize(NewPos - InitPos) * m_pClient->m_aTuning[g_Config.m_ClDummy].m_HookLength;
+					NewPos = InitPos + normalize(NewPos - InitPos) * m_pClient->m_aClients[ClientId].m_Predicted.m_Tuning.m_HookLength;
 					DoBreak = true;
 				}
 
@@ -468,7 +468,7 @@ void CPlayers::RenderPlayer(
 	else if(g_Config.m_ClShowOthersGhosts && !Local && !Spec)
 		Alpha = g_Config.m_ClPredGhostsAlpha / 100.0f;
 
-	if(!OtherTeam && g_Config.m_ClShowOthersGhosts && !Local && g_Config.m_ClUnpredOthersInFreeze && g_Config.m_ClAmIFrozen && !Spec)
+	if(!OtherTeam && g_Config.m_ClShowOthersGhosts && !Local && g_Config.m_ClUnpredOthersInFreeze && Client()->m_IsLocalFrozen && !Spec)
 		Alpha = 1.0f;
 
 	if(ClientId == -2) // ghost
@@ -572,19 +572,7 @@ void CPlayers::RenderPlayer(
 
 	// do skidding
 	if(!InAir && WantOtherDir && length(Vel * 50) > 500.0f)
-	{
-		if(time() - m_SkidSoundTime > time_freq() / 10)
-		{
-			if(g_Config.m_SndGame)
-				m_pClient->m_Sounds.PlayAt(CSounds::CHN_WORLD, SOUND_PLAYER_SKID, 1.0f, Position);
-			m_SkidSoundTime = time();
-		}
-
-		m_pClient->m_Effects.SkidTrail(
-			Position + vec2(-Player.m_Direction * 6, 12),
-			vec2(-Player.m_Direction * 100 * length(Vel), -50),
-			Alpha);
-	}
+		m_pClient->m_Effects.SkidTrail(Position, Vel, Player.m_Direction, Alpha);
 
 	vec2 GhostWeaponPos = vec2(0, 0);
 	// draw gun
@@ -629,7 +617,7 @@ void CPlayers::RenderPlayer(
 						WeaponPosition.y += 3.0f;
 
 					// if active and attack is under way, bash stuffs
-					if(!Inactive || LastAttackTime < m_pClient->m_aTuning[g_Config.m_ClDummy].GetWeaponFireDelay(Player.m_Weapon))
+					if(!Inactive || LastAttackTime < m_pClient->m_aClients[ClientId].m_Predicted.m_Tuning.GetWeaponFireDelay(Player.m_Weapon))
 					{
 						if(Direction.x < 0)
 							Graphics()->QuadsSetRotation(-pi / 2 - State.GetAttach()->m_Angle * pi * 2);
@@ -1074,19 +1062,7 @@ void CPlayers::RenderPlayerGhost(
 
 	// do skidding
 	if(!InAir && WantOtherDir && length(Vel * 50) > 500.0f)
-	{
-		static int64_t s_SkidSoundTime = 0;
-		if(time() - s_SkidSoundTime > time_freq() / 10)
-		{
-			if(g_Config.m_SndGame)
-				m_pClient->m_Sounds.PlayAt(CSounds::CHN_WORLD, SOUND_PLAYER_SKID, 0.25f, Position);
-			s_SkidSoundTime = time();
-		}
-
-		m_pClient->m_Effects.SkidTrail(
-			Position + vec2(-Player.m_Direction * 6, 12),
-			vec2(-Player.m_Direction * 100 * length(Vel), -50));
-	}
+		m_pClient->m_Effects.SkidTrail(Position, Vel, Player.m_Direction, Alpha);
 
 	vec2 GhostWeaponPos = vec2(0, 0);
 	// draw gun
@@ -1145,12 +1121,12 @@ void CPlayers::RenderPlayerGhost(
 				{
 					Graphics()->QuadsSetRotation(-pi / 2 - State.GetAttach()->m_Angle * pi * 2);
 					WeaponPosition.x -= g_pData->m_Weapons.m_aId[CurrentWeapon].m_Offsetx;
-					m_pClient->m_Effects.PowerupShine(WeaponPosition + vec2(32, 0), vec2(32, 12));
+					m_pClient->m_Effects.PowerupShine(WeaponPosition + vec2(32, 0), vec2(32, 12), Alpha);
 				}
 				else
 				{
 					Graphics()->QuadsSetRotation(-pi / 2 + State.GetAttach()->m_Angle * pi * 2);
-					m_pClient->m_Effects.PowerupShine(WeaponPosition - vec2(32, 0), vec2(32, 12));
+					m_pClient->m_Effects.PowerupShine(WeaponPosition - vec2(32, 0), vec2(32, 12), Alpha);
 				}
 				Graphics()->RenderQuadContainerAsSprite(m_WeaponEmoteQuadContainerIndex, QuadOffset, WeaponPosition.x, WeaponPosition.y);
 
@@ -1280,7 +1256,7 @@ void CPlayers::RenderPlayerGhost(
 	vec2 BodyPos = Position + vec2(State.GetBody()->m_X, State.GetBody()->m_Y) * TeeAnimScale;
 	if(RenderInfo.m_TeeRenderFlags & TEE_EFFECT_FROZEN)
 	{
-		GameClient()->m_Effects.FreezingFlakes(BodyPos, vec2(32, 32));
+		GameClient()->m_Effects.FreezingFlakes(BodyPos, vec2(32, 32), Alpha);
 	}
 
 	int QuadOffsetToEmoticon = NUM_WEAPONS * 2 + 2 + 2;
@@ -1365,17 +1341,15 @@ void CPlayers::OnRender()
 	{
 		aRenderInfo[i] = m_pClient->m_aClients[i].m_RenderInfo;
 		aRenderInfo[i].m_TeeRenderFlags = 0;
-		if(m_pClient->m_aClients[i].m_FreezeEnd != 0)
+		if(m_pClient->m_aClients[i].m_Predicted.m_FreezeEnd != 0)
 			aRenderInfo[i].m_TeeRenderFlags |= TEE_EFFECT_FROZEN | TEE_NO_WEAPON;
-		if(m_pClient->m_aClients[i].m_LiveFrozen)
+		if(m_pClient->m_aClients[i].m_Predicted.m_LiveFrozen)
 			aRenderInfo[i].m_TeeRenderFlags |= TEE_EFFECT_FROZEN;
-		if(m_pClient->m_aClients[i].m_Invincible)
+		if(m_pClient->m_aClients[i].m_Predicted.m_Invincible)
 			aRenderInfo[i].m_TeeRenderFlags |= TEE_EFFECT_SPARKLE;
 
-		const CGameClient::CSnapState::CCharacterInfo &CharacterInfo = m_pClient->m_Snap.m_aCharacters[i];
-		const bool Frozen = CharacterInfo.m_HasExtendedData && CharacterInfo.m_ExtendedData.m_FreezeEnd != 0;
-
-		if(((CharacterInfo.m_Cur.m_Weapon == WEAPON_NINJA || Frozen) && g_Config.m_ClShowNinja) || (g_Config.m_ClAmIFrozen && g_Config.m_ClFreezeUpdateFix && m_pClient->m_Snap.m_LocalClientId == i && g_Config.m_ClShowNinja) || (Frozen && !m_pClient->m_GameInfo.m_NoSkinChangeForFrozen && g_Config.m_ClShowNinja))
+		const bool Frozen = m_pClient->m_aClients[i].m_Predicted.m_FreezeEnd != 0;
+		if((m_pClient->m_aClients[i].m_RenderCur.m_Weapon == WEAPON_NINJA || (Frozen && !m_pClient->m_GameInfo.m_NoSkinChangeForFrozen)) && g_Config.m_ClShowNinja)
 		{
 			// change the skin for the player to the ninja
 			const auto *pSkin = m_pClient->m_Skins.FindOrNullptr("x_ninja");
@@ -1476,7 +1450,7 @@ void CPlayers::OnRender()
 			if(!g_Config.m_ClSwapGhosts)
 				RenderGhost = false;
 		}
-		if(g_Config.m_ClUnpredOthersInFreeze && g_Config.m_ClAmIFrozen && g_Config.m_ClShowOthersGhosts)
+		if(g_Config.m_ClUnpredOthersInFreeze && Client()->m_IsLocalFrozen && g_Config.m_ClShowOthersGhosts)
 		{
 			RenderGhost = false;
 		}

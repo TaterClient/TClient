@@ -17,7 +17,6 @@ public:
 	virtual const char *EncodeTarget(const char *pTarget) const;
 	virtual bool CompareTargets(const char *pA, const char *pB) const;
 	virtual const char *Name() const = 0;
-	// "[translated message]\0[guessed language code]"
 	virtual std::optional<bool> Update(CTranslateResponse &Out) = 0;
 };
 
@@ -34,8 +33,7 @@ class CTranslate : public CComponent
 	std::vector<CTranslateJob> m_vJobs;
 
 	static void ConTranslate(IConsole::IResult *pResult, void *pUserData);
-
-	CChat::CLine *FindMessage(const char *pName);
+	static void ConTranslateId(IConsole::IResult *pResult, void *pUserData);
 
 public:
 	int Sizeof() const override { return sizeof(*this); }
@@ -43,6 +41,7 @@ public:
 	void OnConsoleInit() override;
 	void OnRender() override;
 
+	void Translate(int Id, bool ShowProgress = true);
 	void Translate(const char *pName, bool ShowProgress = true);
 	void Translate(CChat::CLine &Line, bool ShowProgress = true);
 };

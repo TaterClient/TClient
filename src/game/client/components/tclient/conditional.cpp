@@ -28,6 +28,12 @@ void CConditional::ParseString(const char *pString, char *pOut, int Length)
 		str_copy(pOut, GameClient()->m_GameInfo.m_AllowEyeWheel ? "1" : "0", Length);
 	else if(str_comp_nocase("$(allow_zoom)", pString) == 0)
 		str_copy(pOut, GameClient()->m_GameInfo.m_AllowZoom ? "1" : "0", Length);
+	else if(str_comp_nocase("$(dummy_allowed)", pString) == 0)
+		str_copy(pOut, Client()->DummyAllowed() ? "1" : "0", Length);
+	else if(str_comp_nocase("$(dummy_connected)", pString) == 0)
+		str_copy(pOut, Client()->DummyConnected() ? "1" : "0", Length);
+	else if(str_comp_nocase("$(rcon_authed)", pString) == 0)
+		str_copy(pOut, Client()->RconAuthed() ? "1" : "0", Length);
 	else if(str_comp_nocase("$(map)", pString) == 0)
 		str_copy(pOut, Client()->GetCurrentMap(), Length);
 	else if(str_comp_nocase("$(server_ip)", pString) == 0)

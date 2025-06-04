@@ -3,8 +3,10 @@
 #ifndef GAME_CLIENT_COMPONENTS_MAPLAYERS_H
 #define GAME_CLIENT_COMPONENTS_MAPLAYERS_H
 #include <game/client/component.h>
+#include <game/client/render.h>
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #define INDEX_BUFFER_GROUP_WIDTH 12
@@ -32,6 +34,7 @@ class CMapLayers : public CComponent
 
 	CLayers *m_pLayers;
 	CMapImages *m_pImages;
+	std::unique_ptr<CMapBasedEnvelopePointAccess> m_pEnvelopePoints;
 
 	void MapScreenToGroup(float CenterX, float CenterY, CMapItemGroup *pGroup, float Zoom = 1.0f);
 	int m_Type;

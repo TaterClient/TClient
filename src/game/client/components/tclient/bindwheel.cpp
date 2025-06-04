@@ -42,8 +42,8 @@ void CBindWheel::ConAddBindwheelLegacy(IConsole::IResult *pResult, void *pUserDa
 	const char *aCommand = pResult->GetString(2);
 
 	CBindWheel *pThis = static_cast<CBindWheel *>(pUserData);
-	while(pThis->m_vBinds.size() <= (size_t)BindPos)
-		pThis->AddBind("", "");
+	if(pThis->m_vBinds.size() <= (size_t)BindPos)
+		pThis->m_vBinds.resize((size_t)BindPos + 1);
 
 	str_copy(pThis->m_vBinds[BindPos].m_aName, aName);
 	str_copy(pThis->m_vBinds[BindPos].m_aCommand, aCommand);

@@ -49,9 +49,9 @@ void CTrails::OnRender()
 
 	for(int ClientId = 0; ClientId < MAX_CLIENTS; ClientId++)
 	{
-		bool Local = m_pClient->m_Snap.m_LocalClientId == ClientId;
+		const bool Local = m_pClient->m_Snap.m_LocalClientId == ClientId;
 
-		bool ZoomAllowed = GameClient()->m_Camera.ZoomAllowed();
+		const bool ZoomAllowed = GameClient()->m_Camera.ZoomAllowed();
 		if(!g_Config.m_ClTeeTrailOthers && !Local)
 			continue;
 
@@ -69,7 +69,7 @@ void CTrails::OnRender()
 
 		CTeeRenderInfo TeeInfo = m_pClient->m_aClients[ClientId].m_RenderInfo;
 
-		bool PredictPlayer = ShouldPredictPlayer(ClientId);
+		const bool PredictPlayer = ShouldPredictPlayer(ClientId);
 		int StartTick;
 		const int GameTick = Client()->GameTick(g_Config.m_ClDummy);
 		const int PredTick = Client()->PredGameTick(g_Config.m_ClDummy);
@@ -83,7 +83,7 @@ void CTrails::OnRender()
 				StartTick = GameClient()->m_SmoothTick[g_Config.m_ClDummy];
 				IntraTick = GameClient()->m_SmoothIntraTick[g_Config.m_ClDummy];
 			}
-			if(g_Config.m_ClUnpredOthersInFreeze && !Local && g_Config.m_ClAmIFrozen)
+			if(g_Config.m_ClUnpredOthersInFreeze && !Local && Client()->m_IsLocalFrozen)
 			{
 				StartTick = GameTick;
 			}
@@ -94,8 +94,8 @@ void CTrails::OnRender()
 			IntraTick = Client()->IntraGameTick(g_Config.m_ClDummy);
 		}
 
-		vec2 CurServerPos = vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y);
-		vec2 PrevServerPos = vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y);
+		const vec2 CurServerPos = vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y);
+		const vec2 PrevServerPos = vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y);
 		m_History[ClientId][GameTick % 200] = {
 			mix(PrevServerPos, CurServerPos, IntraTick),
 			GameTick,

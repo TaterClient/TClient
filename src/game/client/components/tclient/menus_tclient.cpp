@@ -639,10 +639,9 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 	else
 		Ui()->DoScrollbarOption(&g_Config.m_ClAnimateWheelTime, &g_Config.m_ClAnimateWheelTime, &Button, TCLocalize("Wheel animate"), 0, 1000, &CUi::ms_LinearScrollbarScale, 0, "ms (off)");
 
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClFreezeUpdateFix, TCLocalize("Update tee skin faster after being frozen"), &g_Config.m_ClFreezeUpdateFix, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClPingNameCircle, TCLocalize("Show ping colored circle before names"), &g_Config.m_ClPingNameCircle, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRenderNameplateSpec, TCLocalize("Hide nameplates in spec"), &g_Config.m_ClRenderNameplateSpec, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowSkinName, TCLocalize("Show skin names in nameplate"), &g_Config.m_ClShowSkinName, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClNameplatesSkinInfo, TCLocalize("Shows skin name and colors in nameplates"), &g_Config.m_ClNameplatesSkinInfo, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClFreezeStars, TCLocalize("Freeze stars"), &g_Config.m_ClFreezeStars, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClColorFreeze, TCLocalize("Color frozen tee skins"), &g_Config.m_ClColorFreeze, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClTinyTees, TCLocalize("Tiny tees"), &g_Config.m_ClTinyTees, &Column, LineSize);

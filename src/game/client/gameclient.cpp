@@ -641,6 +641,7 @@ void CGameClient::OnReset()
 	m_LastFlagCarrierBlue = -4;
 
 	std::fill(std::begin(m_aCheckInfo), std::end(m_aCheckInfo), -1);
+	std::fill(std::begin(m_aLocalStrongWeakId), std::end(m_aLocalStrongWeakId), -1);
 
 	// m_aDDNetVersionStr is initialized once in OnInit
 
@@ -1781,6 +1782,14 @@ void CGameClient::OnNewSnapshot()
 					{
 						m_Snap.m_aCharacters[Item.m_Id].m_HasExtendedDisplayInfo = true;
 					}
+
+					// Store local player's StrongWeakId for when snap data is unavailable
+					auto *it = std::find(std::begin(m_aLocalIds), std::end(m_aLocalIds), Item.m_Id);
+					if(it != std::end(m_aLocalIds))
+					{
+						int Dummy = it - std::begin(m_aLocalIds);
+						m_aLocalStrongWeakId[Dummy] = pCharacterData->m_StrongWeakId;
+					}
 					CClientData *pClient = &m_aClients[Item.m_Id];
 					// Collision
 					pClient->m_Solo = pCharacterData->m_Flags & CHARACTERFLAG_SOLO;
@@ -2276,7 +2285,7 @@ void CGameClient::OnNewSnapshot()
 					for(int j = 0; j < Amount; j++)
 					{
 						float Angle = mix(Min, Max, (j + 1) / (float)(Amount + 2));
-						m_Effects.DamageIndicator(Pos, direction(Angle));
+						m_Effects.DamageIndicator(Pos, direction(Angle), 1.0f);
 					}
 				}
 			}
@@ -3728,18 +3737,10 @@ void CGameClient::UpdateRenderedCharacters()
 			Client()->IntraGameTick(g_Config.m_ClDummy));
 		vec2 Pos = UnpredPos;
 		CCharacter *pChar = m_PredictedWorld.GetCharacterById(i);
-		// TODO: @Tater remove this garbage
+
+		// TClient
 		if(i == m_Snap.m_LocalClientId)
-		{
-			if(pChar && pChar->m_FreezeTime > 0)
-			{
-				g_Config.m_ClAmIFrozen = 1;
-			}
-			else
-			{
-				g_Config.m_ClAmIFrozen = 0;
-			}
-		}
+			Client()->m_IsLocalFrozen = pChar && pChar->m_FreezeTime > 0;
 
 		if(Predict() && (i == m_Snap.m_LocalClientId || (AntiPingPlayers() && !IsOtherTeam(i))) && pChar)
 		{
@@ -3778,13 +3779,13 @@ void CGameClient::UpdateRenderedCharacters()
 				if(g_Config.m_ClAntiPingImproved)
 					Pos = mix(m_aClients[i].m_PrevImprovedPredPos, m_aClients[i].m_ImprovedPredPos, Client()->PredIntraGameTick(g_Config.m_ClDummy));
 
-				if(g_Config.m_ClRemoveAnti && g_Config.m_ClAmIFrozen)
+				if(g_Config.m_ClRemoveAnti && m_pClient->m_IsLocalFrozen)
 					Pos = GetFreezePos(i);
 
 				if(g_Config.m_ClShowOthersGhosts && g_Config.m_ClSwapGhosts && !(m_aClients[i].m_FreezeEnd > 0 && g_Config.m_ClHideFrozenGhosts))
 					Pos = UnpredPos;
 
-				if(g_Config.m_ClUnpredOthersInFreeze && g_Config.m_ClAmIFrozen)
+				if(g_Config.m_ClUnpredOthersInFreeze && Client()->m_IsLocalFrozen)
 					Pos = UnpredPos;
 			}
 		}

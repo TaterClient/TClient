@@ -1,5 +1,6 @@
 #include <game/client/gameclient.h>
 #include <game/client/lineinput.h>
+#include <game/localization.h>
 
 #include <engine/shared/json.h>
 #include <engine/shared/jsonwriter.h>
@@ -297,50 +298,79 @@ void CTranslate::ConTranslate(IConsole::IResult *pResult, void *pUserData)
 	pThis->Translate(pName);
 }
 
+void CTranslate::ConTranslateId(IConsole::IResult *pResult, void *pUserData)
+{
+	CTranslate *pThis = static_cast<CTranslate *>(pUserData);
+	pThis->Translate(pResult->GetInteger(0));
+}
+
 void CTranslate::OnConsoleInit()
 {
 	Console()->Register("translate", "?r[name]", CFGFLAG_CLIENT, ConTranslate, this, "Translate last message (of a given name)");
+	Console()->Register("translate_id", "v[id]", CFGFLAG_CLIENT, ConTranslateId, this, "Translate last message of the preson with this id");
 }
 
-CChat::CLine *CTranslate::FindMessage(const char *pName)
+void CTranslate::Translate(int Id, bool ShowProgress)
 {
-	// No messages at all
-	if(GameClient()->m_Chat.m_CurrentLine < 0)
-		return nullptr;
-	CChat::CLine *pLineBest = nullptr;
-	int ScoreBest = -1;
-	for(int i = 0; i < CChat::MAX_LINES; i++)
+	if(Id < 0 || Id > (int)std::size(GameClient()->m_aClients))
 	{
-		CChat::CLine *pLine = &GameClient()->m_Chat.m_aLines[((GameClient()->m_Chat.m_CurrentLine - i) + CChat::MAX_LINES) % CChat::MAX_LINES];
-		if(pLine->m_pTranslateResponse != nullptr)
-			continue;
-		if(pLine->m_ClientId == CChat::CLIENT_MSG)
-			continue;
-		if(pLine->m_ClientId == CChat::SERVER_MSG)
-			continue;
-		for(int Id : GameClient()->m_aLocalIds)
-			if(pLine->m_ClientId == Id)
-				continue;
-		int Score = 0;
-		if(pName)
-		{
-			if(str_comp(pLine->m_aName, pName) == 0)
-				Score = 2;
-			else if(str_comp_nocase(pLine->m_aName, pName) == 0)
-				Score = 1;
-			else
-				Score = -1;
-		}
-		if(Score > ScoreBest)
-		{
-			ScoreBest = Score;
-			pLineBest = pLine;
-		}
+		GameClient()->m_Chat.Echo("Not a valid ID");
+		return;
 	}
-	return pLineBest;
+	const auto &Player = GameClient()->m_aClients[Id];
+	if(!Player.m_Active)
+	{
+		GameClient()->m_Chat.Echo("ID not connected");
+		return;
+	}
+	Translate(Player.m_aName, ShowProgress);
 }
 
 void CTranslate::Translate(const char *pName, bool ShowProgress)
+{
+	CChat::CLine *pLineBest = nullptr;
+	if(GameClient()->m_Chat.m_CurrentLine > 0)
+	{
+		int ScoreBest = -1;
+		for(int i = 0; i < CChat::MAX_LINES; i++)
+		{
+			CChat::CLine *pLine = &GameClient()->m_Chat.m_aLines[((GameClient()->m_Chat.m_CurrentLine - i) + CChat::MAX_LINES) % CChat::MAX_LINES];
+			if(pLine->m_pTranslateResponse != nullptr)
+				continue;
+			if(pLine->m_ClientId == CChat::CLIENT_MSG)
+				continue;
+			for(int Id : GameClient()->m_aLocalIds)
+				if(pLine->m_ClientId == Id)
+					continue;
+			int Score = 0;
+			if(pName)
+			{
+				if(pLine->m_ClientId == CChat::SERVER_MSG)
+					continue;
+				if(str_comp(pLine->m_aName, pName) == 0)
+					Score = 2;
+				else if(str_comp_nocase(pLine->m_aName, pName) == 0)
+					Score = 1;
+				else
+					continue;
+			}
+			if(Score > ScoreBest)
+			{
+				ScoreBest = Score;
+				pLineBest = pLine;
+			}
+		}
+	}
+	if(!pLineBest || pLineBest->m_aText[0] == '\0')
+	{
+		GameClient()->m_Chat.Echo("No message to translate");
+		return;
+	}
+
+	Translate(*pLineBest, ShowProgress);
+}
+
+void CTranslate::Translate(CChat::CLine &Line, bool ShowProgress)
 {
 	if(m_vJobs.size() > 10)
 	{
@@ -348,18 +378,6 @@ void CTranslate::Translate(const char *pName, bool ShowProgress)
 		return;
 	}
 
-	CChat::CLine *pLine = FindMessage(pName);
-	if(!pLine || pLine->m_aText[0] == '\0')
-	{
-		GameClient()->m_Chat.Echo("No message to translate");
-		return;
-	}
-
-	Translate(*pLine, ShowProgress);
-}
-
-void CTranslate::Translate(CChat::CLine &Line, bool ShowProgress)
-{
 	CTranslateJob &Job = m_vJobs.emplace_back();
 	Job.m_pLine = &Line;
 	Job.m_pTranslateResponse = std::make_shared<CTranslateResponse>();
@@ -377,7 +395,7 @@ void CTranslate::Translate(CChat::CLine &Line, bool ShowProgress)
 
 	if(ShowProgress)
 	{
-		str_format(Job.m_pTranslateResponse->m_Text, sizeof(Job.m_pTranslateResponse->m_Text), "[%s translating to %s]", Job.m_pBackend->Name(), g_Config.m_ClTranslateTarget);
+		str_format(Job.m_pTranslateResponse->m_Text, sizeof(Job.m_pTranslateResponse->m_Text), TCLocalize("[%s translating to %s]", "translate"), Job.m_pBackend->Name(), g_Config.m_ClTranslateTarget);
 		Job.m_pLine->m_Time = time();
 		GameClient()->m_Chat.RebuildChat();
 	}
@@ -404,10 +422,10 @@ void CTranslate::OnRender()
 		}
 		else
 		{
-			Job.m_pTranslateResponse->m_Text[0] = '\0';
 			char aBuf[1024];
-			str_format(aBuf, sizeof(aBuf), "[%s to %s failed: %s]", Job.m_pBackend->Name(), g_Config.m_ClTranslateTarget, Out.m_Text);
+			str_format(aBuf, sizeof(aBuf), TCLocalize("[%s to %s failed: %s]", "translate"), Job.m_pBackend->Name(), g_Config.m_ClTranslateTarget, Out.m_Text);
 			GameClient->m_Chat.Echo(aBuf);
+			Job.m_pTranslateResponse->m_Text[0] = '\0';
 		}
 		Job.m_pLine->m_Time = Time;
 		GameClient->m_Chat.RebuildChat();

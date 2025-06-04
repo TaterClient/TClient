@@ -17,13 +17,8 @@
 class CTranslateResponse
 {
 public:
-	char m_Text[1024];
-	char m_Language[16];
-	CTranslateResponse()
-	{
-		m_Text[0] = '\0';
-		m_Language[0] = '\0';
-	}
+	char m_Text[1024] = "";
+	char m_Language[16] = "";
 };
 
 constexpr auto SAVES_FILE = "ddnet-saves.txt";

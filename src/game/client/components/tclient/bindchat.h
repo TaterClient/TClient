@@ -116,6 +116,7 @@ static CBindChat::CBindDefault s_aDefaultBindChatMod[] = {
 
 static CBindChat::CBindDefault s_aDefaultBindChatOther[] = {
 	{"Translate:", "!translate", "translate"},
+	{"Translate ID:", "!translateid", "translate_id"},
 	{"Mute:", "!mute", "add_foe"},
 	{"Unmute:", "!unmute", "remove_foe"},
 };

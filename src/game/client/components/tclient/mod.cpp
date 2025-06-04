@@ -249,7 +249,7 @@ void CMod::Mute(const CMod::CIden &Iden, const char *pTime, const char *pReason)
 	GameClient()->Echo(aBuf);
 }
 
-void CMod::OnInit()
+void CMod::OnConsoleInit()
 {
 	auto FRegisterModCommand = [&](const char *pName, const char *pParams, const char *pHelp, void (*FCallback)(IConsole::IResult *, CMod *)){
 		Console()->Register(pName, pParams, CFGFLAG_CLIENT, (CConsole::FCommandCallback)FCallback, this, pHelp);
@@ -286,4 +286,65 @@ void CMod::OnInit()
 			if(pResult->GetString(i)[0] != '\0')
 				pThis->Kill(CIden(pThis, pResult->GetString(i), CIden::EParseMode::NAME), true);
 	});
+}
+
+void CMod::OnRender()
+{
+	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+		return;
+
+	GameClient()->RenderTools()->MapScreenToGroup(GameClient()->m_Camera.m_Center.x, GameClient()->m_Camera.m_Center.y, GameClient()->Layers()->GameGroup(), GameClient()->m_Camera.m_Zoom);
+
+	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
+	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+
+	Graphics()->TextureClear();
+
+	if(g_Config.m_ClShowPlayerHitBoxes > 0) {
+		auto FRenderHitbox = [&](vec2 Position, float Alpha) {
+			const float Radius = 16.0f;
+			Graphics()->QuadsBegin();
+			Graphics()->SetColor(ColorRGBA(0.0f, 1.0f, 0.0f, 0.2f * Alpha));
+			Graphics()->DrawCircle(Position.x, Position.y, Radius, 20);
+			Graphics()->QuadsEnd();
+			IEngineGraphics::CLineItem aLines[22];
+			aLines[0] = {Position.x, Position.y - Radius, Position.x, Position.y + Radius};
+			aLines[1] = {Position.x - Radius, Position.y, Position.x + Radius, Position.y};
+			for(int i = 0; i < 20; ++i)
+			{
+				const float Angle = (float)i / 20.0f * 2.0f * pi;
+				const float NextAngle = (float)(i + 1) / 20.0f * 2.0f * pi;
+				aLines[i + 2] = {Position.x + std::sin(Angle) * Radius, Position.y + std::cos(Angle) * Radius, Position.x + std::sin(NextAngle) * Radius, Position.y + std::cos(NextAngle) * Radius};
+			}
+			Graphics()->LinesBegin();
+			Graphics()->SetColor(ColorRGBA(1.0f, 0.0f, 0.0f, 0.8f * Alpha));
+			Graphics()->LinesDraw(aLines, std::size(aLines));
+			Graphics()->LinesEnd();
+		};
+
+		for(const auto &Player : GameClient()->m_aClients)
+		{
+			const int ClientId = Player.ClientId();
+			const auto &Char = m_pClient->m_Snap.m_aCharacters[ClientId];
+			if(!Char.m_Active || !Player.m_Active)
+				continue;
+			if(Player.m_Team < 0)
+				continue;
+
+			if(!(in_range(Player.m_RenderPos.x, ScreenX0, ScreenX1) && in_range(Player.m_RenderPos.y, ScreenY0, ScreenY1)))
+				continue;
+
+			FRenderHitbox(Player.m_RenderPos, 1.0f);
+			
+			if(g_Config.m_ClShowPlayerHitBoxes > 1)
+			{
+				// From CPlayers::RenderPlayer
+				vec2 ShadowPosition = mix(
+					vec2(m_pClient->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, m_pClient->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y),
+					vec2(m_pClient->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, m_pClient->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
+					Client()->IntraGameTick(g_Config.m_ClDummy));
+				FRenderHitbox(ShadowPosition, 0.75f);
+			}
+		}
+	}
 }
