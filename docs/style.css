@@ -91,15 +91,17 @@ nav {
     top: 20px;
     z-index: 1000;
     animation: fadeIn 0.5s ease-out;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, pointer-events 0.3s ease;
 }
 
 nav.scrolled {
     opacity: 0.25;
+    pointer-events: none;
 }
 
 nav.scrolled:hover {
     opacity: 1;
+    pointer-events: auto;
 }
 
 .nav-content {
