@@ -317,8 +317,10 @@
         document.querySelector('.hamburger').addEventListener('click', () => {
             const hamburger = document.querySelector('.hamburger');
             const navLinks = document.querySelector('.nav-links');
+            const nav = document.querySelector('nav');
             hamburger.classList.toggle('active');
             navLinks.classList.toggle('active');
+            nav.classList.toggle('hamburger-active');
         });
     </script>
 </body>
