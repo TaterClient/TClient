@@ -1942,7 +1942,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 		if(DoName && strlen(LoadProfile.m_Name) != 0)
 			str_format(aName, sizeof(aName), "%s", LoadProfile.m_Name);
-		if(DoClan && strlen(LoadProfile.m_Clan) != 0)
+		if(DoClan)
 			str_format(aClan, sizeof(aClan), "%s", LoadProfile.m_Clan);
 
 		Label.VSplitLeft(90.0f, &FlagRect, &Label);
@@ -2028,7 +2028,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 					g_Config.m_ClPlayerDefaultEyes = LoadProfile.m_Emote;
 				if(DoName && strlen(LoadProfile.m_Name) != 0)
 					str_copy(g_Config.m_PlayerName, LoadProfile.m_Name, sizeof(g_Config.m_PlayerName));
-				if(DoClan && strlen(LoadProfile.m_Clan) != 0)
+				if(DoClan)
 					str_copy(g_Config.m_PlayerClan, LoadProfile.m_Clan, sizeof(g_Config.m_PlayerClan));
 				if(DoFlag && LoadProfile.m_CountryFlag != -2)
 					g_Config.m_PlayerCountry = LoadProfile.m_CountryFlag;
@@ -2046,7 +2046,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 					g_Config.m_ClDummyDefaultEyes = LoadProfile.m_Emote;
 				if(DoName && strlen(LoadProfile.m_Name) != 0)
 					str_copy(g_Config.m_ClDummyName, LoadProfile.m_Name, sizeof(g_Config.m_ClDummyName));
-				if(DoClan && strlen(LoadProfile.m_Clan) != 0)
+				if(DoClan)
 					str_copy(g_Config.m_ClDummyClan, LoadProfile.m_Clan, sizeof(g_Config.m_ClDummyClan));
 				if(DoFlag && LoadProfile.m_CountryFlag != -2)
 					g_Config.m_ClDummyCountry = LoadProfile.m_CountryFlag;
