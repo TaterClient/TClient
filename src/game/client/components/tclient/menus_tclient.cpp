@@ -1942,7 +1942,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 		if(DoName && strlen(LoadProfile.m_Name) != 0)
 			str_format(aName, sizeof(aName), "%s", LoadProfile.m_Name);
-		if(DoClan && (strlen(LoadProfile.m_Clan) != 0 || g_Config.m_ClAllowEmptyClan))
+		if(DoClan && (strlen(LoadProfile.m_Clan) != 0 || g_Config.m_ClProfileOverwriteClanWithEmpty))
 			str_format(aClan, sizeof(aClan), "%s", LoadProfile.m_Clan);
 
 		Label.VSplitLeft(90.0f, &FlagRect, &Label);
