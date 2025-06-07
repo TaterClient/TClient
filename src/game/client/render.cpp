@@ -584,7 +584,7 @@ void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 
 	const float TinyBodyScale = 0.7f;
 	const float TinyFeetScale = 0.85f;
-	float SizeMultiplier = (g_Config.m_ClTeeSize / 100.0f);
+	float SizeMultiplier = (g_Config.m_ClTinyTeeSize / 100.0f);
 	bool TinyTee = g_Config.m_ClTinyTees;
 	if(!m_LocalTeeRender && !g_Config.m_ClTinyTeesOthers)
 		TinyTee = false;
