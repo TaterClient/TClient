@@ -1920,7 +1920,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 		MainView.HSplitTop(50.0f, &Label, &MainView);
 		Label.VSplitLeft(250.0f, &Label, nullptr);
 
-		if(DoSkin && (strlen(LoadProfile.m_SkinName) != 0) || g_Config.m_ClAllowEmptyValues)
+if(DoSkin && (strlen(LoadProfile.m_SkinName) != 0 || g_Config.m_ClAllowEmptyValues))
 		{
 			const CSkin *pLoadSkin = m_pClient->m_Skins.Find(LoadProfile.m_SkinName);
 			OwnSkinInfo.m_OriginalRenderSkin = pLoadSkin->m_OriginalSkin;
