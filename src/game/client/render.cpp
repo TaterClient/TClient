@@ -584,6 +584,7 @@ void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 
 	const float TinyBodyScale = 0.7f;
 	const float TinyFeetScale = 0.85f;
+	float SizeMultiplier = (g_Config.m_ClTeeSize / 100.0f);
 	bool TinyTee = g_Config.m_ClTinyTees;
 	if(!m_LocalTeeRender && !g_Config.m_ClTinyTeesOthers)
 		TinyTee = false;
@@ -603,8 +604,8 @@ void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 
 			if(TinyTee)
 			{
-				BaseSize *= TinyBodyScale;
-				AnimScale *= TinyBodyScale;
+				BaseSize *= TinyBodyScale * SizeMultiplier;
+				AnimScale *= TinyBodyScale * SizeMultiplier;
 			}
 
 			if(Filling == 1)
@@ -662,8 +663,8 @@ void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 
 			if(TinyTee)
 			{
-				BaseSize /= TinyBodyScale;
-				AnimScale /= TinyBodyScale;
+				BaseSize /= TinyBodyScale * SizeMultiplier;
+				AnimScale /= TinyBodyScale * SizeMultiplier;
 			}
 
 			// draw feet
@@ -674,8 +675,8 @@ void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 
 			if(TinyTee)
 			{
-				w *= TinyFeetScale;
-				h *= TinyFeetScale;
+				w *= TinyFeetScale * SizeMultiplier;
+				h *= TinyFeetScale * SizeMultiplier;
 			}
 
 			int QuadOffset = 7;
