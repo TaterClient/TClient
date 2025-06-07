@@ -2029,7 +2029,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 					g_Config.m_ClPlayerDefaultEyes = LoadProfile.m_Emote;
 				if(DoName && strlen(LoadProfile.m_Name) != 0)
 					str_copy(g_Config.m_PlayerName, LoadProfile.m_Name, sizeof(g_Config.m_PlayerName));
-				if(DoClan && (strlen(LoadProfile.m_Clan) != 0 || g_Config.m_ClAllowEmptyClan))
+				if(DoClan && (strlen(LoadProfile.m_Clan) != 0 || g_Config.m_ClProfileOverwriteClanWithEmpty))
 					str_copy(g_Config.m_PlayerClan, LoadProfile.m_Clan, sizeof(g_Config.m_PlayerClan));
 				if(DoFlag && LoadProfile.m_CountryFlag != -2)
 					g_Config.m_PlayerCountry = LoadProfile.m_CountryFlag;
