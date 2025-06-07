@@ -2003,7 +2003,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClApplyProfileName, TCLocalize("Save/Load Name"), &g_Config.m_ClApplyProfileName, &LabelMid, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClApplyProfileClan, TCLocalize("Save/Load Clan"), &g_Config.m_ClApplyProfileClan, &LabelMid, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClApplyProfileFlag, TCLocalize("Save/Load Flag"), &g_Config.m_ClApplyProfileFlag, &LabelMid, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClAllowEmptyClan, TCLocalize("Overwrite clan even if empty"), &g_Config.m_ClAllowEmptyClan, &LabelMid, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClAllowEmptyClan, TCLocalize("Overwrite clan even if empty"), &g_Config.m_ClProfileOverwriteClanWithEmpty, &LabelMid, LineSize);
 
 	CUIRect Button;
 	LabelRight.VSplitLeft(150.0f, &LabelRight, nullptr);
