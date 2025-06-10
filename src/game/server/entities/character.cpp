@@ -692,10 +692,10 @@ void CCharacter::OnPredictedInput(CNetObj_PlayerInput *pNewInput)
 	mem_copy(&m_SavedInput, &m_Input, sizeof(m_SavedInput));
 }
 
-void CCharacter::OnDirectInput(CNetObj_PlayerInput *pNewInput)
+void CCharacter::OnDirectInput()
 {
 	mem_copy(&m_LatestPrevInput, &m_LatestInput, sizeof(m_LatestInput));
-	mem_copy(&m_LatestInput, pNewInput, sizeof(m_LatestInput));
+	mem_copy(&m_LatestInput, &m_Input, sizeof(m_LatestInput));
 	m_NumInputs++;
 
 	// it is not allowed to aim in the center
@@ -706,6 +706,7 @@ void CCharacter::OnDirectInput(CNetObj_PlayerInput *pNewInput)
 
 	if(m_NumInputs > 1 && m_pPlayer->GetTeam() != TEAM_SPECTATORS)
 	{
+		// Requires m_LatestInput and m_LatestPrevInput to be real values (m_NumInputs > 1)
 		HandleWeaponSwitch();
 		FireWeapon();
 	}
