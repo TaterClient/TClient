@@ -43,6 +43,9 @@
 #include <engine/shared/snapshot.h>
 #include <engine/shared/uuid_manager.h>
 
+#include <engine/client/steamp2p/steam_p2p.h>
+#include <game/client/gameclient.h>
+
 #include <game/generated/protocol.h>
 #include <game/generated/protocol7.h>
 #include <game/generated/protocolglue.h>
@@ -372,6 +375,7 @@ void CClient::SendInput()
 					Msg.AddInt(m_aInputs[i][m_aCurrentInput[i]].m_aData[k]);
 				}
 			}
+			const int *pData = m_aInputs[i][m_aCurrentInput[i]].m_aData;
 
 			m_aCurrentInput[i]++;
 			m_aCurrentInput[i] %= 200;
@@ -382,6 +386,12 @@ void CClient::SendInput()
 			// impossible to use grenade with frozen dummy that gets hammered...
 			if(g_Config.m_ClDummyCopyMoves || m_aCurrentInput[i] % 2)
 				Force = true;
+
+			CNetObj_PlayerInput Input{};
+			mem_copy(&Input, pData, sizeof(Input));
+			int ClientId = ((CGameClient *)GameClient())->m_aLocalIds[i];
+			CSteamP2PManager::Instance().UpdateLocalServer(ServerAddress());
+			CSteamP2PManager::Instance().SendInputs(Input, m_aPredTick[i], ClientId);
 		}
 	}
 }

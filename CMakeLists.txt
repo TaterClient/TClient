@@ -2383,6 +2383,9 @@ if(CLIENT)
     sound.h
     sqlite.cpp
     steam.cpp
+    steamp2p/network_p2p.h
+    steamp2p/steam_p2p.cpp
+    steamp2p/steam_p2p.h
     text.cpp
     updater.cpp
     updater.h
@@ -3769,7 +3772,7 @@ foreach(target ${TARGETS_DEP})
   endif()
 endforeach()
 
-if(TARGET_OS STREQUAL "windows" AND STEAM AND NOT CMAKE_BUILD_TYPE STREQUAL Debug)
+if(TARGET_OS STREQUAL "windows" AND STEAM AND TARGET_BITS EQUAL 64)
   add_custom_command(
     TARGET game-client POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -3780,3 +3783,16 @@ if(TARGET_OS STREQUAL "windows" AND STEAM AND NOT CMAKE_BUILD_TYPE STREQUAL Debu
       "$<TARGET_FILE_DIR:game-client>"
   )
 endif()
+
+if(TARGET_OS STREQUAL "linux" AND STEAM AND TARGET_BITS EQUAL 64)
+  add_custom_command(
+    TARGET game-client POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${CMAKE_SOURCE_DIR}/libsteam_api.so"
+      "$<TARGET_FILE_DIR:game-client>"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+      "${CMAKE_SOURCE_DIR}/steam_appid.txt"
+      "$<TARGET_FILE_DIR:game-client>"
+  )
+endif()
+

@@ -4,6 +4,7 @@
 #include <engine/shared/config.h>
 
 #include <steam/steam_api_flat.h>
+#include <engine/client/steamp2p/steam_p2p.h>
 
 class CSteam : public ISteam
 {
@@ -100,6 +101,23 @@ public:
 			case GameRichPresenceJoinRequested_t::k_iCallback:
 				OnGameRichPresenceJoinRequested((GameRichPresenceJoinRequested_t *)Callback.m_pubParam);
 				break;
+			// TClient
+			case LobbyCreated_t::k_iCallback:
+				CSteamP2PManager::Instance().OnLobbyCreated(
+					*reinterpret_cast<LobbyCreated_t *>(Callback.m_pubParam));
+				break;
+			case LobbyEnter_t::k_iCallback:
+				CSteamP2PManager::Instance().OnLobbyEnter(
+					*reinterpret_cast<LobbyEnter_t *>(Callback.m_pubParam));
+				break;
+			case LobbyChatUpdate_t::k_iCallback:
+				CSteamP2PManager::Instance().OnLobbyChatUpdate(
+					*reinterpret_cast<LobbyChatUpdate_t *>(Callback.m_pubParam));
+				break;
+			case LobbyKicked_t::k_iCallback:
+				CSteamP2PManager::Instance().OnLobbyKicked(
+					*reinterpret_cast<LobbyKicked_t *>(Callback.m_pubParam));
+				break;
 			default:
 				if(g_Config.m_Debug)
 				{
@@ -108,6 +126,7 @@ public:
 			}
 			SteamAPI_ManualDispatch_FreeLastCallback(m_SteamPipe);
 		}
+		CSteamP2PManager::Instance().Update();
 	}
 	void ClearGameInfo() override
 	{
@@ -145,5 +164,8 @@ ISteam *CreateSteam()
 	{
 		return new CSteamStub();
 	}
+	// TClient
+	CSteamP2PManager::Instance().Init();
+
 	return new CSteam();
 }

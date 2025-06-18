@@ -865,6 +865,7 @@ private:
 	void RenderSettingsWarList(CUIRect MainView);
 	void RenderSettingsInfo(CUIRect MainView);
 	void RenderSettingsStatusBar(CUIRect MainView);
+	void RenderSettingsSteamLobby(CUIRect MainView);
 
 	const CWarType *m_pRemoveWarType = nullptr;
 	void PopupConfirmRemoveWarType();

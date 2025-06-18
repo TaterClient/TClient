@@ -21,6 +21,8 @@
 #include <engine/textrender.h>
 #include <engine/updater.h>
 
+#include <engine/client/steamp2p/steam_p2p.h>
+
 #include <game/generated/client_data.h>
 #include <game/generated/client_data7.h>
 #include <game/generated/protocol.h>
@@ -2461,6 +2463,22 @@ void CGameClient::OnPredict()
 		if(g_Config.m_ClFastInput && Tick == FinalTickSelf)
 			pInputData = &m_Controls.m_FastInput;
 
+		// Steam Preinput 
+		// TODO: Handle eventual merge conflict (ddnet preinput should get priority)
+		auto &CSteamP2P = CSteamP2PManager::Instance();
+		if(CSteamP2P.m_Initalized && CSteamP2P.IsLobbyValid())
+		{
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(CCharacter *pChar = m_PredictedWorld.GetCharacterById(i))
+				{
+					CNetObj_PlayerInput P2PInput;
+					if(pDummyChar == pChar || pLocalChar == pChar || !CSteamP2P.GetPeerInput(i, Tick, P2PInput))
+						continue;
+					pChar->OnDirectInput(&P2PInput);
+				}
+			}
+		}
 		if(DummyFirst)
 			pDummyChar->OnDirectInput(pDummyInputData);
 		if(pInputData)
@@ -2472,6 +2490,22 @@ void CGameClient::OnPredict()
 			pLocalChar->OnPredictedInput(pInputData);
 		if(pDummyInputData)
 			pDummyChar->OnPredictedInput(pDummyInputData);
+		// Steam Preinput
+		if(CSteamP2P.m_Initalized && CSteamP2P.IsLobbyValid())
+		{
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(CCharacter *pChar = m_PredictedWorld.GetCharacterById(i))
+				{
+					CNetObj_PlayerInput P2PInput;
+					if(pDummyChar == pChar || pLocalChar == pChar || !CSteamP2P.GetPeerInput(i, Tick, P2PInput))
+						continue;
+					pChar->OnDirectInput(&P2PInput);
+				}
+			}
+		}
+
+
 		m_PredictedWorld.Tick();
 
 		// fetch the current characters

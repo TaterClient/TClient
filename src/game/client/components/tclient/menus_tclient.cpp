@@ -32,6 +32,7 @@
 #include "../menus.h"
 #include "../skins.h"
 #include "game/client/components/tclient/bindchat.h"
+#include "engine/client/steamp2p/steam_p2p.h"
 
 #include <vector>
 
@@ -42,6 +43,7 @@ enum
 	TCLIENT_TAB_WARLIST,
 	TCLIENT_TAB_BINDCHAT,
 	TCLIENT_TAB_STATUSBAR,
+	TCLIENT_TAB_STEAMLOBBY,
 	TCLIENT_TAB_INFO,
 	NUMBER_OF_TCLIENT_TABS
 };
@@ -204,6 +206,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		TCLocalize("Warlist"),
 		TCLocalize("Chat Binds"),
 		TCLocalize("Status Bar"),
+		TCLocalize("Steam Lobby"),
 		TCLocalize("Info")};
 
 	for(int Tab = 0; Tab < NUMBER_OF_TCLIENT_TABS; ++Tab)
@@ -488,6 +491,10 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 	if(s_CurCustomTab == TCLIENT_TAB_STATUSBAR)
 	{
 		RenderSettingsStatusBar(MainView);
+	}
+	if(s_CurCustomTab == TCLIENT_TAB_STEAMLOBBY)
+	{
+		RenderSettingsSteamLobby(MainView);
 	}
 	if(s_CurCustomTab == TCLIENT_TAB_INFO)
 	{
@@ -2437,6 +2444,71 @@ void CMenus::RenderSettingsStatusBar(CUIRect MainView)
 	}
 	if(!StatusItemActive)
 		s_SelectedItem = std::max(-1, s_SelectedItem);
+}
+
+void CMenus::RenderSettingsSteamLobby(CUIRect MainView)
+{
+	CUIRect LeftView, RightView, Button, Label;
+	MainView.HSplitTop(MarginSmall, nullptr, &MainView);
+
+	MainView.VSplitMid(&LeftView, &RightView, MarginBetweenViews);
+	LeftView.VSplitLeft(MarginSmall, nullptr, &LeftView);
+	RightView.VSplitRight(MarginSmall, &RightView, nullptr);
+
+	LeftView.HSplitTop(HeadlineHeight, &Label, &LeftView);
+	Ui()->DoLabel(&Label, TCLocalize("Steam Lobby"), HeadlineFontSize, TEXTALIGN_ML);
+	LeftView.HSplitTop(MarginSmall, nullptr, &LeftView);
+
+	static CButtonContainer s_CreateLobbyButton, s_LeaveLobbyButton, s_JoinLobbyButton, s_CopyLobbyButton;
+	CUIRect ButtonLeft, ButtonRight;
+
+	LeftView.HSplitTop(LineSize * 2.0f, &Button, &LeftView);
+
+	if(DoButton_Menu(&s_CreateLobbyButton, TCLocalize("Create New Lobby"), 0, &Button)) 
+	{
+		CSteamP2PManager::Instance().LeaveLobby();
+		CSteamP2PManager::Instance().HostLobbyPrivate(2);
+	}
+	LeftView.HSplitTop(MarginSmall, nullptr, &LeftView);
+	LeftView.HSplitTop(LineSize * 2.0f, &Button, &LeftView);
+
+	if(DoButton_Menu(&s_LeaveLobbyButton, TCLocalize("Leave Lobby"), 0, &Button))
+	{
+		CSteamP2PManager::Instance().LeaveLobby();
+	}
+
+	LeftView.HSplitTop(MarginSmall, nullptr, &LeftView);
+	LeftView.HSplitTop(StandardFontSize, &Label, &LeftView);
+
+	char aBuf[256];
+	str_format(aBuf, sizeof(aBuf), "Lobby ID: %lld", CSteamP2PManager::Instance().GetLobbyID());
+
+	Ui()->DoLabel(&Label, aBuf, HeadlineFontSize, TEXTALIGN_ML);
+
+	LeftView.HSplitTop(MarginSmall, nullptr, &LeftView);
+
+	LeftView.HSplitTop(HeadlineHeight, &Button, &LeftView);
+	static CLineInput s_LobbyInput;
+	static char s_aLobbyId[32];
+	s_LobbyInput.SetBuffer(s_aLobbyId, sizeof(s_aLobbyId));
+	s_LobbyInput.SetEmptyText("");
+	Ui()->DoEditBox(&s_LobbyInput, &Button, 12.0f);
+
+	LeftView.HSplitTop(MarginSmall, nullptr, &LeftView);
+	LeftView.HSplitTop(LineSize * 2.0f, &Button, &LeftView);
+
+	if(DoButton_Menu(&s_JoinLobbyButton, TCLocalize("Join Lobby"), 0, &Button))
+	{
+		int64_t LobbyId = str_toint64_base(s_aLobbyId);
+		CSteamP2PManager::Instance().JoinLobbyByID(LobbyId);
+	}
+	LeftView.HSplitTop(MarginSmall, nullptr, &LeftView);
+	LeftView.HSplitTop(LineSize * 2.0f, &Button, &LeftView);
+
+	if(DoButton_Menu(&s_CopyLobbyButton, TCLocalize("Copy Lobby Id To Box lol"), 0, &Button))
+	{
+		str_format(s_aLobbyId, sizeof(s_aLobbyId), "%llu", CSteamP2PManager::Instance().GetLobbyID());
+	}
 }
 
 void CMenus::RenderDevSkin(vec2 RenderPos, float Size, const char *pSkinName, const char *pBackupSkin, bool CustomColors, int FeetColor, int BodyColor, int Emote, bool Rainbow, ColorRGBA ColorFeet, ColorRGBA ColorBody)
