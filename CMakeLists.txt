@@ -323,7 +323,7 @@ if(NOT MSVC AND NOT HAIKU)
 
   add_cxx_compiler_flag_if_supported(OUR_FLAGS_OWN -Wall)
   add_cxx_compiler_flag_if_supported(OUR_FLAGS_OWN -Wextra)
-  add_cxx_compiler_flag_if_supported(OUR_FLAGS_OWN -Wno-psabi) # parameter passing for argument of type ‘__gnu_cxx::__normal_iterator<CCommandProcessorFragment_Vulkan::SMemoryBlock<1>*, std::vector<CCommandProcessorFragment_Vulkan::SMemoryBlock<1>, std::allocator<CCommandProcessorFragment_Vulkan::SMemoryBlock<1> > > >’ changed in GCC 7.1
+  add_cxx_compiler_flag_if_supported(OUR_FLAGS_OWN -Wno-psabi) # parameter passing for argument of type 'CCommandProcessorFragment_Vulkan::SMemoryBlock<1>*, std::vector<CCommandProcessorFragment_Vulkan::SMemoryBlock<1>, std::allocator<CCommandProcessorFragment_Vulkan::SMemoryBlock<1> > >' changed in GCC 7.1
   add_cxx_compiler_flag_if_supported(OUR_FLAGS_OWN -Wno-unused-parameter)
   add_cxx_compiler_flag_if_supported(OUR_FLAGS_OWN -Wno-missing-field-initializers)
   if(CMAKE_BUILD_TYPE STREQUAL DEBUG)
@@ -2822,6 +2822,7 @@ if(SERVER)
     sql_string_helpers.h
     upnp.cpp
     upnp.h
+    proxy.cpp
   )
 
   list(REMOVE_ITEM ENGINE_SERVER_WITHOUT_MAIN "${PROJECT_SOURCE_DIR}/src/engine/server/main.cpp")

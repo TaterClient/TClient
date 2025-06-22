@@ -28,6 +28,9 @@
 
 #include <csignal>
 
+#include <engine/server/proxy.h>
+#include <engine/shared/network.h>
+
 volatile sig_atomic_t InterruptSignaled = 0;
 
 bool IsInterrupted()
@@ -46,6 +49,54 @@ void HandleSigIntTerm(int Param)
 
 int main(int argc, const char **argv)
 {
+	// Proxy mode: if first argument is --proxy run simple UDP proxy that rewrites handshake and exits
+	if(argc > 1 && str_comp(argv[1], "--proxy") == 0)
+	{
+		net_init();
+		NETADDR Listen{};
+		mem_zero(&Listen, sizeof(Listen));
+		Listen.type = NETTYPE_IPV4;
+		Listen.port = 8303; // default Teeworlds port
+
+		char aServerStr[128];
+		printf("Enter upstream server ip:port > ");
+		fflush(stdout);
+		if(scanf("%127s", aServerStr) != 1)
+		{
+			printf("invalid input\n");
+			return -1;
+		}
+		NETADDR Upstream;
+		if(net_addr_from_str(&Upstream, aServerStr) != 0)
+		{
+			printf("bad address\n");
+			return -1;
+		}
+
+		char aSpoofStr[32];
+		printf("Spoof version string > ");
+		fflush(stdout);
+		scanf("%31s", aSpoofStr);
+		int SpoofInt;
+		printf("Spoof DDNet int > ");
+		fflush(stdout);
+		scanf("%d", &SpoofInt);
+
+		CProxy Proxy;
+		if(!Proxy.Init(Listen, Upstream, aSpoofStr, SpoofInt))
+		{
+			printf("Failed to init proxy\n");
+			return -1;
+		}
+		printf("Proxy running... Press Ctrl+C to stop.\n");
+		while(!IsInterrupted())
+		{
+			Proxy.Pump();
+			thread_sleep(1); // ms
+		}
+		return 0;
+	}
+
 	const int64_t MainStart = time_get();
 
 	CCmdlineFix CmdlineFix(&argc, &argv);
