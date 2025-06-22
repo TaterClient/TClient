@@ -198,8 +198,8 @@ struct LobbyCreated_t
 	{
 		k_iCallback = 513
 	};
-	uint64_t m_ulSteamIDLobby;
 	EResult m_eResult;
+	uint64_t m_ulSteamIDLobby;
 };
 
 struct LobbyEnter_t

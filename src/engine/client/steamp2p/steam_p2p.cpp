@@ -105,9 +105,8 @@ void CSteamP2PManager::UpdateLobbyOwner()
 	CSteamID NewOwnerID = SteamAPI_ISteamMatchmaking_GetLobbyOwner(m_pSteamMatchmaking, m_LobbyID.ConvertToUint64());
 	if(NewOwnerID != m_LobbyOwnerID)
 	{
-		CSteamID OldOwnerID = m_LobbyOwnerID;
-		m_LobbyOwnerID = OldOwnerID;
-		dbg_msg("p2p", "lobby owner changed from (%llu) to (%llu)", OldOwnerID.ConvertToUint64(), NewOwnerID.ConvertToUint64());
+		dbg_msg("p2p", "lobby owner changed from (%llu) to (%llu)", m_LobbyOwnerID.ConvertToUint64(), NewOwnerID.ConvertToUint64());
+		m_LobbyOwnerID = NewOwnerID;
 	}
 }
 
@@ -252,7 +251,7 @@ void CSteamP2PManager::ProcessPacket(const void *pData, size_t Size, uint64_t Se
 		const CP2PInputMsg *pInput = static_cast<const CP2PInputMsg *>(pData);
 		uint32_t ServerCRC = NetAddrCRC32(pInput->m_ServerAddr);
 
-		if(ServerCRC != m_LocalSrvCRC)
+		if(pInput->m_ServerAddr != m_LocalSrvAddr)
 			return;
 
 		// TODO: Scary, add helper or something for this

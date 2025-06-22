@@ -2500,7 +2500,7 @@ void CGameClient::OnPredict()
 					CNetObj_PlayerInput P2PInput;
 					if(pDummyChar == pChar || pLocalChar == pChar || !CSteamP2P.GetPeerInput(i, Tick, P2PInput))
 						continue;
-					pChar->OnDirectInput(&P2PInput);
+					pChar->OnPredictedInput(&P2PInput);
 				}
 			}
 		}
