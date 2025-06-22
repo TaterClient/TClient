@@ -2823,6 +2823,7 @@ if(SERVER)
     upnp.cpp
     upnp.h
     proxy.cpp
+    proxy.h
   )
 
   list(REMOVE_ITEM ENGINE_SERVER_WITHOUT_MAIN "${PROJECT_SOURCE_DIR}/src/engine/server/main.cpp")

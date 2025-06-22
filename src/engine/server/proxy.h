@@ -11,7 +11,7 @@
 class CProxy
 {
 public:
-	CProxy() = default;
+	CProxy();
 
 	// Initialize sockets; returns false on error.
 	//  listenAddr  – address to bind for incoming client packets (usually 0.0.0.0:8303)
@@ -25,17 +25,17 @@ public:
 	void Pump();
 
 private:
-	CNetUDP m_SockClient{}; // socket bound to listenAddr (receives from client, sends to server)
-	CNetUDP m_SockServer{}; // socket bound to random port (receives from server, sends to client)
+	NETSOCKET m_SockClient; // socket bound to listenAddr (receives from client, sends to server)
+	NETSOCKET m_SockServer; // socket bound to random port (receives from server, sends to client)
 
-	NETADDR m_ServerAddr{}; // cached upstream address
-	NETADDR m_ClientAddr{}; // last/only connected client address (single-client proxy)
+	NETADDR m_ServerAddr; // cached upstream address
+	NETADDR m_ClientAddr; // last/only connected client address (single-client proxy)
 
-	char m_aSpoofVersion[64]{};
-	int m_SpoofDDNet = -1;
+	char m_aSpoofVersion[64];
+	int m_SpoofDDNet;
 
 	// Helpers
 	void HandleFromClient();
 	void HandleFromServer();
-	bool RewriteHandshake(CNetChunk &chunk);
+	bool RewriteHandshake(unsigned char *pData, int *pSize, int maxSize);
 };
