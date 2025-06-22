@@ -18,46 +18,7 @@ struct CP2PPreInput
 	CNetObj_PlayerInput m_Input = {};
 };
 
-struct CPeerConnection
-{
-	uint64_t m_SteamID64;
-
-	std::chrono::steady_clock::time_point m_LastReceived;
-	std::chrono::steady_clock::time_point m_LastSent;
-
-	int m_RTT; // ms
-	int m_ClientId;
-	uint32_t m_ServerCRC; // If we are not in the same server we don't need to send inputs
-
-	CPeerConnection(uint64_t SteamID64) :
-		m_SteamID64(SteamID64),
-		m_LastReceived(std::chrono::steady_clock::now()),
-		m_LastSent(std::chrono::steady_clock::now()),
-		m_RTT(-1),
-		m_ServerCRC(0),
-		m_ClientId(0)
-	{
-	}
-
-	bool IsTimedOut() const
-	{
-		auto Now = std::chrono::steady_clock::now();
-		auto ElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(Now - m_LastReceived).count();
-		return ElapsedMs > PEER_TIMEOUT_MS;
-	}
-	bool NeedsKeepAlive() const
-	{
-		auto Now = std::chrono::steady_clock::now();
-		auto ElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(Now - m_LastSent).count();
-		return ElapsedMs > KEEP_ALIVE_INTERVAL_MS;
-	}
-	bool IsLobbyOwner() const
-	{
-		uint64_t OwnerId = CSteamP2PManager::Instance().GetLobbyOwnerID();
-		CSteamID OwnerSteamId = CSteamID{OwnerId};
-		return m_SteamID64 == CSteamP2PManager::Instance().GetLobbyOwnerID() && OwnerSteamId.IsValid();
-	}
-};
+struct CPeerConnection;
 
 class CSteamP2PManager
 {
@@ -121,11 +82,52 @@ private:
 
 	SteamAPICall_t m_hPendingCreate = 0;
 	SteamAPICall_t m_hPendingJoin = 0;
-	CSteamID m_LobbyID = 0ULL;
-	CSteamID m_LobbyOwnerID = 0ULL;
+	CSteamID m_LobbyID;
+	CSteamID m_LobbyOwnerID;
 
 	std::unordered_map<uint64_t, CPeerConnection> m_Peers;
 	std::chrono::steady_clock::time_point m_LastMemberUpdate;
+};
+
+struct CPeerConnection
+{
+	uint64_t m_SteamID64;
+
+	std::chrono::steady_clock::time_point m_LastReceived;
+	std::chrono::steady_clock::time_point m_LastSent;
+
+	int m_RTT; // ms
+	int m_ClientId;
+	uint32_t m_ServerCRC; // If we are not in the same server we don't need to send inputs
+
+	CPeerConnection(uint64_t SteamID64) :
+		m_SteamID64(SteamID64),
+		m_LastReceived(std::chrono::steady_clock::now()),
+		m_LastSent(std::chrono::steady_clock::now()),
+		m_RTT(-1),
+		m_ServerCRC(0),
+		m_ClientId(0)
+	{
+	}
+
+	bool IsTimedOut() const
+	{
+		auto Now = std::chrono::steady_clock::now();
+		auto ElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(Now - m_LastReceived).count();
+		return ElapsedMs > PEER_TIMEOUT_MS;
+	}
+	bool NeedsKeepAlive() const
+	{
+		auto Now = std::chrono::steady_clock::now();
+		auto ElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(Now - m_LastSent).count();
+		return ElapsedMs > KEEP_ALIVE_INTERVAL_MS;
+	}
+	bool IsLobbyOwner() const
+	{
+		uint64_t OwnerId = CSteamP2PManager::Instance().GetLobbyOwnerID();
+		CSteamID OwnerSteamId = CSteamID{OwnerId};
+		return m_SteamID64 == CSteamP2PManager::Instance().GetLobbyOwnerID() && OwnerSteamId.IsValid();
+	}
 };
 
 #endif

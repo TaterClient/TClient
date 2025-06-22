@@ -143,3 +143,4 @@ tags
 /build
 
 !steam_api.dll
+!libsteam_api.so
