@@ -129,6 +129,7 @@ void CSteamP2PManager::Update()
 	if(ElapsedMs > 3000)
 	{
 		UpdateLobbyMembers();
+		UpdateLobbyOwner();
 		m_LastMemberUpdate = Now;
 	}
 	PollIngress();
@@ -142,11 +143,10 @@ void CSteamP2PManager::PollIngress()
 		return;
 
 	SteamNetworkingMessage_t *Messages[32];
-	int NumMessages = 0;
 
 	for(int Channel = 0; Channel < 2; Channel++)
 	{
-		SteamAPI_ISteamNetworkingMessages_ReceiveMessagesOnChannel(m_pSteamMessages, Channel, Messages, 32);
+		int NumMessages = SteamAPI_ISteamNetworkingMessages_ReceiveMessagesOnChannel(m_pSteamMessages, Channel, Messages, 32);
 		for(int i = 0; i < NumMessages; ++i)
 		{
 			auto *pMsg = Messages[i];

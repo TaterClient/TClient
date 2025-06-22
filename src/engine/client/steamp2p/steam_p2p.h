@@ -105,8 +105,8 @@ struct CPeerConnection
 		m_LastReceived(std::chrono::steady_clock::now()),
 		m_LastSent(std::chrono::steady_clock::now()),
 		m_RTT(-1),
-		m_ServerCRC(0),
-		m_ClientId(0)
+		m_ClientId(0),
+		m_ServerCRC(0)
 	{
 	}
 
