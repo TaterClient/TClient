@@ -3,8 +3,8 @@
 
 #include <base/types.h>
 #include <engine/shared/network.h>
-#include <game/generated/protocol.h>
 #include <engine/shared/protocol.h>
+#include <game/generated/protocol.h>
 
 static constexpr uint8_t P2P_PROTOCOL_VERSION = 1;
 
@@ -25,7 +25,6 @@ struct CP2PPacketHeader
 };
 #pragma pack(pop)
 
-
 struct CP2PPlayerInput
 {
 	int m_TargetX;
@@ -42,7 +41,7 @@ struct CP2PPlayerInput
 struct CP2PInputMsg
 {
 	CP2PPacketHeader m_Header;
-	NETADDR m_ServerAddr = {}; 
+	NETADDR m_ServerAddr = {};
 	uint32_t m_GameTick = 0;
 	CP2PPlayerInput m_Input = {};
 	int8_t m_ClientId = -1;
@@ -86,7 +85,6 @@ struct CP2PKeepAliveMsg
 	}
 };
 
-
 inline EP2PPacketType GetPacketType(const void *pData, size_t Size)
 {
 	if(Size < sizeof(CP2PPacketHeader))
@@ -98,7 +96,6 @@ inline EP2PPacketType GetPacketType(const void *pData, size_t Size)
 
 	return static_cast<EP2PPacketType>(pHeader->m_Type);
 }
-
 
 inline uint32_t NetAddrCRC32(const NETADDR &Addr)
 {
@@ -144,7 +141,5 @@ inline CNetObj_PlayerInput ConvertFromP2PInput(const CP2PPlayerInput &P2PInput)
 	NetInput.m_Direction = static_cast<int>(P2PInput.m_Direction);
 	return NetInput;
 }
-
-
 
 #endif // NETWORK_P2P_H

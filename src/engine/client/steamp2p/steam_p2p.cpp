@@ -125,7 +125,7 @@ void CSteamP2PManager::Update()
 	auto Now = std::chrono::steady_clock::now();
 	auto ElapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(Now - m_LastMemberUpdate).count();
 
-	if(ElapsedMs > 3000)
+	if(ElapsedMs > 1000)
 	{
 		UpdateLobbyMembers();
 		UpdateLobbyOwner();
