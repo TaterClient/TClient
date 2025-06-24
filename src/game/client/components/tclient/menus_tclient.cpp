@@ -2537,7 +2537,7 @@ void CMenus::RenderSettingsSteamLobby(CUIRect MainView)
 
 		char aRtt[32];
 		if(Peer.m_RTT >= 0)
-			str_format(aRtt, sizeof(aRtt), "%d ms", Peer.m_RTT);
+			str_format(aRtt, sizeof(aRtt), "%d ms, manual: %d", Peer.m_RTT, Peer.m_RTTManual);
 		else
 			str_copy(aRtt, "--", sizeof(aRtt));
 		Ui()->DoLabel(&RttRect, aRtt, FontSize, TEXTALIGN_MR);

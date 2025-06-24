@@ -43,7 +43,11 @@ public:
 	void Update();
 	void PollIngress();
 	void SendInputs(const CNetObj_PlayerInput &PlayerInput, uint32_t GameTick, int ClientId);
-	int GetPeerRTT(uint64_t SteamID64) const; // ms, -1 = not connected
+
+	// ms, -1 = not connected
+	int GetPeerRTT(uint64_t SteamID64) const; 
+	int GetPeerManualRTT(uint64_t SteamID64) const;
+
 	bool GetPeerInput(int ClientId, uint32_t GameTick, CNetObj_PlayerInput &OutInput) const;
 	void UpdateLobbyOwner();
 
@@ -75,6 +79,8 @@ private:
 	void SendMessageToAll(int SendFlags, const void *pData, size_t Size);
 
 	void ProcessPacket(const void *pData, size_t Size, uint64_t SenderID);
+	void SendPings();
+
 
 	ISteamMatchmaking *m_pSteamMatchmaking = nullptr;
 	ISteamNetworkingMessages *m_pSteamMessages = nullptr;
@@ -139,6 +145,18 @@ struct CPeerConnection
 		CSteamID OwnerSteamId = CSteamID{OwnerId};
 		return m_SteamID64 == CSteamP2PManager::Instance().GetLobbyOwnerID() && OwnerSteamId.IsValid();
 	}
+
+	std::chrono::steady_clock::time_point m_LastPingSent{};
+	uint32_t m_LastPingStamp{}; 
+	int m_RTTManual = -1; 
+
+	bool NeedsPing() const
+	{
+		auto now = std::chrono::steady_clock::now();
+		auto elaps = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_LastPingSent).count();
+		return elaps > 1000;
+	}
+
 };
 
 #endif

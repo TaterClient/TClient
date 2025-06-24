@@ -13,8 +13,11 @@ enum EP2PPacketType : uint8_t
 	P2P_PACKET_PEER_INFO,
 	P2P_PACKET_KEEP_ALIVE,
 	P2P_PACKET_INPUT,
+	P2P_PACKET_PING,
+	P2P_PACKET_PONG,
 	P2P_PACKET_MAX
 };
+
 
 #pragma pack(push, 1)
 struct CP2PPacketHeader
@@ -22,6 +25,24 @@ struct CP2PPacketHeader
 	uint8_t m_Version;
 	uint8_t m_Type; // EP2PPacketType
 	uint16_t m_Size;
+};
+#pragma pack(pop)
+
+
+#pragma pack(push, 1)
+struct CP2PPingPongMsg
+{
+	CP2PPacketHeader m_Header;
+	uint32_t m_TimestampMs;
+
+	explicit CP2PPingPongMsg(EP2PPacketType Type = P2P_PACKET_PING,
+		uint32_t Stamp = 0)
+	{
+		m_Header.m_Type = Type;
+		m_Header.m_Version = P2P_PROTOCOL_VERSION;
+		m_Header.m_Size = sizeof(CP2PPingPongMsg);
+		m_TimestampMs = Stamp;
+	}
 };
 #pragma pack(pop)
 

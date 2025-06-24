@@ -133,6 +133,7 @@ void CSteamP2PManager::Update()
 	}
 	PollIngress();
 	SendKeepAlives();
+	SendPings();
 	CheckTimeouts();
 }
 
@@ -284,6 +285,30 @@ void CSteamP2PManager::ProcessPacket(const void *pData, size_t Size, uint64_t Se
 		pPeer->m_Profile.m_BodyColor = pInfo->m_BodyColor;
 		pPeer->m_Profile.m_FeetColor = pInfo->m_FeetColor;
 		pPeer->m_Profile.m_CustomColor = pInfo->m_CustomColor;
+		break;
+	}
+	case P2P_PACKET_PING:
+	{
+		if(Size != sizeof(CP2PPingPongMsg))
+			return;
+
+		const auto *pPing = static_cast<const CP2PPingPongMsg *>(pData);
+		CP2PPingPongMsg pong(P2P_PACKET_PONG, pPing->m_TimestampMs);
+		SendMessageToPeer(SenderID, kInputSendFlags, &pong, sizeof(pong));
+		break;
+	}
+	case P2P_PACKET_PONG:
+	{
+		if(Size != sizeof(CP2PPingPongMsg))
+			return;
+
+		const auto *pPong = static_cast<const CP2PPingPongMsg *>(pData);
+		if(pPeer->m_LastPingStamp == pPong->m_TimestampMs)
+		{
+			auto Now = std::chrono::steady_clock::now();
+			auto RTT = std::chrono::duration_cast<std::chrono::milliseconds>(Now - pPeer->m_LastPingSent).count();
+			pPeer->m_RTTManual = (int)RTT;
+		}
 		break;
 	}
 	default:
@@ -457,6 +482,33 @@ int CSteamP2PManager::GetPeerRTT(uint64_t SteamID64) const
 	}
 	return -1;
 }
+
+int CSteamP2PManager::GetPeerManualRTT(uint64_t SteamID64) const
+{
+	auto it = m_Peers.find(SteamID64);
+	return (it == m_Peers.end()) ? -1 : it->second.m_RTTManual;
+}
+
+void CSteamP2PManager::SendPings()
+{
+	uint32_t nowMs = (uint32_t)std::chrono::duration_cast<
+		std::chrono::milliseconds>(
+		std::chrono::steady_clock::now().time_since_epoch())
+				 .count();
+
+	for(auto &[id, peer] : m_Peers)
+	{
+		if(!peer.NeedsPing())
+			continue;
+
+		CP2PPingPongMsg msg(P2P_PACKET_PING, nowMs);
+		SendMessageToPeer(id, kInputSendFlags, &msg, sizeof(msg));
+
+		peer.m_LastPingSent = std::chrono::steady_clock::now();
+		peer.m_LastPingStamp = nowMs;
+	}
+}
+
 
 bool CSteamP2PManager::GetPeerInput(int ClientId, uint32_t GameTick, CNetObj_PlayerInput &OutInput) const
 {
