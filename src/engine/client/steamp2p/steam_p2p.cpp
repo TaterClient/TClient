@@ -23,7 +23,29 @@ bool CSteamP2PManager::Init()
 	m_pSteamNetUtils = SteamAPI_SteamNetworkingUtils_SteamAPI_v004();
 	m_Initalized = m_pSteamMatchmaking && m_pSteamMessages && m_pSteamUser && m_pSteamNetUtils;
 	if(m_Initalized)
+	{
 		SteamAPI_ISteamNetworkingUtils_InitRelayNetworkAccess(m_pSteamNetUtils);
+
+		SteamNetworkingConfigValue_t opt[3]{};
+
+		opt[0].SetInt32(
+			k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable,
+			k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All);
+
+		opt[1].SetInt32(
+			k_ESteamNetworkingConfig_P2P_Transport_ICE_Penalty,
+			0);
+
+		opt[2].SetInt32(
+			k_ESteamNetworkingConfig_P2P_Transport_SDR_Penalty,
+			100);
+
+
+		SteamAPI_ISteamNetworkingUtils_SetConfigValueStruct(m_pSteamNetUtils, opt[0], k_ESteamNetworkingConfig_Global, 0);
+		SteamAPI_ISteamNetworkingUtils_SetConfigValueStruct(m_pSteamNetUtils, opt[1], k_ESteamNetworkingConfig_Global, 0);
+		SteamAPI_ISteamNetworkingUtils_SetConfigValueStruct(m_pSteamNetUtils, opt[2], k_ESteamNetworkingConfig_Global, 0);
+
+	}
 	return m_Initalized;
 }
 
@@ -263,7 +285,7 @@ void CSteamP2PManager::ProcessPacket(const void *pData, size_t Size, uint64_t Se
 		int ClientId = std::clamp(static_cast<int>(pInput->m_ClientId), 0, static_cast<int>(MAX_CLIENTS - 1));
 
 		m_InputBuffer[ClientId][BufferIndex].m_GameTick = pInput->m_GameTick;
-		m_InputBuffer[ClientId][BufferIndex].m_Input = ConvertFromP2PInput(pInput->m_Input); 
+		m_InputBuffer[ClientId][BufferIndex].m_Input = ConvertFromP2PInput(pInput->m_Input);
 		break;
 	}
 	case P2P_PACKET_KEEP_ALIVE:
@@ -342,7 +364,6 @@ void CSteamP2PManager::UpdateLobbyMembers()
 				CPeerConnection *Peer = GetOrCreatePeer(SteamID64);
 				Peer->m_RTT = GetPeerRTT(SteamID64);
 			}
-
 		}
 	}
 	std::vector<uint64_t> ToRemove;
@@ -461,7 +482,7 @@ void CSteamP2PManager::OnLobbyChatUpdate(const LobbyChatUpdate_t &Callback)
 	}
 }
 
-void CSteamP2PManager::OnSessionRequest(const SteamNetworkingMessagesSessionRequest_t& Callback) 
+void CSteamP2PManager::OnSessionRequest(const SteamNetworkingMessagesSessionRequest_t &Callback)
 {
 	SteamAPI_ISteamNetworkingMessages_AcceptSessionWithUser(m_pSteamMessages, Callback.m_identityRemote);
 }
@@ -516,7 +537,6 @@ void CSteamP2PManager::SendPings()
 		peer.m_LastPingStamp = nowMs;
 	}
 }
-
 
 bool CSteamP2PManager::GetPeerInput(int ClientId, uint32_t GameTick, CNetObj_PlayerInput &OutInput) const
 {

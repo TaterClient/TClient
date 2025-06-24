@@ -198,7 +198,7 @@ struct LobbyChatUpdate_t
 	uint64_t m_ulSteamIDLobby; // Lobby ID
 	uint64_t m_ulSteamIDUserChanged; // user who's status in the lobby just changed - can be recipient
 	uint64_t m_ulSteamIDMakingChange; // Chat member who made the change (different from SteamIDUserChange if kicking, muting, etc.)
-					// for example, if one user kicks another from the lobby, this will be set to the id of the user who initiated the kick
+					  // for example, if one user kicks another from the lobby, this will be set to the id of the user who initiated the kick
 	uint32_t m_rgfChatMemberStateChange; // bitfield of EChatMemberStateChange values
 };
 
@@ -224,17 +224,15 @@ struct LobbyEnter_t
 	EResult m_EChatRoomEnterResponse; // 0 == OK
 };
 
-
-
 struct LobbyKicked_t
 {
 	enum
 	{
 		k_iCallback = 512
 	};
-	uint64_t m_ulSteamIDLobby; 
-	uint64_t m_ulSteamIDAdmin; 
-	uint8_t m_bKickedDueToDisconnect; 
+	uint64_t m_ulSteamIDLobby;
+	uint64_t m_ulSteamIDAdmin;
+	uint8_t m_bKickedDueToDisconnect;
 };
 
 // INTENTIONALLY DIFFERENT CAPITLIZATION (sane ID capitlization) TO NOT CONFLICT WITH DDNET TYPE TO AVOID MERGE ISSUES HOPEFULLY (probably not) -Tater
@@ -542,6 +540,165 @@ struct SteamNetworkingMessagesSessionRequest_t
 	SteamNetworkingIdentity m_identityRemote;
 };
 
+enum ESteamNetworkingConfigValue
+{
+	k_ESteamNetworkingConfig_Invalid = 0,
+	k_ESteamNetworkingConfig_TimeoutInitial = 24,
+	k_ESteamNetworkingConfig_TimeoutConnected = 25,
+	k_ESteamNetworkingConfig_SendBufferSize = 9,
+	k_ESteamNetworkingConfig_RecvBufferSize = 47,
+	k_ESteamNetworkingConfig_RecvBufferMessages = 48,
+	k_ESteamNetworkingConfig_RecvMaxMessageSize = 49,
+	k_ESteamNetworkingConfig_RecvMaxSegmentsPerPacket = 50,
+	k_ESteamNetworkingConfig_ConnectionUserData = 40,
+	k_ESteamNetworkingConfig_SendRateMin = 10,
+	k_ESteamNetworkingConfig_SendRateMax = 11,
+	k_ESteamNetworkingConfig_NagleTime = 12,
+	k_ESteamNetworkingConfig_IP_AllowWithoutAuth = 23,
+	k_ESteamNetworkingConfig_IPLocalHost_AllowWithoutAuth = 52,
+	k_ESteamNetworkingConfig_MTU_PacketSize = 32,
+	k_ESteamNetworkingConfig_MTU_DataSize = 33,
+	k_ESteamNetworkingConfig_Unencrypted = 34,
+	k_ESteamNetworkingConfig_SymmetricConnect = 37,
+	k_ESteamNetworkingConfig_LocalVirtualPort = 38,
+	k_ESteamNetworkingConfig_DualWifi_Enable = 39,
+	k_ESteamNetworkingConfig_EnableDiagnosticsUI = 46,
+	k_ESteamNetworkingConfig_SendTimeSincePreviousPacket = 59,
+	k_ESteamNetworkingConfig_FakePacketLoss_Send = 2,
+	k_ESteamNetworkingConfig_FakePacketLoss_Recv = 3,
+	k_ESteamNetworkingConfig_FakePacketLag_Send = 4,
+	k_ESteamNetworkingConfig_FakePacketLag_Recv = 5,
+	k_ESteamNetworkingConfig_FakePacketJitter_Send_Avg = 53,
+	k_ESteamNetworkingConfig_FakePacketJitter_Send_Max = 54,
+	k_ESteamNetworkingConfig_FakePacketJitter_Send_Pct = 55,
+	k_ESteamNetworkingConfig_FakePacketJitter_Recv_Avg = 56,
+	k_ESteamNetworkingConfig_FakePacketJitter_Recv_Max = 57,
+	k_ESteamNetworkingConfig_FakePacketJitter_Recv_Pct = 58,
+	k_ESteamNetworkingConfig_FakePacketReorder_Send = 6,
+	k_ESteamNetworkingConfig_FakePacketReorder_Recv = 7,
+	k_ESteamNetworkingConfig_FakePacketReorder_Time = 8,
+	k_ESteamNetworkingConfig_FakePacketDup_Send = 26,
+	k_ESteamNetworkingConfig_FakePacketDup_Recv = 27,
+	k_ESteamNetworkingConfig_FakePacketDup_TimeMax = 28,
+	k_ESteamNetworkingConfig_PacketTraceMaxBytes = 41,
+	k_ESteamNetworkingConfig_FakeRateLimit_Send_Rate = 42,
+	k_ESteamNetworkingConfig_FakeRateLimit_Send_Burst = 43,
+	k_ESteamNetworkingConfig_FakeRateLimit_Recv_Rate = 44,
+	k_ESteamNetworkingConfig_FakeRateLimit_Recv_Burst = 45,
+	k_ESteamNetworkingConfig_OutOfOrderCorrectionWindowMicroseconds = 51,
+	k_ESteamNetworkingConfig_Callback_ConnectionStatusChanged = 201,
+	k_ESteamNetworkingConfig_Callback_AuthStatusChanged = 202,
+	k_ESteamNetworkingConfig_Callback_RelayNetworkStatusChanged = 203,
+	k_ESteamNetworkingConfig_Callback_MessagesSessionRequest = 204,
+	k_ESteamNetworkingConfig_Callback_MessagesSessionFailed = 205,
+	k_ESteamNetworkingConfig_Callback_CreateConnectionSignaling = 206,
+	k_ESteamNetworkingConfig_Callback_FakeIPResult = 207,
+	k_ESteamNetworkingConfig_P2P_STUN_ServerList = 103,
+	k_ESteamNetworkingConfig_P2P_Transport_ICE_Enable = 104,
+	k_ESteamNetworkingConfig_P2P_Transport_ICE_Penalty = 105,
+	k_ESteamNetworkingConfig_P2P_Transport_SDR_Penalty = 106,
+	k_ESteamNetworkingConfig_P2P_TURN_ServerList = 107,
+	k_ESteamNetworkingConfig_P2P_TURN_UserList = 108,
+	k_ESteamNetworkingConfig_P2P_TURN_PassList = 109,
+	// k_ESteamNetworkingConfig_P2P_Transport_LANBeacon_Penalty = 107,
+	k_ESteamNetworkingConfig_P2P_Transport_ICE_Implementation = 110,
+	k_ESteamNetworkingConfig_SDRClient_ConsecutitivePingTimeoutsFailInitial = 19,
+	k_ESteamNetworkingConfig_SDRClient_ConsecutitivePingTimeoutsFail = 20,
+	k_ESteamNetworkingConfig_SDRClient_MinPingsBeforePingAccurate = 21,
+	k_ESteamNetworkingConfig_SDRClient_SingleSocket = 22,
+	k_ESteamNetworkingConfig_SDRClient_ForceRelayCluster = 29,
+	k_ESteamNetworkingConfig_SDRClient_DevTicket = 30,
+	k_ESteamNetworkingConfig_SDRClient_ForceProxyAddr = 31,
+	k_ESteamNetworkingConfig_SDRClient_FakeClusterPing = 36,
+	k_ESteamNetworkingConfig_SDRClient_LimitPingProbesToNearestN = 60,
+	k_ESteamNetworkingConfig_LogLevel_AckRTT = 13, 
+	k_ESteamNetworkingConfig_LogLevel_PacketDecode = 14, 
+	k_ESteamNetworkingConfig_LogLevel_Message = 15, 
+	k_ESteamNetworkingConfig_LogLevel_PacketGaps = 16, 
+	k_ESteamNetworkingConfig_LogLevel_P2PRendezvous = 17, 
+	k_ESteamNetworkingConfig_LogLevel_SDRRelayPings = 18,
+	k_ESteamNetworkingConfig_ECN = 999,
+	k_ESteamNetworkingConfig_DELETED_EnumerateDevVars = 35,
+	k_ESteamNetworkingConfigValue__Force32Bit = 0x7fffffff
+};
+
+enum ESteamNetworkingConfigDataType
+{
+	k_ESteamNetworkingConfig_Int32 = 1,
+	k_ESteamNetworkingConfig_Int64 = 2,
+	k_ESteamNetworkingConfig_Float = 3,
+	k_ESteamNetworkingConfig_String = 4,
+	k_ESteamNetworkingConfig_Ptr = 5,
+	k_ESteamNetworkingConfigDataType__Force32Bit = 0x7fffffff
+};
+enum ESteamNetworkingConfigScope
+{
+
+	k_ESteamNetworkingConfig_Global = 1,
+	k_ESteamNetworkingConfig_SocketsInterface = 2,
+	k_ESteamNetworkingConfig_ListenSocket = 3,
+	k_ESteamNetworkingConfig_Connection = 4,
+	k_ESteamNetworkingConfigScope__Force32Bit = 0x7fffffff
+};
+const int k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Default = -1;
+const int k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Disable = 0; 
+const int k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Relay = 1; 
+const int k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Private = 2; 
+const int k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_Public = 4; 
+const int k_nSteamNetworkingConfig_P2P_Transport_ICE_Enable_All = 0x7fffffff;
+
+struct SteamNetworkingConfigValue_t
+{
+	/// Which option is being set
+	ESteamNetworkingConfigValue m_eValue;
+
+	/// Which field below did you fill in?
+	ESteamNetworkingConfigDataType m_eDataType;
+
+	/// Option value
+	union
+	{
+		int32_t m_int32;
+		int64_t m_int64;
+		float m_float;
+		const char *m_string; // Points to your '\0'-terminated buffer
+		void *m_ptr;
+	} m_val;
+
+	//
+	// Shortcut helpers to set the type and value in a single call
+	//
+	inline void SetInt32(ESteamNetworkingConfigValue eVal, int32_t data)
+	{
+		m_eValue = eVal;
+		m_eDataType = k_ESteamNetworkingConfig_Int32;
+		m_val.m_int32 = data;
+	}
+	inline void SetInt64(ESteamNetworkingConfigValue eVal, int64_t data)
+	{
+		m_eValue = eVal;
+		m_eDataType = k_ESteamNetworkingConfig_Int64;
+		m_val.m_int64 = data;
+	}
+	inline void SetFloat(ESteamNetworkingConfigValue eVal, float data)
+	{
+		m_eValue = eVal;
+		m_eDataType = k_ESteamNetworkingConfig_Float;
+		m_val.m_float = data;
+	}
+	inline void SetPtr(ESteamNetworkingConfigValue eVal, void *data)
+	{
+		m_eValue = eVal;
+		m_eDataType = k_ESteamNetworkingConfig_Ptr;
+		m_val.m_ptr = data;
+	}
+	inline void SetString(ESteamNetworkingConfigValue eVal, const char *data) // WARNING - Just saves your pointer.  Does NOT make a copy of the string
+	{
+		m_eValue = eVal;
+		m_eDataType = k_ESteamNetworkingConfig_Ptr;
+		m_val.m_string = data;
+	}
+};
 
 STEAMAPI ISteamNetworkingMessages *SteamAPI_SteamNetworkingMessages_SteamAPI_v002();
 STEAMAPI EResult SteamAPI_ISteamNetworkingMessages_SendMessageToUser(ISteamNetworkingMessages *self, const SteamNetworkingIdentity &identityRemote, const void *pubData, uint32_t cubData, int nSendFlags, int nRemoteChannel);
@@ -558,6 +715,7 @@ STEAMAPI bool SteamAPI_ISteamMatchmaking_LeaveLobby(ISteamMatchmaking *self, CSt
 
 STEAMAPI ISteamNetworkingUtils *SteamAPI_SteamNetworkingUtils_SteamAPI_v004();
 STEAMAPI void SteamAPI_ISteamNetworkingUtils_InitRelayNetworkAccess(ISteamNetworkingUtils *self);
+STEAMAPI bool SteamAPI_ISteamNetworkingUtils_SetConfigValueStruct(ISteamNetworkingUtils *self, const SteamNetworkingConfigValue_t &opt, ESteamNetworkingConfigScope eScopeType, intptr_t scopeObj);
 
 STEAMAPI uint64_t SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex(ISteamMatchmaking *self, uint64_t steamIDLobby, int iMember);
 STEAMAPI int SteamAPI_ISteamMatchmaking_GetNumLobbyMembers(ISteamMatchmaking *self, uint64_t steamIDLobby);
@@ -567,7 +725,6 @@ STEAMAPI const char *SteamAPI_ISteamMatchmaking_GetLobbyData(ISteamMatchmaking *
 
 STEAMAPI ISteamUser *SteamAPI_SteamUser_v021();
 STEAMAPI uint64_t SteamAPI_ISteamUser_GetSteamID(ISteamUser *self);
-
 }
 
 #endif // STEAM_STEAM_API_FLAT_H
