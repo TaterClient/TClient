@@ -37,6 +37,7 @@ bool SteamAPI_ISteamMatchmaking_LeaveLobby(ISteamMatchmaking *, CSteamID) { abor
 
 ISteamNetworkingUtils *SteamAPI_SteamNetworkingUtils_v003() { abort(); }
 void SteamAPI_ISteamNetworkingUtils_InitRelayNetworkAccess(ISteamNetworkingUtils *) { abort(); }
+
 uint64_t SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex(ISteamMatchmaking *self, uint64_t steamIDLobby, int iMember) { abort(); }
 int SteamAPI_ISteamMatchmaking_GetNumLobbyMembers(ISteamMatchmaking *self, uint64_t steamIDLobby) { abort(); }
 uint64_t SteamAPI_ISteamMatchmaking_GetLobbyOwner(ISteamMatchmaking *self, uint64_t steamIDLobby) { abort(); }

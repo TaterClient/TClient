@@ -56,6 +56,7 @@ public:
 	void OnLobbyEnter(const LobbyEnter_t &Callback);
 	void OnLobbyChatUpdate(const LobbyChatUpdate_t &Callback);
 	void OnLobbyKicked(const LobbyKicked_t &Callback);
+	void OnSessionRequest(const SteamNetworkingMessagesSessionRequest_t &Callback);
 
 	uint32_t m_LocalSrvCRC = 0;
 	NETADDR m_LocalSrvAddr = {};
@@ -85,6 +86,7 @@ private:
 	ISteamMatchmaking *m_pSteamMatchmaking = nullptr;
 	ISteamNetworkingMessages *m_pSteamMessages = nullptr;
 	ISteamUser *m_pSteamUser = nullptr;
+	ISteamNetworkingUtils *m_pSteamNetUtils = nullptr;
 
 	SteamAPICall_t m_hPendingCreate = 0;
 	SteamAPICall_t m_hPendingJoin = 0;

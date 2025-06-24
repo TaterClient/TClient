@@ -224,6 +224,15 @@ struct LobbyEnter_t
 	EResult m_EChatRoomEnterResponse; // 0 == OK
 };
 
+struct SteamNetworkingMessagesSessionRequest_t
+{
+	enum
+	{
+		k_iCallback = 1250 + 1
+	};
+	SteamNetworkingIdentity m_identityRemote;
+};
+
 struct LobbyKicked_t
 {
 	enum
