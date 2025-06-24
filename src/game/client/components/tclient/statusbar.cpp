@@ -56,18 +56,18 @@ float CStatusBar::GetDurationWidth(int Duration)
 
 float CStatusBar::AngleWidth()
 {
-	if(m_pClient->m_Snap.m_SpecInfo.m_SpectatorId == SPEC_FREEVIEW)
+	if(GameClient()->m_Snap.m_SpecInfo.m_SpectatorId == SPEC_FREEVIEW)
 		return 0.0f;
 
 	return TextRender()->TextWidth(m_FontSize, "000.00");
 }
 void CStatusBar::AngleRender()
 {
-	CNetObj_Character *pCharacter = &m_pClient->m_Snap.m_aCharacters[m_PlayerId].m_Cur;
+	CNetObj_Character *pCharacter = &GameClient()->m_Snap.m_aCharacters[m_PlayerId].m_Cur;
 	float Angle = 0.0f;
-	if(m_pClient->m_Snap.m_aCharacters[m_PlayerId].m_HasExtendedDisplayInfo)
+	if(GameClient()->m_Snap.m_aCharacters[m_PlayerId].m_HasExtendedDisplayInfo)
 	{
-		CNetObj_DDNetCharacter *pExtendedData = &m_pClient->m_Snap.m_aCharacters[m_PlayerId].m_ExtendedData;
+		CNetObj_DDNetCharacter *pExtendedData = &GameClient()->m_Snap.m_aCharacters[m_PlayerId].m_ExtendedData;
 		Angle = atan2f(pExtendedData->m_TargetY, pExtendedData->m_TargetX);
 	}
 	else
@@ -81,14 +81,14 @@ void CStatusBar::AngleRender()
 
 float CStatusBar::PingWidth()
 {
-	if(!m_pClient->m_Snap.m_apPlayerInfos[m_PlayerId])
+	if(!GameClient()->m_Snap.m_apPlayerInfos[m_PlayerId])
 		return 0.0f;
 
 	return TextRender()->TextWidth(m_FontSize, "0000");
 }
 void CStatusBar::PingRender()
 {
-	const CNetObj_PlayerInfo *pInfo = m_pClient->m_Snap.m_apPlayerInfos[m_PlayerId];
+	const CNetObj_PlayerInfo *pInfo = GameClient()->m_Snap.m_apPlayerInfos[m_PlayerId];
 	char aBuf[32];
 	str_format(aBuf, sizeof(aBuf), "%d", pInfo->m_Latency);
 	TextRender()->Text(m_CursorX, m_CursorY, m_FontSize, aBuf);
@@ -127,22 +127,22 @@ float CStatusBar::RaceTimeWidth()
 void CStatusBar::RaceTimeRender()
 {
 	int RaceTime = 0;
-	if(m_pClient->m_Snap.m_pGameInfoObj->m_TimeLimit && (m_pClient->m_Snap.m_pGameInfoObj->m_WarmupTimer <= 0))
+	if(GameClient()->m_Snap.m_pGameInfoObj->m_TimeLimit && (GameClient()->m_Snap.m_pGameInfoObj->m_WarmupTimer <= 0))
 	{
-		RaceTime = m_pClient->m_Snap.m_pGameInfoObj->m_TimeLimit * 60 - ((Client()->GameTick(g_Config.m_ClDummy) - m_pClient->m_Snap.m_pGameInfoObj->m_RoundStartTick) / Client()->GameTickSpeed());
+		RaceTime = GameClient()->m_Snap.m_pGameInfoObj->m_TimeLimit * 60 - ((Client()->GameTick(g_Config.m_ClDummy) - GameClient()->m_Snap.m_pGameInfoObj->m_RoundStartTick) / Client()->GameTickSpeed());
 
-		if(m_pClient->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_GAMEOVER)
+		if(GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_GAMEOVER)
 			RaceTime = 0;
 	}
-	else if(m_pClient->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_RACETIME)
-		RaceTime = (Client()->GameTick(g_Config.m_ClDummy) + m_pClient->m_Snap.m_pGameInfoObj->m_WarmupTimer) / Client()->GameTickSpeed();
+	else if(GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_RACETIME)
+		RaceTime = (Client()->GameTick(g_Config.m_ClDummy) + GameClient()->m_Snap.m_pGameInfoObj->m_WarmupTimer) / Client()->GameTickSpeed();
 	else
-		RaceTime = (Client()->GameTick(g_Config.m_ClDummy) - m_pClient->m_Snap.m_pGameInfoObj->m_RoundStartTick) / Client()->GameTickSpeed();
+		RaceTime = (Client()->GameTick(g_Config.m_ClDummy) - GameClient()->m_Snap.m_pGameInfoObj->m_RoundStartTick) / Client()->GameTickSpeed();
 	m_CurrentRaceTime = RaceTime;
 	char aTimeBuf[64];
 	str_time((int64_t)RaceTime * 100, TIME_DAYS, aTimeBuf, sizeof(aTimeBuf));
 
-	if(m_pClient->m_Snap.m_pGameInfoObj->m_TimeLimit && RaceTime <= 60 && (m_pClient->m_Snap.m_pGameInfoObj->m_WarmupTimer <= 0))
+	if(GameClient()->m_Snap.m_pGameInfoObj->m_TimeLimit && RaceTime <= 60 && (GameClient()->m_Snap.m_pGameInfoObj->m_WarmupTimer <= 0))
 	{
 		const float Alpha = RaceTime <= 10 && (2 * time() / time_freq()) % 2 ? 0.5f : 1.0f;
 		TextRender()->TextColor(1.0f, 0.25f, 0.25f, Alpha);
@@ -166,15 +166,15 @@ void CStatusBar::FPSRender()
 
 float CStatusBar::PositionWidth()
 {
-	if(!m_pClient->m_Snap.m_apPlayerInfos[m_PlayerId])
+	if(!GameClient()->m_Snap.m_apPlayerInfos[m_PlayerId])
 		return 0.0f;
 
 	return TextRender()->TextWidth(m_FontSize, "-0000.00, -0000.00");
 }
 void CStatusBar::PositionRender()
 {
-	const CNetObj_Character *pPrevChar = &m_pClient->m_Snap.m_aCharacters[m_PlayerId].m_Prev;
-	const CNetObj_Character *pCurChar = &m_pClient->m_Snap.m_aCharacters[m_PlayerId].m_Cur;
+	const CNetObj_Character *pPrevChar = &GameClient()->m_Snap.m_aCharacters[m_PlayerId].m_Prev;
+	const CNetObj_Character *pCurChar = &GameClient()->m_Snap.m_aCharacters[m_PlayerId].m_Cur;
 	const float IntraTick = Client()->IntraGameTick(g_Config.m_ClDummy);
 	// To make the player position relative to blocks we need to divide by the block size
 	const vec2 Pos = mix(vec2(pPrevChar->m_X, pPrevChar->m_Y), vec2(pCurChar->m_X, pCurChar->m_Y), IntraTick) / 32.0f;
@@ -185,15 +185,15 @@ void CStatusBar::PositionRender()
 
 float CStatusBar::VelocityWidth()
 {
-	if(!m_pClient->m_Snap.m_apPlayerInfos[m_PlayerId])
+	if(!GameClient()->m_Snap.m_apPlayerInfos[m_PlayerId])
 		return 0.0f;
 
 	return TextRender()->TextWidth(m_FontSize, "+00.00, +00.00");
 }
 void CStatusBar::VelocityRender()
 {
-	const CNetObj_Character *pPrevChar = &m_pClient->m_Snap.m_aCharacters[m_PlayerId].m_Prev;
-	const CNetObj_Character *pCurChar = &m_pClient->m_Snap.m_aCharacters[m_PlayerId].m_Cur;
+	const CNetObj_Character *pPrevChar = &GameClient()->m_Snap.m_aCharacters[m_PlayerId].m_Prev;
+	const CNetObj_Character *pCurChar = &GameClient()->m_Snap.m_aCharacters[m_PlayerId].m_Cur;
 	const float IntraTick = Client()->IntraGameTick(g_Config.m_ClDummy);
 	const vec2 Vel = mix(vec2(pPrevChar->m_VelX, pPrevChar->m_VelY), vec2(pCurChar->m_VelX, pCurChar->m_VelY), IntraTick);
 	float VelspeedX = Vel.x / 256.0f * Client()->GameTickSpeed();
@@ -204,7 +204,7 @@ void CStatusBar::VelocityRender()
 		VelspeedY = 0;
 	float DisplaySpeedX = VelspeedX / 32;
 	float VelspeedLength = length(vec2(Vel.x, Vel.y) / 256.0f) * Client()->GameTickSpeed();
-	float Ramp = VelocityRamp(VelspeedLength, m_pClient->m_aTuning[g_Config.m_ClDummy].m_VelrampStart, m_pClient->m_aTuning[g_Config.m_ClDummy].m_VelrampRange, m_pClient->m_aTuning[g_Config.m_ClDummy].m_VelrampCurvature);
+	float Ramp = VelocityRamp(VelspeedLength, GameClient()->m_aTuning[g_Config.m_ClDummy].m_VelrampStart, GameClient()->m_aTuning[g_Config.m_ClDummy].m_VelrampRange, GameClient()->m_aTuning[g_Config.m_ClDummy].m_VelrampCurvature);
 	DisplaySpeedX *= Ramp;
 	float DisplaySpeedY = VelspeedY / 32;
 
@@ -221,7 +221,7 @@ void CStatusBar::ZoomRender()
 {
 	char aBuf[32];
 	const double ZoomStep = std::cos((30.0f * pi) / 180.0f);
-	const float ConsoleZoom = std::log(m_pClient->m_Camera.m_Zoom * std::pow(ZoomStep, 10)) / std::log(ZoomStep);
+	const float ConsoleZoom = std::log(GameClient()->m_Camera.m_Zoom * std::pow(ZoomStep, 10)) / std::log(ZoomStep);
 	str_format(aBuf, sizeof(aBuf), "%.2f", ConsoleZoom);
 	TextRender()->Text(m_CursorX, m_CursorY, m_FontSize, aBuf);
 }
@@ -297,12 +297,12 @@ void CStatusBar::OnRender()
 	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 		return;
 
-	if(!g_Config.m_ClStatusBar || !m_pClient->m_Snap.m_pGameInfoObj)
+	if(!g_Config.m_ClStatusBar || !GameClient()->m_Snap.m_pGameInfoObj)
 		return;
 
-	m_PlayerId = m_pClient->m_Snap.m_LocalClientId;
-	if(m_pClient->m_Snap.m_SpecInfo.m_Active)
-		m_PlayerId = m_pClient->m_Snap.m_SpecInfo.m_SpectatorId;
+	m_PlayerId = GameClient()->m_Snap.m_LocalClientId;
+	if(GameClient()->m_Snap.m_SpecInfo.m_Active)
+		m_PlayerId = GameClient()->m_Snap.m_SpecInfo.m_SpectatorId;
 
 	UpdateStatusBarSize();
 

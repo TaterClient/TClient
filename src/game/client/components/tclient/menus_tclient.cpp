@@ -12,27 +12,26 @@
 #include <engine/updater.h>
 
 #include <game/generated/protocol.h>
+#include <game/localization.h>
 
 #include <game/client/animstate.h>
 #include <game/client/components/chat.h>
+#include <game/client/components/countryflags.h>
 #include <game/client/components/menu_background.h>
+#include <game/client/components/menus.h>
+#include <game/client/components/skins.h>
 #include <game/client/components/sounds.h>
+#include <game/client/components/tclient/bindchat.h>
 #include <game/client/components/tclient/bindwheel.h>
 #include <game/client/components/tclient/trails.h>
+#include "engine/client/steamp2p/steam_p2p.h"
+
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
 #include <game/client/skin.h>
 #include <game/client/ui.h>
 #include <game/client/ui_listbox.h>
 #include <game/client/ui_scrollregion.h>
-#include <game/localization.h>
-
-#include "../binds.h"
-#include "../countryflags.h"
-#include "../menus.h"
-#include "../skins.h"
-#include "game/client/components/tclient/bindchat.h"
-#include "engine/client/steamp2p/steam_p2p.h"
 
 #include <vector>
 
@@ -185,7 +184,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 
 	static int s_CurCustomTab = 0;
 
-	CUIRect TabBar, Column, LeftView, RightView, Button, Label;
+	CUIRect TabBar, Button, Label;
 	int TabCount = NUMBER_OF_TCLIENT_TABS;
 	for(int Tab = 0; Tab < NUMBER_OF_TCLIENT_TABS; ++Tab)
 	{
@@ -197,13 +196,13 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		}
 	}
 
-	MainView.HSplitTop(LineSize * 1.2f, &TabBar, &MainView);
+	MainView.HSplitTop(LineSize, &TabBar, &MainView);
 	const float TabWidth = TabBar.w / TabCount;
 	static CButtonContainer s_aPageTabs[NUMBER_OF_TCLIENT_TABS] = {};
 	const char *apTabNames[] = {
 		TCLocalize("Settings"),
-		TCLocalize("Bindwheel"),
-		TCLocalize("Warlist"),
+		TCLocalize("Bind Wheel"),
+		TCLocalize("War List"),
 		TCLocalize("Chat Binds"),
 		TCLocalize("Status Bar"),
 		TCLocalize("Steam Lobby"),
@@ -220,7 +219,7 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			s_CurCustomTab = Tab;
 	}
 
-	MainView.HSplitTop(MarginSmall, nullptr, &MainView);
+	MainView.HSplitTop(Margin, nullptr, &MainView);
 
 	if(s_CurCustomTab == TCLIENT_TAB_SETTINGS)
 	{
@@ -229,78 +228,60 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 
 	if(s_CurCustomTab == TCLIENT_TAB_BINDCHAT)
 	{
-		MainView.HSplitTop(MarginBetweenSections, nullptr, &MainView);
+		CUIRect LeftView, RightView;
 		MainView.VSplitMid(&LeftView, &RightView, Margin);
 
-		Column = LeftView;
-
-		const auto DoBindchat = [&](CLineInput &LineInput, const char *pLabel, const CBindChat::CBind &BindDefault) {
+		auto DoBindchatDefault = [&](CUIRect &Column, CBindChat::CBindDefault &BindDefault) {
 			Column.HSplitTop(MarginSmall, nullptr, &Column);
 			Column.HSplitTop(LineSize, &Button, &Column);
-			CBindChat::CBind *pOldBind = GameClient()->m_BindChat.GetBind(BindDefault.m_aCommand);
-			static char s_aTempName[BINDCHAT_MAX_CMD];
+			CBindChat::CBind *pOldBind = GameClient()->m_BindChat.GetBind(BindDefault.m_Bind.m_aCommand);
+			static char s_aTempName[BINDCHAT_MAX_NAME] = "";
 			char *pName;
 			if(pOldBind == nullptr)
-			{
-				s_aTempName[0] = '\0';
 				pName = s_aTempName;
-			}
 			else
-			{
 				pName = pOldBind->m_aName;
-				str_copy(s_aTempName, pName);
-			}
-			if(DoEditBoxWithLabel(&LineInput, &Button, pLabel, BindDefault.m_aName, pName, sizeof(s_aTempName)))
+			if(DoEditBoxWithLabel(&BindDefault.m_LineInput, &Button, BindDefault.m_pTitle, BindDefault.m_Bind.m_aName, pName, BINDCHAT_MAX_NAME) && BindDefault.m_LineInput.IsActive())
 			{
-				if(pOldBind)
-					GameClient()->m_BindChat.RemoveBind(s_aTempName);
-				auto BindNew = BindDefault;
-				str_copy(BindNew.m_aName, pName);
-				GameClient()->m_BindChat.AddBind(BindNew);
+				if(!pOldBind && pName[0] != '\0')
+				{
+					auto BindNew = BindDefault.m_Bind;
+					str_copy(BindNew.m_aName, pName);
+					GameClient()->m_BindChat.RemoveBind(pName); // Prevent duplicates
+					GameClient()->m_BindChat.AddBind(BindNew);
+					s_aTempName[0] = '\0';
+				}
+				if(pOldBind && pName[0] == '\0')
+				{
+					GameClient()->m_BindChat.RemoveBind(pName);
+				}
 			}
 		};
 
-		Column.HSplitTop(HeadlineHeight, &Label, &Column);
-		Ui()->DoLabel(&Label, TCLocalize("Kaomoji"), HeadlineFontSize, TEXTALIGN_ML);
-		Column.HSplitTop(MarginSmall, nullptr, &Column);
+		auto DoBindchatDefaults = [&](CUIRect &Column, const char *pTitle, std::vector<CBindChat::CBindDefault> &vBindchatDefaults) {
+			Column.HSplitTop(HeadlineHeight, &Label, &Column);
+			Ui()->DoLabel(&Label, pTitle, HeadlineFontSize, TEXTALIGN_ML);
+			Column.HSplitTop(MarginSmall, nullptr, &Column);
+			for(CBindChat::CBindDefault &BindchatDefault : vBindchatDefaults)
+				DoBindchatDefault(Column, BindchatDefault);
+			Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
+		};
 
-		static const int s_KaomojiCount = sizeof(s_aDefaultBindChatKaomoji) / sizeof(s_aDefaultBindChatKaomoji[0]);
-		static CLineInput s_aKaomoji[s_KaomojiCount];
-		for(int i = 0; i < s_KaomojiCount; ++i)
+		float SizeL = 0.0f, SizeR = 0.0f;
+		for(auto &[pTitle, vBindDefaults] : CBindChat::BIND_DEFAULTS)
 		{
-			const CBindChat::CBindDefault &BindDefault = s_aDefaultBindChatKaomoji[i];
-			DoBindchat(s_aKaomoji[i], TCLocalize(BindDefault.m_pTitle), BindDefault.m_Bind);
-		}
-
-		Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
-		Column.HSplitTop(HeadlineHeight, &Label, &Column);
-		Ui()->DoLabel(&Label, TCLocalize("Other Commands"), HeadlineFontSize, TEXTALIGN_ML);
-
-		static const int s_OtherCount = sizeof(s_aDefaultBindChatOther) / sizeof(s_aDefaultBindChatOther[0]);
-		static CLineInput s_Other[s_OtherCount];
-		for(int i = 0; i < s_OtherCount; ++i)
-		{
-			const CBindChat::CBindDefault &BindDefault = s_aDefaultBindChatOther[i];
-			DoBindchat(s_Other[i], TCLocalize(BindDefault.m_pTitle), BindDefault.m_Bind);
-		}
-
-		Column = RightView;
-
-		Column.HSplitTop(HeadlineHeight, &Label, &Column);
-		Ui()->DoLabel(&Label, TCLocalize("Warlist"), HeadlineFontSize, TEXTALIGN_ML);
-
-		static const int s_WarlistCount = sizeof(s_aDefaultBindChatWarlist) / sizeof(s_aDefaultBindChatWarlist[0]);
-		static CLineInput s_Warlist[s_WarlistCount];
-		for(int i = 0; i < s_WarlistCount; ++i)
-		{
-			const CBindChat::CBindDefault &BindDefault = s_aDefaultBindChatWarlist[i];
-			DoBindchat(s_Warlist[i], TCLocalize(BindDefault.m_pTitle), BindDefault.m_Bind);
+			if(str_comp(pTitle, "Mod") == 0)
+				continue;
+			float &Size = SizeL > SizeR ? SizeR : SizeL;
+			CUIRect &Column = SizeL > SizeR ? RightView : LeftView;
+			DoBindchatDefaults(Column, pTitle, vBindDefaults);
+			Size += vBindDefaults.size() * (MarginSmall + LineSize) + HeadlineHeight + HeadlineFontSize + MarginSmall * 2.0f;
 		}
 	}
 
 	if(s_CurCustomTab == TCLIENT_TAB_BINDWHEEL)
 	{
-		MainView.HSplitTop(MarginBetweenSections, nullptr, &MainView);
+		CUIRect LeftView, RightView;
 		MainView.VSplitLeft(MainView.w / 2.1f, &LeftView, &RightView);
 
 		const float Radius = minimum(RightView.w, RightView.h) / 2.0f;
@@ -444,12 +425,12 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		Ui()->DoLabel(&Label, TCLocalize("Use middle mouse select without copy"), FontSize, TEXTALIGN_ML);
 
 		// Do Settings Key
-		CKeyInfo Key = CKeyInfo{"Bind Wheel Key", "+bindwheel", 0, 0};
+		CKeyInfo Key = CKeyInfo{TCLocalize("Bind Wheel Key"), "+bindwheel", 0, 0};
 		for(int Mod = 0; Mod < CBinds::MODIFIER_COMBINATION_COUNT; Mod++)
 		{
 			for(int KeyId = 0; KeyId < KEY_LAST; KeyId++)
 			{
-				const char *pBind = m_pClient->m_Binds.Get(KeyId, Mod);
+				const char *pBind = GameClient()->m_Binds.Get(KeyId, Mod);
 				if(!pBind[0])
 					continue;
 
@@ -475,9 +456,9 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 		if(NewId != OldId || NewModifierCombination != OldModifierCombination)
 		{
 			if(OldId != 0 || NewId == 0)
-				m_pClient->m_Binds.Bind(OldId, "", false, OldModifierCombination);
+				GameClient()->m_Binds.Bind(OldId, "", false, OldModifierCombination);
 			if(NewId != 0)
-				m_pClient->m_Binds.Bind(NewId, Key.m_pCommand, false, NewModifierCombination);
+				GameClient()->m_Binds.Bind(NewId, Key.m_pCommand, false, NewModifierCombination);
 		}
 		LeftView.HSplitBottom(LineSize, &LeftView, &Button);
 
@@ -535,8 +516,7 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 		Section.x -= Padding * 0.5f;
 		Section.y -= Padding * 0.5f;
 		Section.y -= s_PrevScrollOffset.y - ScrollOffset.y;
-		float Shade = 0.0f;
-		Section.Draw(ColorRGBA(Shade, Shade, Shade, 0.25f), IGraphics::CORNER_ALL, 10.0f);
+		Section.Draw(ColorRGBA(0.0f, 0.0f, 0.0f, 0.25f), IGraphics::CORNER_ALL, 10.0f);
 	}
 	s_PrevScrollOffset = ScrollOffset;
 	s_SectionBoxes.clear();
@@ -623,8 +603,8 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 		Ui()->DoScrollbarOption(&g_Config.m_ClAnimateWheelTime, &g_Config.m_ClAnimateWheelTime, &Button, TCLocalize("Wheel animate"), 0, 1000, &CUi::ms_LinearScrollbarScale, 0, "ms (off)");
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClPingNameCircle, TCLocalize("Show ping colored circle before names"), &g_Config.m_ClPingNameCircle, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRenderNameplateSpec, TCLocalize("Hide nameplates in spec"), &g_Config.m_ClRenderNameplateSpec, &Column, LineSize);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClNameplatesSkinInfo, TCLocalize("Shows skin name and colors in nameplates"), &g_Config.m_ClNameplatesSkinInfo, &Column, LineSize);
+	// DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRenderNameplateSpec, TCLocalize("Hide nameplates in spec"), &g_Config.m_ClRenderNameplateSpec, &Column, LineSize);
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClShowSkinName, TCLocalize("Show skin names in nameplate"), &g_Config.m_ClShowSkinName, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClFreezeStars, TCLocalize("Freeze stars"), &g_Config.m_ClFreezeStars, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClColorFreeze, TCLocalize("Color frozen tee skins"), &g_Config.m_ClColorFreeze, &Column, LineSize);
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClFreezeKatana, TCLocalize("Show katan on frozen players"), &g_Config.m_ClFreezeKatana, &Column, LineSize);
@@ -644,11 +624,11 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 	// ***** Tiny Tee's ***** //
 	static std::vector<CButtonContainer> s_vButtonContainersTinyTees = {{}, {}, {}};
 	int Value = g_Config.m_ClTinyTees ? (g_Config.m_ClTinyTeesOthers ? 2 : 1) : 0;
-	if(DoLine_RadioMenu(Column, Localize("Tiny Tees"),
-		s_vButtonContainersTinyTees,
-		{Localize("None"), Localize("Own"), Localize("All")},
-		{0, 1, 2},
-		Value))
+	if(DoLine_RadioMenu(Column, TCLocalize("Tiny Tees"),
+		   s_vButtonContainersTinyTees,
+		   {Localize("None"), Localize("Own"), Localize("All")},
+		   {0, 1, 2},
+		   Value))
 	{
 		g_Config.m_ClTinyTees = Value > 0 ? 1 : 0;
 		g_Config.m_ClTinyTeesOthers = Value > 1 ? 1 : 0;
@@ -1004,13 +984,13 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_ClRenderGhostAsCircle, TCLocalize("Render ghosts as circles"), &g_Config.m_ClRenderGhostAsCircle, &Column, LineSize);
 
 	{
-		static CKeyInfo s_Key = CKeyInfo{"Toggle ghosts key", "toggle tc_show_others_ghosts 0 1", 0, 0};
+		static CKeyInfo s_Key = CKeyInfo{TCLocalize("Toggle ghosts key"), "toggle tc_show_others_ghosts 0 1", 0, 0};
 		s_Key.m_ModifierCombination = s_Key.m_KeyId = 0;
 		for(int Mod = 0; Mod < CBinds::MODIFIER_COMBINATION_COUNT; Mod++)
 		{
 			for(int KeyId = 0; KeyId < KEY_LAST; KeyId++)
 			{
-				const char *pBind = m_pClient->m_Binds.Get(KeyId, Mod);
+				const char *pBind = GameClient()->m_Binds.Get(KeyId, Mod);
 				if(!pBind[0])
 					continue;
 
@@ -1034,9 +1014,9 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 		if(NewId != OldId || NewModifierCombination != OldModifierCombination)
 		{
 			if(OldId != 0 || NewId == 0)
-				m_pClient->m_Binds.Bind(OldId, "", false, OldModifierCombination);
+				GameClient()->m_Binds.Bind(OldId, "", false, OldModifierCombination);
 			if(NewId != 0)
-				m_pClient->m_Binds.Bind(NewId, s_Key.m_pCommand, false, NewModifierCombination);
+				GameClient()->m_Binds.Bind(NewId, s_Key.m_pCommand, false, NewModifierCombination);
 		}
 		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	}
@@ -1140,13 +1120,13 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 
 	{
 		Column.HSplitTop(MarginSmall, nullptr, &Column);
-		static CKeyInfo s_Key = CKeyInfo{"Draw where mouse is", "+bg_draw", 0, 0};
+		static CKeyInfo s_Key = CKeyInfo{TCLocalize("Draw where mouse is"), "+bg_draw", 0, 0};
 		s_Key.m_ModifierCombination = s_Key.m_KeyId = 0;
 		for(int Mod = 0; Mod < CBinds::MODIFIER_COMBINATION_COUNT; Mod++)
 		{
 			for(int KeyId = 0; KeyId < KEY_LAST; KeyId++)
 			{
-				const char *pBind = m_pClient->m_Binds.Get(KeyId, Mod);
+				const char *pBind = GameClient()->m_Binds.Get(KeyId, Mod);
 				if(!pBind[0])
 					continue;
 
@@ -1170,9 +1150,9 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 		if(NewId != OldId || NewModifierCombination != OldModifierCombination)
 		{
 			if(OldId != 0 || NewId == 0)
-				m_pClient->m_Binds.Bind(OldId, "", false, OldModifierCombination);
+				GameClient()->m_Binds.Bind(OldId, "", false, OldModifierCombination);
 			if(NewId != 0)
-				m_pClient->m_Binds.Bind(NewId, s_Key.m_pCommand, false, NewModifierCombination);
+				GameClient()->m_Binds.Bind(NewId, s_Key.m_pCommand, false, NewModifierCombination);
 		}
 		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	}
@@ -1373,7 +1353,7 @@ void CMenus::RenderSettingsWarList(CUIRect MainView)
 		}
 	}
 
-	Ui()->DoEditBox_Search(&s_EntriesFilterInput, &EntriesSearch, 14.0f, !Ui()->IsPopupOpen() && !m_pClient->m_GameConsole.IsActive());
+	Ui()->DoEditBox_Search(&s_EntriesFilterInput, &EntriesSearch, 14.0f, !Ui()->IsPopupOpen() && !GameClient()->m_GameConsole.IsActive());
 
 	// ======WAR ENTRY EDITING======
 	Column2.HSplitTop(HeadlineHeight, &Label, &Column2);
@@ -1605,10 +1585,10 @@ void CMenus::RenderSettingsWarList(CUIRect MainView)
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!m_pClient->m_Snap.m_apPlayerInfos[i])
+		if(!GameClient()->m_Snap.m_apPlayerInfos[i])
 			continue;
 
-		CTeeRenderInfo TeeInfo = m_pClient->m_aClients[i].m_RenderInfo;
+		CTeeRenderInfo TeeInfo = GameClient()->m_aClients[i].m_RenderInfo;
 
 		const CListboxItem Item = s_PlayerListBox.DoNextItem(&s_vPlayerItemIds[i], false);
 		if(!Item.m_Visible)
@@ -1721,12 +1701,12 @@ void CMenus::RenderSettingsInfo(CUIRect MainView)
 	LeftView.HSplitTop(LineSize * 2.0f, &Button, &LeftView);
 	Button.VSplitMid(&WarlistFile, &ChatbindsFile, MarginSmall);
 
-	if(DoButtonLineSize_Menu(&s_Warlist, TCLocalize("Warlist"), 0, &WarlistFile, LineSize, false, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, ColorRGBA(0.0f, 0.0f, 0.0f, 0.25f)))
+	if(DoButtonLineSize_Menu(&s_Warlist, TCLocalize("War List"), 0, &WarlistFile, LineSize, false, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, ColorRGBA(0.0f, 0.0f, 0.0f, 0.25f)))
 	{
 		Storage()->GetCompletePath(IStorage::TYPE_SAVE, s_aConfigDomains[ConfigDomain::TCLIENTWARLIST].m_aConfigPath, aBuf, sizeof(aBuf));
 		Client()->ViewFile(aBuf);
 	}
-	if(DoButtonLineSize_Menu(&s_Chatbinds, TCLocalize("Chatbinds"), 0, &ChatbindsFile, LineSize, false, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, ColorRGBA(0.0f, 0.0f, 0.0f, 0.25f)))
+	if(DoButtonLineSize_Menu(&s_Chatbinds, TCLocalize("Chat Binds"), 0, &ChatbindsFile, LineSize, false, 0, IGraphics::CORNER_ALL, 5.0f, 0.0f, ColorRGBA(0.0f, 0.0f, 0.0f, 0.25f)))
 	{
 		Storage()->GetCompletePath(IStorage::TYPE_SAVE, s_aConfigDomains[ConfigDomain::TCLIENTCHATBINDS].m_aConfigPath, aBuf, sizeof(aBuf));
 		Client()->ViewFile(aBuf);
@@ -1776,7 +1756,6 @@ void CMenus::RenderSettingsInfo(CUIRect MainView)
 			Client()->ViewLink("https://github.com/danielkempf");
 		RenderDevSkin(TeeRect.Center(), 50.0f, "greyfox", "greyfox", true, 0, 0, 2, false, ColorRGBA(0.00f, 0.09f, 1.00f, 1.00f), ColorRGBA(1.00f, 0.92f, 0.00f, 1.00f));
 	}
-
 	{
 		RightView.HSplitTop(CardSize, &DevCardRect, &RightView);
 		DevCardRect.VSplitLeft(CardSize, &TeeRect, &Label);
@@ -1798,21 +1777,19 @@ void CMenus::RenderSettingsInfo(CUIRect MainView)
 	RightView.VSplitMid(&LeftSettings, &RightSettings, MarginSmall);
 	RightView.HSplitTop(LineSize * 3.5f, nullptr, &RightView);
 
-	static int s_ShowSettings = IsFlagSet(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_SETTINGS);
-	DoButton_CheckBoxAutoVMarginAndSet(&s_ShowSettings, TCLocalize("Settings"), &s_ShowSettings, &LeftSettings, LineSize);
-	SetFlag(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_SETTINGS, s_ShowSettings);
-	static int s_ShowBindWheel = IsFlagSet(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_BINDWHEEL);
-	DoButton_CheckBoxAutoVMarginAndSet(&s_ShowBindWheel, TCLocalize("Bindwheel"), &s_ShowBindWheel, &RightSettings, LineSize);
-	SetFlag(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_BINDWHEEL, s_ShowBindWheel);
-	static int s_ShowWarlist = IsFlagSet(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_WARLIST);
-	DoButton_CheckBoxAutoVMarginAndSet(&s_ShowWarlist, TCLocalize("Warlist"), &s_ShowWarlist, &LeftSettings, LineSize);
-	SetFlag(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_WARLIST, s_ShowWarlist);
-	static int s_ShowBindChat = IsFlagSet(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_BINDCHAT);
-	DoButton_CheckBoxAutoVMarginAndSet(&s_ShowBindChat, TCLocalize("Chat Binds"), &s_ShowBindChat, &RightSettings, LineSize);
-	SetFlag(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_BINDCHAT, s_ShowBindChat);
-	static int s_ShowStatusBar = IsFlagSet(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_STATUSBAR);
-	DoButton_CheckBoxAutoVMarginAndSet(&s_ShowStatusBar, TCLocalize("Status Bar"), &s_ShowStatusBar, &LeftSettings, LineSize);
-	SetFlag(g_Config.m_ClTClientSettingsTabs, TCLIENT_TAB_STATUSBAR, s_ShowStatusBar);
+	const char *apTabNames[] = {
+		TCLocalize("Settings"),
+		TCLocalize("Bind Wheel"),
+		TCLocalize("War List"),
+		TCLocalize("Chat Binds"),
+		TCLocalize("Status Bar"),
+		TCLocalize("Info")};
+	static int s_aShowTabs[NUMBER_OF_TCLIENT_TABS] = {};
+	for(int i = 0; i < NUMBER_OF_TCLIENT_TABS - 1; ++i)
+	{
+		DoButton_CheckBoxAutoVMarginAndSet(&s_aShowTabs[i], apTabNames[i], &s_aShowTabs[i], i % 2 == 0 ? &LeftSettings : &RightSettings, LineSize);
+		SetFlag(g_Config.m_ClTClientSettingsTabs, i, s_aShowTabs[i]);
+	}
 
 	RightView.HSplitTop(HeadlineHeight, &Label, &RightView);
 	Ui()->DoLabel(&Label, TCLocalize("Integration"), HeadlineFontSize, TEXTALIGN_ML);
@@ -1841,7 +1818,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 	// skin info
 	CTeeRenderInfo OwnSkinInfo;
-	const CSkin *pSkin = m_pClient->m_Skins.Find(pSkinName);
+	const CSkin *pSkin = GameClient()->m_Skins.Find(pSkinName);
 	OwnSkinInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
 	OwnSkinInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;
 	OwnSkinInfo.m_SkinMetrics = pSkin->m_Metrics;
@@ -1898,7 +1875,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	FlagRect.HSplitBottom(25.0f, nullptr, &FlagRect);
 	FlagRect.y -= 10.0f;
 	ColorRGBA Color(1.0f, 1.0f, 1.0f, 1.0f);
-	m_pClient->m_CountryFlags.Render(m_Dummy ? g_Config.m_ClDummyCountry : g_Config.m_PlayerCountry, Color, FlagRect.x, FlagRect.y, FlagRect.w, FlagRect.h);
+	GameClient()->m_CountryFlags.Render(m_Dummy ? g_Config.m_ClDummyCountry : g_Config.m_PlayerCountry, Color, FlagRect.x, FlagRect.y, FlagRect.w, FlagRect.h);
 
 	bool DoSkin = g_Config.m_ClProfileSkin;
 	bool DoColors = g_Config.m_ClProfileColors;
@@ -1921,7 +1898,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 
 		if(DoSkin && strlen(LoadProfile.m_SkinName) != 0)
 		{
-			const CSkin *pLoadSkin = m_pClient->m_Skins.Find(LoadProfile.m_SkinName);
+			const CSkin *pLoadSkin = GameClient()->m_Skins.Find(LoadProfile.m_SkinName);
 			OwnSkinInfo.m_OriginalRenderSkin = pLoadSkin->m_OriginalSkin;
 			OwnSkinInfo.m_ColorableRenderSkin = pLoadSkin->m_ColorableSkin;
 			OwnSkinInfo.m_SkinMetrics = pLoadSkin->m_Metrics;
@@ -1964,7 +1941,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 		int RenderFlag = m_Dummy ? g_Config.m_ClDummyCountry : g_Config.m_PlayerCountry;
 		if(DoFlag && LoadProfile.m_CountryFlag != -2)
 			RenderFlag = LoadProfile.m_CountryFlag;
-		m_pClient->m_CountryFlags.Render(RenderFlag, Color, FlagRect.x, FlagRect.y, FlagRect.w, FlagRect.h);
+		GameClient()->m_CountryFlags.Render(RenderFlag, Color, FlagRect.x, FlagRect.y, FlagRect.w, FlagRect.h);
 
 		str_format(aName, sizeof(aName), "%s", m_Dummy ? g_Config.m_ClDummyName : g_Config.m_PlayerName);
 		str_format(aClan, sizeof(aClan), "%s", m_Dummy ? g_Config.m_ClDummyClan : g_Config.m_PlayerClan);
@@ -2111,7 +2088,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 	std::vector<CProfile> *pProfileList = &GameClient()->m_SkinProfiles.m_Profiles;
 
 	static CListBox s_ListBox;
-	s_ListBox.DoStart(50.0f, pProfileList->size(), 4, 3, s_SelectedProfile, &SelectorRect, true);
+	s_ListBox.DoStart(50.0f, pProfileList->size(), 4, 3, s_SelectedProfile, &SelectorRect, true, IGraphics::CORNER_ALL, true);
 
 	static bool s_Indexs[1024];
 
@@ -2125,7 +2102,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 		else
 			str_copy(RenderSkin, CurrentProfile.m_SkinName, sizeof(RenderSkin));
 
-		const CSkin *pSkinToBeDraw = m_pClient->m_Skins.Find(RenderSkin);
+		const CSkin *pSkinToBeDraw = GameClient()->m_Skins.Find(RenderSkin);
 
 		CListboxItem Item = s_ListBox.DoNextItem(&s_Indexs[i], s_SelectedProfile >= 0 && (size_t)s_SelectedProfile == i);
 
@@ -2173,7 +2150,7 @@ void CMenus::RenderSettingsProfiles(CUIRect MainView)
 			SLabelProperties Props;
 			Props.m_MaxWidth = Item.m_Rect.w;
 			if(CurrentProfile.m_CountryFlag != -2)
-				m_pClient->m_CountryFlags.Render(CurrentProfile.m_CountryFlag, Color, FlagRect.x, FlagRect.y, FlagRect.w, FlagRect.h);
+				GameClient()->m_CountryFlags.Render(CurrentProfile.m_CountryFlag, Color, FlagRect.x, FlagRect.y, FlagRect.w, FlagRect.h);
 
 			if(CurrentProfile.m_BodyColor != -1 && CurrentProfile.m_FeetColor != -1)
 			{
@@ -2519,9 +2496,9 @@ void CMenus::RenderDevSkin(vec2 RenderPos, float Size, const char *pSkinName, co
 	float DefTick = std::fmod(s_Time, 1.0f);
 
 	CTeeRenderInfo SkinInfo;
-	const CSkin *pSkin = m_pClient->m_Skins.Find(pSkinName);
+	const CSkin *pSkin = GameClient()->m_Skins.Find(pSkinName);
 	if(str_comp(pSkin->GetName(), pSkinName) != 0)
-		pSkin = m_pClient->m_Skins.Find(pBackupSkin);
+		pSkin = GameClient()->m_Skins.Find(pBackupSkin);
 
 	SkinInfo.m_OriginalRenderSkin = pSkin->m_OriginalSkin;
 	SkinInfo.m_ColorableRenderSkin = pSkin->m_ColorableSkin;

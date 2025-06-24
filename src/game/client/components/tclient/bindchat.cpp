@@ -1,8 +1,76 @@
 #include <engine/shared/config.h>
 
 #include <game/client/gameclient.h>
+#include <game/localization.h>
+
+#include <base/log.h>
+#include <base/system.h>
 
 #include "bindchat.h"
+
+static constexpr LOG_COLOR BINDCHAT_PRINT_COLOR{255, 255, 204};
+
+CBindChat::CBind::CBind(const char *pName, const char *pCommand)
+{
+	str_copy(m_aName, pName);
+	m_aParams[0] = '\0';
+	m_aHelp[0] = '\0';
+	str_copy(m_aCommand, pCommand);
+}
+
+bool CBindChat::CBind::CompContent(const CBind &Other) const
+{
+	if(m_IsEx != Other.m_IsEx)
+		return false;
+	if(str_comp(m_aCommand, Other.m_aCommand) != 0)
+		return false;
+	if(m_IsEx && str_comp(m_aParams, Other.m_aParams) != 0)
+		return false;
+	if(m_IsEx && str_comp(m_aHelp, Other.m_aHelp) != 0)
+		return false;
+	return true;
+}
+decltype(CBindChat::BIND_DEFAULTS) CBindChat::BIND_DEFAULTS = {
+	{TCLocalize("Kaomoji"), {
+					{TCLocalize("Shrug:"), "!shrug", "say ¯\\_(ツ)_/¯"},
+					{TCLocalize("Flip:"), "!flip", "say (╯°□°)╯︵ ┻━┻"},
+					{TCLocalize("Unflip:"), "!unflip", "say ┬─┬ノ( º _ ºノ)"},
+					{TCLocalize("Cute:"), "!cute", "say ૮ ˶ᵔ ᵕ ᵔ˶ ა"},
+					{TCLocalize("Lenny:"), "!lenny", "say ( ͡° ͜ʖ ͡°)"},
+				}},
+	{TCLocalize("Warlist"), {
+					{TCLocalize("Add war name:"), "!war", "war_name_index 1"},
+					{TCLocalize("Add war clan:"), "!warclan", "war_clan_index 1"},
+					{TCLocalize("Add team name:"), "!team", "war_name_index 2"},
+					{TCLocalize("Add team clan:"), "!teamclan", "war_clan_index 2"},
+					{TCLocalize("Remove war name:"), "!delwar", "remove_war_name_index 1"},
+					{TCLocalize("Remove war name:"), "!delwarclan", "remove_war_clan_index 1"},
+					{TCLocalize("Remove team name:"), "!delteam", "remove_war_name_index 2"},
+					{TCLocalize("Remove team clan:"), "!delteamclan", "remove_war_clan_index 2"},
+					{TCLocalize("Add [group] [name] [reason]:"), "!name", "war_name"},
+					{TCLocalize("Add [group] [clan] [reason]:"), "!clan", "war_clan"},
+					{TCLocalize("Remove [group] [name]:"), "!delname", "remove_war_name"},
+					{TCLocalize("Remove [group] [clan]:"), "!delclan", "remove_war_clan"},
+				}},
+	{TCLocalize("Mod"), {
+				    {TCLocalize("Mute ID:"), "!mmute", "mod_rcon_mute"},
+				    {TCLocalize("Mute Name:"), "!mmuten", "mod_rcon_mute_name"},
+				    {TCLocalize("Unmute Last:"), "!munmutelast", "rcon unmute 0"},
+				    {TCLocalize("Kick ID:"), "!mkick", "mod_rcon_kick"},
+				    {TCLocalize("Kick Name:"), "!mkickn", "mod_rcon_kick_name"},
+				    {TCLocalize("Ban ID:"), "!mban", "mod_rcon_ban"},
+				    {TCLocalize("Ban Name:"), "!mbann", "mod_rcon_ban_name"},
+				    {TCLocalize("Unban Last:"), "!munbanlast", "rcon unban 0"},
+				    {TCLocalize("Kill Ids:"), "!mkill", "rcon mod_rcon_kill"},
+				    {TCLocalize("Kill Names:"), "!mkilln", "rcon mod_rcon_kill_name"},
+			    }},
+	{TCLocalize("Other"), {
+				      {TCLocalize("Translate:"), "!translate", "translate"},
+				      {TCLocalize("Translate ID:"), "!translateid", "translate_id"},
+				      {TCLocalize("Mute:"), "!mute", "add_foe"},
+				      {TCLocalize("Unmute:"), "!unmute", "remove_foe"},
+			      }},
+};
 
 CBindChat::CBindChat()
 {
@@ -32,7 +100,6 @@ void CBindChat::ConAddBindchatEx(IConsole::IResult *pResult, void *pUserData)
 void CBindChat::ConBindchats(IConsole::IResult *pResult, void *pUserData)
 {
 	CBindChat *pThis = static_cast<CBindChat *>(pUserData);
-	char aBuf[BINDCHAT_MAX_NAME + BINDCHAT_MAX_CMD + 32];
 	if(pResult->NumArguments() == 1)
 	{
 		const char *pName = pResult->GetString(0);
@@ -40,21 +107,16 @@ void CBindChat::ConBindchats(IConsole::IResult *pResult, void *pUserData)
 		{
 			if(str_comp_nocase(Bind.m_aName, pName) == 0)
 			{
-				str_format(aBuf, sizeof(aBuf), "%s = %s", Bind.m_aName, Bind.m_aCommand);
-				pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "bindchat", aBuf);
+				log_info_color(BINDCHAT_PRINT_COLOR, "bindchat", "%s = %s", Bind.m_aName, Bind.m_aCommand);
 				return;
 			}
 		}
-		str_format(aBuf, sizeof(aBuf), "%s is not bound", pName);
-		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "bindchat", aBuf);
+		log_info_color(BINDCHAT_PRINT_COLOR, "bindchat", "%s is not bound", pName);
 	}
 	else
 	{
 		for(const CBind &Bind : pThis->m_vBinds)
-		{
-			str_format(aBuf, sizeof(aBuf), "%s = %s", Bind.m_aName, Bind.m_aCommand);
-			pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "bindchat", aBuf);
-		}
+			log_info_color(BINDCHAT_PRINT_COLOR, "bindchat", "%s = %s", Bind.m_aName, Bind.m_aCommand);
 	}
 }
 
@@ -62,7 +124,8 @@ void CBindChat::ConRemoveBindchat(IConsole::IResult *pResult, void *pUserData)
 {
 	const char *aName = pResult->GetString(0);
 	CBindChat *pThis = static_cast<CBindChat *>(pUserData);
-	pThis->RemoveBind(aName);
+	if(!pThis->RemoveBind(aName))
+		log_info_color(BINDCHAT_PRINT_COLOR, "bindchat", "bindchat \"%s\" not found", aName);
 }
 
 void CBindChat::ConRemoveBindchatAll(IConsole::IResult *pResult, void *pUserData)
@@ -75,14 +138,9 @@ void CBindChat::ConBindchatDefaults(IConsole::IResult *pResult, void *pUserData)
 {
 	CBindChat *pThis = static_cast<CBindChat *>(pUserData);
 
-	for(const CBindDefault &BindDefault : s_aDefaultBindChatKaomoji)
-		pThis->AddBind(BindDefault.m_Bind);
-	for(const CBindDefault &BindDefault : s_aDefaultBindChatWarlist)
-		pThis->AddBind(BindDefault.m_Bind);
-	for(const CBindDefault &BindDefault : s_aDefaultBindChatOther)
-		pThis->AddBind(BindDefault.m_Bind);
-	for(const CBindDefault &BindDefault : s_aDefaultBindChatMod)
-		pThis->AddBind(BindDefault.m_Bind);
+	for(const auto &[_, vBindDefaults] : CBindChat::BIND_DEFAULTS)
+		for(const CBindChat::CBindDefault &BindDefault : vBindDefaults)
+			pThis->AddBind(BindDefault.m_Bind);
 }
 
 void CBindChat::AddBind(const char *pName, const char *pParams, const char *pHelp, const char *pCommand, bool IsEx)
@@ -98,7 +156,7 @@ void CBindChat::AddBind(const char *pName, const char *pParams, const char *pHel
 	str_copy(Bind.m_aHelp, pHelp ? pHelp : "Bound with bindchat");
 	str_copy(Bind.m_aCommand, pCommand);
 	Bind.m_IsEx = IsEx;
-	
+
 	AddBind(Bind);
 }
 
@@ -108,18 +166,17 @@ void CBindChat::AddBind(const CBind &Bind)
 	m_vBinds.push_back(Bind);
 }
 
-void CBindChat::RemoveBind(const char *pName)
+bool CBindChat::RemoveBind(const char *pName)
 {
-	if(pName[0] == '\0')
-		return;
 	for(auto It = m_vBinds.begin(); It != m_vBinds.end(); ++It)
 	{
 		if(str_comp(It->m_aName, pName) == 0)
 		{
 			m_vBinds.erase(It);
-			return;
+			return true;
 		}
 	}
+	return false;
 }
 
 void CBindChat::RemoveAllBinds()
@@ -317,9 +374,29 @@ bool CBindChat::ChatDoAutocomplete(bool ShiftPressed)
 void CBindChat::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserData)
 {
 	CBindChat *pThis = (CBindChat *)pUserData;
-	pConfigManager->WriteLine("unbindchatall", ConfigDomain::TCLIENTCHATBINDS);
+
+	auto FCompare = [&](const CBindChat::CBind &A, const CBindChat::CBind &B) {
+		const int Res = str_utf8_comp_nocase(A.m_aName, B.m_aName);
+		return Res < 0 || (Res == 0 && str_comp(A.m_aName, B.m_aName) < 0);
+	};
+
+	std::vector<std::reference_wrapper<const CBindChat::CBind>> vDefaultBinds;
+	for(const auto &[_, vBindDefaults] : CBindChat::BIND_DEFAULTS)
+		for(const CBindChat::CBindDefault &BindDefault : vBindDefaults)
+			vDefaultBinds.emplace_back(BindDefault.m_Bind);
+	std::sort(vDefaultBinds.begin(), vDefaultBinds.end(), FCompare);
+
+	std::sort(pThis->m_vBinds.begin(), pThis->m_vBinds.end(), FCompare);
 	for(CBind &Bind : pThis->m_vBinds)
 	{
+		const auto It = std::lower_bound(vDefaultBinds.begin(), vDefaultBinds.end(), Bind, FCompare);
+		if(It != vDefaultBinds.end() && str_utf8_comp_nocase(It->get().m_aName, Bind.m_aName) == 0)
+		{
+			vDefaultBinds.erase(It);
+			if(Bind.CompContent(Bind)) // Don't write default binds
+				continue;
+		}
+
 		char aBuf[BINDCHAT_MAX_CMD * 2] = "";
 		char *pEnd = aBuf + sizeof(aBuf);
 		char *pDst;
@@ -355,6 +432,20 @@ void CBindChat::ConfigSaveCallback(IConfigManager *pConfigManager, void *pUserDa
 			str_escape(&pDst, Bind.m_aCommand, pEnd);
 			str_append(aBuf, "\"");
 		}
+		pConfigManager->WriteLine(aBuf, ConfigDomain::TCLIENTCHATBINDS);
+	}
+	for(const auto &Bind : vDefaultBinds)
+	{
+		char aBuf[BINDCHAT_MAX_CMD * 2 + 32] = "";
+		char *pEnd = aBuf + sizeof(aBuf);
+		char *pDst;
+
+		str_append(aBuf, "unbindchat \"");
+		// Escape name
+		pDst = aBuf + str_length(aBuf);
+		str_escape(&pDst, Bind.get().m_aName, pEnd);
+		str_append(aBuf, "\"");
+
 		pConfigManager->WriteLine(aBuf, ConfigDomain::TCLIENTCHATBINDS);
 	}
 }

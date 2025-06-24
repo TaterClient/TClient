@@ -464,7 +464,7 @@ void CBgDraw::OnRender()
 		if(GameClient()->m_Snap.m_SpecInfo.m_Active && Dummy == g_Config.m_ClDummy)
 			Pos = GameClient()->m_Camera.m_Center;
 		else
-			Pos = (m_pClient->m_Controls.m_aTargetPos[Dummy] - GameClient()->m_Camera.m_Center) * GameClient()->m_Camera.m_Zoom + GameClient()->m_Camera.m_Center;
+			Pos = (GameClient()->m_Controls.m_aTargetPos[Dummy] - GameClient()->m_Camera.m_Center) * GameClient()->m_Camera.m_Zoom + GameClient()->m_Camera.m_Center;
 		if(Input == InputMode::DRAW)
 		{
 			if(ActiveItem.has_value())

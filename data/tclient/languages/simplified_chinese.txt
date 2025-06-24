@@ -51,9 +51,6 @@ Profiles
 Visual
 == 视觉效果
 
-Update tee skin faster after being frozen
-== 冻结后更快更新tee外观
-
 Show ping colored circle before names
 == 在玩家昵称前显示延迟状况
 
@@ -69,17 +66,8 @@ Freeze stars
 Color frozen tee skins
 == 冻结不再是灰黑色而是自定义的颜色（无自定义默认灰黑色）
 
-Tiny tees
-== 小tee
-
-Tiny tees others
-== 小tee（其他玩家）
-
 Render all custom colored feet as white feet skin
 == 将所有自定义脚部颜色渲染为白色
-
-Show screen center
-== 显示屏幕中心（十字线）
 
 Show position and angle (mini debug)
 == 显示位置和角度（小型调试工具）
@@ -321,9 +309,6 @@ Trail alpha
 Tee trail color
 == Tee尾迹颜色
 
-Bindwheel
-== 快捷绑定轮盘
-
 Name:
 == 名称:
 
@@ -534,30 +519,6 @@ Load
 Override
 == 覆盖
 
-Add %s name:
-== 添加 %s 名称：
-
-Add %s clan:
-== 添加 %s 战队：
-
-Remove %s name:
-== 删除 %s 名称：
-
-Remove %s clan:
-== 移除 %s 战队：
-
-Add [group] [name] [reason]
-== 添加 [组] [名称] [原因]
-
-Add [group] [clan] [reason]
-== 添加 [组] [战队] [原因]
-
-Remove [group] [name]
-== 删除 [组] [名称]
-
-Remove [group] [clan]
-== 删除 [组] [战队]
-
 Command
 == 命令
 
@@ -602,9 +563,6 @@ Color
 
 Github
 == Github
-
-Chatbinds
-== 聊天快捷绑定
 
 Integration
 == 集成
@@ -688,14 +646,6 @@ Changing name to %s near finish
 Custom Font: 
 == 自定义字体: 
 
-[bgdraw]
-Failed to create bgdraw folder
-==
-
-[bgdraw]
-Failed to open %s for %s
-==
-
 Finish Name
 == 终点前改名
 
@@ -722,15 +672,9 @@ Loaded %zu items
 Loaded %zu items (discarded %zu items)
 == 加载了 %zu 项（丢弃了 %zu 项）
 
-Normal
-== 正常模式
-
 [bgdraw]
 Opening %s for %s
 == Opening %s for %s
-
-Other Commands
-== 其他指令
 
 Pet
 == 宠物
@@ -743,12 +687,6 @@ Pet alpha
 
 Pet size
 == 宠物大小
-
-Rotate with cursor
-== 随光标旋转
-
-Rotate with cursor like gun
-== 像枪一样随光标旋转
 
 Show mini vote HUD
 == 显示小型投票HUD
@@ -811,9 +749,6 @@ Cute:
 Lenny:
 == Lenny:
 
-Mute Commands
-== 静音命令
-
 Translate:
 == 翻译：
 
@@ -822,3 +757,133 @@ Mute:
 
 Unmute:
 == 取消禁言：
+
+(On Latest)
+== 
+
+(Fetching Update Info)
+== 
+
+[bgdraw]
+Failed to create bgdraw folder
+== 
+
+[bgdraw]
+Failed to open %s for %s
+== 
+
+Add war name:
+== 
+
+Add war clan:
+== 
+
+Add team name:
+== 
+
+Add team clan:
+== 
+
+Remove war name:
+== 
+
+Remove team name:
+== 
+
+Remove team clan:
+== 
+
+Add [group] [name] [reason]:
+== 
+
+Add [group] [clan] [reason]:
+== 
+
+Remove [group] [name]:
+== 
+
+Remove [group] [clan]:
+== 
+
+Mod
+== 
+
+Mute ID:
+== 
+
+Mute Name:
+== 
+
+Unmute Last:
+== 
+
+Kick ID:
+== 
+
+Kick Name:
+== 
+
+Ban ID:
+== 
+
+Ban Name:
+== 
+
+Unban Last:
+== 
+
+Kill Ids:
+== 
+
+Kill Names:
+== 
+
+Translate ID:
+== 
+
+Bind Wheel
+== 
+
+War List
+== 
+
+[Hammer Mode]
+Normal
+== 
+
+[Hammer Mode]
+Rotate with cursor
+== 
+
+[Hammer Mode]
+Rotate with cursor like gun
+== 
+
+Show katan on frozen players
+== 
+
+Tiny Tees
+== 
+
+Tiny Tee Size
+== 
+
+Show screen center lines
+== 
+
+Screen center line color
+== 
+
+Screen center line width
+== 
+
+Overwrite clan even if empty
+== 
+
+[translate]
+[%s translating to %s]
+== 
+
+[translate]
+[%s to %s failed: %s]
+== 

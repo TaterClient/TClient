@@ -325,7 +325,7 @@ void CMod::OnRender()
 		for(const auto &Player : GameClient()->m_aClients)
 		{
 			const int ClientId = Player.ClientId();
-			const auto &Char = m_pClient->m_Snap.m_aCharacters[ClientId];
+			const auto &Char = GameClient()->m_Snap.m_aCharacters[ClientId];
 			if(!Char.m_Active || !Player.m_Active)
 				continue;
 			if(Player.m_Team < 0)
@@ -344,8 +344,8 @@ void CMod::OnRender()
 			{
 				// From CPlayers::RenderPlayer
 				vec2 ShadowPosition = mix(
-					vec2(m_pClient->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, m_pClient->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y),
-					vec2(m_pClient->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, m_pClient->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
+					vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y),
+					vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
 					Client()->IntraGameTick(g_Config.m_ClDummy));
 				FRenderHitbox(ShadowPosition, Alpha * 0.75f);
 			}

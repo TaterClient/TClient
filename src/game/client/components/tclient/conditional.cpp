@@ -67,10 +67,8 @@ void CConditional::ParseString(char *pBuf, int Length)
 		return;
 
 	std::vector<std::pair<int, int>> vParsedRanges;
-	const auto IsInParsedRegion = [&vParsedRanges](int Pos)
-	{
-		return std::any_of(vParsedRanges.begin(), vParsedRanges.end(), [Pos](const auto &ParsedRange)
-		{
+	const auto IsInParsedRegion = [&vParsedRanges](int Pos) {
+		return std::any_of(vParsedRanges.begin(), vParsedRanges.end(), [Pos](const auto &ParsedRange) {
 			return Pos >= ParsedRange.first && Pos < ParsedRange.second;
 		});
 	};
@@ -118,7 +116,8 @@ void CConditional::ParseString(char *pBuf, int Length)
 			if(NewLen >= Length)
 			{
 				ResultLen = Length - 1 - LastOpen - TailLen;
-				if(ResultLen < 0) ResultLen = 0;
+				if(ResultLen < 0)
+					ResultLen = 0;
 				NewLen = LastOpen + ResultLen + TailLen;
 			}
 
@@ -197,6 +196,38 @@ void CConditional::ConReturn(IConsole::IResult *pResult, void *pUserData)
 	pThis->Console()->m_Return = true;
 }
 
+static int UnitLengthSeconds(char Unit)
+{
+	switch(Unit)
+	{
+	case 's':
+	case 'S': return 1;
+	case 'm':
+	case 'M': return 60;
+	case 'h':
+	case 'H': return 60 * 60;
+	case 'd':
+	case 'D': return 60 * 60 * 24;
+	default: return -1;
+	}
+}
+
+static int TimeFromStr(const char *pStr, char OutUnit)
+{
+	double Time = -1;
+	char InUnit = OutUnit;
+	std::sscanf(pStr, "%lf%c", &Time, &InUnit);
+	if(Time < 0)
+		return -1;
+	int InUnitLength = UnitLengthSeconds(InUnit);
+	if(InUnitLength < 0)
+		return -1;
+	int OutUnitLength = UnitLengthSeconds(OutUnit);
+	if(OutUnitLength < 0)
+		return -1;
+	return std::round(Time * (float)InUnitLength / (float)OutUnitLength);
+}
+
 void CConditional::OnConsoleInit()
 {
 	m_vVariables.emplace_back("l", [&](char *pOut, int Length) {
@@ -228,6 +259,12 @@ void CConditional::OnConsoleInit()
 	});
 	m_vVariables.emplace_back("rcon_authed", [&](char *pOut, int Length) {
 		return str_copy(pOut, Client()->RconAuthed() ? "1" : "0", Length);
+	});
+	m_vVariables.emplace_back("team", [&](char *pOut, int Length) {
+		return str_format(pOut, Length, "%d", GameClient()->m_aClients[GameClient()->m_aLocalIds[g_Config.m_ClDummy]].m_Team);
+	});
+	m_vVariables.emplace_back("ddnet_team", [&](char *pOut, int Length) {
+		return str_format(pOut, Length, "%d", GameClient()->m_Teams.Team(GameClient()->m_aLocalIds[g_Config.m_ClDummy]));
 	});
 	m_vVariables.emplace_back("map", [&](char *pOut, int Length) {
 		return str_copy(pOut, Client()->GetCurrentMap(), Length);
@@ -306,6 +343,18 @@ void CConditional::OnConsoleInit()
 		if(!Player.m_Active)
 			return str_copy(pOut, "ID not connected", Length);
 		return str_copy(pOut, Player.m_aName, Length);
+	});
+	m_vFunctions.emplace_back("seconds", [&](const char *pParam, char *pOut, int Length) {
+		return str_format(pOut, Length, "%d", TimeFromStr(pParam, 's'));
+	});
+	m_vFunctions.emplace_back("minutes", [&](const char *pParam, char *pOut, int Length) {
+		return str_format(pOut, Length, "%d", TimeFromStr(pParam, 'm'));
+	});
+	m_vFunctions.emplace_back("hours", [&](const char *pParam, char *pOut, int Length) {
+		return str_format(pOut, Length, "%d", TimeFromStr(pParam, 'h'));
+	});
+	m_vFunctions.emplace_back("days", [&](const char *pParam, char *pOut, int Length) {
+		return str_format(pOut, Length, "%d", TimeFromStr(pParam, 'd'));
 	});
 
 	Console()->Register("ifeq", "s[a] s[b] r[command]", CFGFLAG_CLIENT, ConIfeq, this, "Comapre 2 values, if equal run the command");

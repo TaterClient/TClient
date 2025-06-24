@@ -501,47 +501,31 @@ class CNamePlatePartSkin : public CNamePlatePartText
 {
 private:
 	char m_aText[MAX_CLAN_LENGTH] = "";
-	int m_ColorBody, m_ColorFeet;
 	float m_FontSize = -INFINITY;
 
 protected:
 	bool UpdateNeeded(CGameClient &This, const CNamePlateData &Data) override
 	{
-		m_Visible = Data.m_InGame ? g_Config.m_ClNameplatesSkinInfo > (This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Local ? 1 : 0) : false;
+		m_Visible = Data.m_InGame ? g_Config.m_ClShowSkinName > (This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Local ? 1 : 0) : g_Config.m_ClShowSkinName > 0;
 		if(!m_Visible)
 			return false;
-		m_Color.a = Data.m_Color.a;
-		const auto &Player = This.m_aClients[Data.m_ClientId];
-		return m_FontSize != Data.m_FontSizeClan || str_comp(m_aText, Player.m_aSkinName) != 0 || m_ColorBody != Player.m_ColorBody || m_ColorFeet != Player.m_ColorFeet;
+		m_Color = Data.m_Color;
+		const char *pSkin = Data.m_InGame ? This.m_aClients[Data.m_ClientId].m_aSkinName : (Data.m_ClientId == 0 ? g_Config.m_ClPlayerSkin : g_Config.m_ClDummySkin);
+		return m_FontSize != Data.m_FontSizeClan || str_comp(m_aText, pSkin) != 0;
 	}
 	void UpdateText(CGameClient &This, const CNamePlateData &Data) override
 	{
 		m_FontSize = Data.m_FontSizeClan;
-		const auto &Player = This.m_aClients[Data.m_ClientId];
-		str_copy(m_aText, Player.m_aSkinName, sizeof(m_aText));
-		m_ColorFeet = Player.m_ColorFeet;
-		m_ColorBody = Player.m_ColorBody;
+		const char *pSkin = Data.m_InGame ? This.m_aClients[Data.m_ClientId].m_aSkinName : (Data.m_ClientId == 0 ? g_Config.m_ClPlayerSkin : g_Config.m_ClDummySkin);
+		str_copy(m_aText, pSkin, sizeof(m_aText));
 		CTextCursor Cursor;
 		This.TextRender()->SetCursor(&Cursor, 0.0f, 0.0f, m_FontSize, TEXTFLAG_RENDER);
 		This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, m_aText);
-		auto FAddColor = [&](int Color) {
-			char aBuf[9]; // $RRGGBB
-			ColorRGBA Parsed = color_cast<ColorRGBA>(ColorHSLA(Color));
-			str_format(aBuf, sizeof(aBuf), "$%02X%02X%02X", (int)std::round(Parsed.r * 255), (int)std::round(Parsed.g * 255), (int)std::round(Parsed.b * 255));
-			This.TextRender()->TextColor(Parsed);
-			This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, aBuf);
-		};
-		FAddColor(m_ColorFeet);
-		FAddColor(m_ColorBody);
-		This.TextRender()->TextColor(This.TextRender()->DefaultTextColor());
 	}
 
 public:
 	CNamePlatePartSkin(CGameClient &This) :
-		CNamePlatePartText(This)
-	{
-		m_Color = ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f);
-	}
+		CNamePlatePartText(This) {}
 };
 
 class CNamePlatePartReason : public CNamePlatePartText
@@ -644,11 +628,6 @@ private:
 			return;
 		m_Inited = true;
 
-		AddPart<CNamePlatePartDirection>(This, DIRECTION_LEFT);
-		AddPart<CNamePlatePartDirection>(This, DIRECTION_UP);
-		AddPart<CNamePlatePartDirection>(This, DIRECTION_RIGHT);
-		AddPart<CNamePlatePartNewLine>(This);
-
 		AddPart<CNamePlatePartPing>(This); // TClient
 		AddPart<CNamePlatePartIgnoreMark>(This); // TClient
 		AddPart<CNamePlatePartFriendMark>(This);
@@ -663,6 +642,11 @@ private:
 		AddPart<CNamePlatePartNewLine>(This); // TClient
 		AddPart<CNamePlatePartSkin>(This); // TClient
 		AddPart<CNamePlatePartNewLine>(This); // TClient
+
+		AddPart<CNamePlatePartDirection>(This, DIRECTION_LEFT);
+		AddPart<CNamePlatePartDirection>(This, DIRECTION_UP);
+		AddPart<CNamePlatePartDirection>(This, DIRECTION_RIGHT);
+		AddPart<CNamePlatePartNewLine>(This);
 
 		AddPart<CNamePlatePartClientId>(This, true);
 		AddPart<CNamePlatePartNewLine>(This);
@@ -885,37 +869,17 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 		const CGameClient::CSnapState::CCharacterInfo &Selected = GameClient()->m_Snap.m_aCharacters[SelectedId];
 		const CGameClient::CSnapState::CCharacterInfo &Other = GameClient()->m_Snap.m_aCharacters[pPlayerInfo->m_ClientId];
 
-		const bool ShouldShowIndicator = Other.m_HasExtendedData && (GameClient()->m_Snap.m_pLocalInfo && (GameClient()->m_Snap.m_pLocalInfo->m_Team != TEAM_SPECTATORS || Following));
-
-		if(ShouldShowIndicator)
+		if((Selected.m_HasExtendedData || GameClient()->m_aClients[SelectedId].m_SpecCharPresent) && Other.m_HasExtendedData)
 		{
+			int SelectedStrongWeakId = Selected.m_HasExtendedData ? Selected.m_ExtendedData.m_StrongWeakId : 0;
 			Data.m_HookStrongWeakId = Other.m_ExtendedData.m_StrongWeakId;
 			Data.m_ShowHookStrongWeakId = g_Config.m_Debug || g_Config.m_ClNamePlatesStrong == 2;
-
-			// Get selected player's StrongWeakId from snap data or saved local data
-			int SelectedStrongWeakId = 0;
-			bool HasSelectedId = false;
-
-			if(Selected.m_HasExtendedData)
+			if(SelectedId == pPlayerInfo->m_ClientId)
+				Data.m_ShowHookStrongWeak = Data.m_ShowHookStrongWeakId;
+			else
 			{
-				SelectedStrongWeakId = Selected.m_ExtendedData.m_StrongWeakId;
-				HasSelectedId = true;
-			}
-			else if(!Following && GameClient()->LocalStrongWeakId(g_Config.m_ClDummy) != -1)
-			{
-				SelectedStrongWeakId = GameClient()->LocalStrongWeakId(g_Config.m_ClDummy);
-				HasSelectedId = true;
-			}
-
-			if(HasSelectedId)
-			{
-				if(SelectedId == pPlayerInfo->m_ClientId)
-					Data.m_ShowHookStrongWeak = Data.m_ShowHookStrongWeakId;
-				else
-				{
-					Data.m_HookStrongWeakState = SelectedStrongWeakId > Other.m_ExtendedData.m_StrongWeakId ? EHookStrongWeakState::STRONG : EHookStrongWeakState::WEAK;
-					Data.m_ShowHookStrongWeak = g_Config.m_Debug || g_Config.m_ClNamePlatesStrong > 0;
-				}
+				Data.m_HookStrongWeakState = SelectedStrongWeakId > Other.m_ExtendedData.m_StrongWeakId ? EHookStrongWeakState::STRONG : EHookStrongWeakState::WEAK;
+				Data.m_ShowHookStrongWeak = g_Config.m_Debug || g_Config.m_ClNamePlatesStrong > 0;
 			}
 		}
 	}
@@ -982,12 +946,12 @@ void CNamePlates::RenderNamePlatePreview(vec2 Position, int Dummy)
 	CTeeRenderInfo TeeRenderInfo;
 	if(Dummy == 0)
 	{
-		TeeRenderInfo.Apply(m_pClient->m_Skins.Find(g_Config.m_ClPlayerSkin));
+		TeeRenderInfo.Apply(GameClient()->m_Skins.Find(g_Config.m_ClPlayerSkin));
 		TeeRenderInfo.ApplyColors(g_Config.m_ClPlayerUseCustomColor, g_Config.m_ClPlayerColorBody, g_Config.m_ClPlayerColorFeet);
 	}
 	else
 	{
-		TeeRenderInfo.Apply(m_pClient->m_Skins.Find(g_Config.m_ClDummySkin));
+		TeeRenderInfo.Apply(GameClient()->m_Skins.Find(g_Config.m_ClDummySkin));
 		TeeRenderInfo.ApplyColors(g_Config.m_ClDummyUseCustomColor, g_Config.m_ClDummyColorBody, g_Config.m_ClDummyColorFeet);
 	}
 	TeeRenderInfo.m_Size = 64.0f;
@@ -1043,8 +1007,8 @@ void CNamePlates::OnRender()
 			// TClient
 			if(GameClient()->m_aClients[i].m_DeepFrozen && (g_Config.m_ClVolleyBallBetterBall == 2 || (g_Config.m_ClVolleyBallBetterBall == 1 && str_startswith_nocase(Client()->GetCurrentMap(), "volleyball"))))
 				continue;
-			if(g_Config.m_ClRenderNameplateSpec > 0)
-				continue;
+			//if(g_Config.m_ClRenderNameplateSpec > 0)
+			//	continue;
 			const vec2 RenderPos = GameClient()->m_aClients[i].m_RenderPos;
 			RenderNamePlateGame(RenderPos, pInfo, 1.0f);
 		}

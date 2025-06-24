@@ -41,7 +41,7 @@ void CTrails::OnRender()
 	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 		return;
 
-	if(!m_pClient->m_Snap.m_pGameInfoObj)
+	if(!GameClient()->m_Snap.m_pGameInfoObj)
 		return;
 
 	Graphics()->TextureClear();
@@ -49,7 +49,7 @@ void CTrails::OnRender()
 
 	for(int ClientId = 0; ClientId < MAX_CLIENTS; ClientId++)
 	{
-		const bool Local = m_pClient->m_Snap.m_LocalClientId == ClientId;
+		const bool Local = GameClient()->m_Snap.m_LocalClientId == ClientId;
 
 		const bool ZoomAllowed = GameClient()->m_Camera.ZoomAllowed();
 		if(!g_Config.m_ClTeeTrailOthers && !Local)
@@ -58,7 +58,7 @@ void CTrails::OnRender()
 		if(!Local && !ZoomAllowed)
 			continue;
 
-		if(!m_pClient->m_Snap.m_aCharacters[ClientId].m_Active)
+		if(!GameClient()->m_Snap.m_aCharacters[ClientId].m_Active)
 		{
 			if(m_HistoryValid[ClientId])
 				ClearHistory(ClientId);
@@ -67,7 +67,7 @@ void CTrails::OnRender()
 		else
 			m_HistoryValid[ClientId] = true;
 
-		CTeeRenderInfo TeeInfo = m_pClient->m_aClients[ClientId].m_RenderInfo;
+		CTeeRenderInfo TeeInfo = GameClient()->m_aClients[ClientId].m_RenderInfo;
 
 		const bool PredictPlayer = ShouldPredictPlayer(ClientId);
 		int StartTick;
@@ -112,7 +112,7 @@ void CTrails::OnRender()
 		// Taken from players.cpp
 		if(ClientId == -2)
 			Alpha *= g_Config.m_ClRaceGhostAlpha / 100.0f;
-		else if(ClientId < 0 || m_pClient->IsOtherTeam(ClientId))
+		else if(ClientId < 0 || GameClient()->IsOtherTeam(ClientId))
 			Alpha *= g_Config.m_ClShowOthersAlpha / 100.0f;
 
 		int TrailLength = g_Config.m_ClTeeTrailLength;

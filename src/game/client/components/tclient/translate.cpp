@@ -275,7 +275,7 @@ public:
 	}
 	CTranslateBackendFtapi(IHttp &Http, const char *pText)
 	{
-		char aBuf[2048];
+		char aBuf[4096];
 		str_format(aBuf, sizeof(aBuf), "%s/translate?dl=%s&text=",
 			g_Config.m_ClTranslateEndpoint[0] != '\0' ? g_Config.m_ClTranslateEndpoint : "https://ftapi.pythonanywhere.com",
 			EncodeTarget(g_Config.m_ClTranslateTarget));

@@ -31,7 +31,7 @@ public:
 private:
 	enum
 	{
-		CODE_LB = -1,
+		CODE_LB = -999,
 		CODE_UB = 999,
 		CODE_RANGE = CODE_UB - CODE_LB + 1,
 	};

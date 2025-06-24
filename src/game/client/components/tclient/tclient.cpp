@@ -91,7 +91,7 @@ void CTClient::ConchainRandomColor(IConsole::IResult *pResult, void *pUserData, 
 		RandomSkin(pUserData);
 	if(RandomizeFlag)
 		RandomFlag(pUserData);
-	pThis->m_pClient->SendInfo(false);
+	pThis->GameClient()->SendInfo(false);
 }
 
 void CTClient::OnInit()
@@ -205,8 +205,8 @@ void CTClient::OnMessage(int MsgType, void *pRawMsg)
 			if(g_Config.m_ClAutoVoteWhenFar && (MapVote || RandomMapVote))
 			{
 				int RaceTime = 0;
-				if(m_pClient->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_RACETIME)
-					RaceTime = (Client()->GameTick(g_Config.m_ClDummy) + m_pClient->m_Snap.m_pGameInfoObj->m_WarmupTimer) / Client()->GameTickSpeed();
+				if(GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_RACETIME)
+					RaceTime = (Client()->GameTick(g_Config.m_ClDummy) + GameClient()->m_Snap.m_pGameInfoObj->m_WarmupTimer) / Client()->GameTickSpeed();
 
 				if(RaceTime / 60 >= g_Config.m_ClAutoVoteWhenFarTime)
 				{
@@ -214,22 +214,22 @@ void CTClient::OnMessage(int MsgType, void *pRawMsg)
 					int CallerId = -1;
 					for(int i = 0; i < MAX_CLIENTS; i++)
 					{
-						if(!m_pClient->m_aStats[i].IsActive())
+						if(!GameClient()->m_aStats[i].IsActive())
 							continue;
 
 						char aBuf[MAX_NAME_LENGTH + 4];
-						str_format(aBuf, sizeof(aBuf), "\'%s\'", m_pClient->m_aClients[i].m_aName);
+						str_format(aBuf, sizeof(aBuf), "\'%s\'", GameClient()->m_aClients[i].m_aName);
 						if(str_find_nocase(aBuf, pMsg->m_pDescription) == 0)
 						{
-							pVoteCaller = &m_pClient->m_aClients[i];
+							pVoteCaller = &GameClient()->m_aClients[i];
 							CallerId = i;
 						}
 					}
 					if(pVoteCaller)
 					{
 						bool Friend = pVoteCaller->m_Friend;
-						bool SameTeam = m_pClient->m_Teams.Team(m_pClient->m_Snap.m_LocalClientId) == pVoteCaller->m_Team && pVoteCaller->m_Team != 0;
-						bool MySelf = CallerId == m_pClient->m_Snap.m_LocalClientId;
+						bool SameTeam = GameClient()->m_Teams.Team(GameClient()->m_Snap.m_LocalClientId) == pVoteCaller->m_Team && pVoteCaller->m_Team != 0;
+						bool MySelf = CallerId == GameClient()->m_Snap.m_LocalClientId;
 
 						if(!Friend && !SameTeam && !MySelf)
 						{
@@ -348,6 +348,13 @@ void CTClient::OnConsoleInit()
 	Console()->Register("spec_id", "v[id]", CFGFLAG_CLIENT, ConSpecId, this, "Spectate a player by Id");
 
 	Console()->Register("emote_cycle", "", CFGFLAG_CLIENT, ConEmoteCycle, this, "Cycle through emotes");
+
+	Console()->Chain(
+		"tc_allow_any_resolution", [](IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData) {
+			pfnCallback(pResult, pCallbackUserData);
+			((CTClient *)pUserData)->SetForcedAspect();
+		},
+		this);
 }
 
 void CTClient::RandomBodyColor()
@@ -363,7 +370,7 @@ void CTClient::RandomFeetColor()
 void CTClient::RandomSkin(void *pUserData)
 {
 	CTClient *pThis = static_cast<CTClient *>(pUserData);
-	const auto &Skins = pThis->m_pClient->m_Skins.SkinList().Skins();
+	const auto &Skins = pThis->GameClient()->m_Skins.SkinList().Skins();
 	str_copy(g_Config.m_ClPlayerSkin, Skins[std::rand() % (int)Skins.size()].SkinContainer()->Name());
 }
 
@@ -371,13 +378,13 @@ void CTClient::RandomFlag(void *pUserData)
 {
 	CTClient *pThis = static_cast<CTClient *>(pUserData);
 	// get the flag count
-	int FlagCount = pThis->m_pClient->m_CountryFlags.Num();
+	int FlagCount = pThis->GameClient()->m_CountryFlags.Num();
 
 	// get a random flag number
 	int FlagNumber = std::rand() % FlagCount;
 
 	// get the flag name
-	const CCountryFlags::CCountryFlag *pFlag = pThis->m_pClient->m_CountryFlags.GetByIndex(FlagNumber);
+	const CCountryFlags::CCountryFlag *pFlag = pThis->GameClient()->m_CountryFlags.GetByIndex(FlagNumber);
 
 	// set the flag code as number
 	g_Config.m_PlayerCountry = pFlag->m_CountryCode;
@@ -537,6 +544,7 @@ void CTClient::FinishTClientInfo()
 			m_aVersionStr[0] = '0';
 			m_aVersionStr[1] = '\0';
 		}
+		m_FetchedTClientInfo = true;
 	}
 
 	json_value_free(pJson);
@@ -544,18 +552,15 @@ void CTClient::FinishTClientInfo()
 
 void CTClient::SetForcedAspect()
 {
-	return; // TODO: fix set forced aspect
+	// TODO: Fix flashing on windows
 	int State = Client()->State();
 	bool Force = true;
-	if(State == CClient::EClientState::STATE_DEMOPLAYBACK)
-	{
+	if(g_Config.m_ClAllowAnyRes == 0)
+		;
+	else if(State == CClient::EClientState::STATE_DEMOPLAYBACK)
 		Force = false;
-	}
-	else if(State == CClient::EClientState::STATE_ONLINE)
-	{
-		if(GameClient()->m_GameInfo.m_AllowZoom && !GameClient()->m_Menus.IsActive())
-			Force = false;
-	}
+	else if(State == CClient::EClientState::STATE_ONLINE && GameClient()->m_GameInfo.m_AllowZoom && !GameClient()->m_Menus.IsActive())
+		Force = false;
 	Graphics()->SetForcedAspect(Force);
 }
 
@@ -660,11 +665,11 @@ void CTClient::RenderMiniVoteHud()
 	Row.VSplitMid(&LeftColumn, &RightColumn, 4.0f);
 
 	char aKey[64];
-	m_pClient->m_Binds.GetKey("vote yes", aKey, sizeof(aKey));
+	GameClient()->m_Binds.GetKey("vote yes", aKey, sizeof(aKey));
 	TextRender()->TextColor(GameClient()->m_Voting.TakenChoice() == 1 ? ColorRGBA(0.2f, 0.9f, 0.2f, 0.85f) : TextRender()->DefaultTextColor());
 	Ui()->DoLabel(&LeftColumn, aKey[0] == '\0' ? "yes" : aKey, 0.5f, TEXTALIGN_ML);
 
-	m_pClient->m_Binds.GetKey("vote no", aKey, sizeof(aKey));
+	GameClient()->m_Binds.GetKey("vote no", aKey, sizeof(aKey));
 	TextRender()->TextColor(GameClient()->m_Voting.TakenChoice() == -1 ? ColorRGBA(0.95f, 0.25f, 0.25f, 0.85f) : TextRender()->DefaultTextColor());
 	Ui()->DoLabel(&RightColumn, aKey[0] == '\0' ? "no" : aKey, 0.5f, TEXTALIGN_MR);
 
@@ -676,7 +681,7 @@ void CTClient::RenderCenterLines()
 	if(g_Config.m_ClShowCenter <= 0)
 		return;
 
-	if(m_pClient->m_Scoreboard.IsActive())
+	if(GameClient()->m_Scoreboard.IsActive())
 		return;
 
 	Graphics()->TextureClear();

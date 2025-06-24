@@ -11,9 +11,6 @@ TClient
 Settings
 == Ajustes
 
-Bindwheel
-== Rueda de binds
-
 Warlist
 == Lista de guerra
 
@@ -38,38 +35,8 @@ Flip:
 Unflip:
 == Desvoltear:
 
-Mute Commands
-== Comandos de silenciar
-
 Mute:
 == Silenciar:
-
-Un-Mute:
-== Quitar silencio:
-
-Add %s name:
-== Añadir nombre %s:
-
-Add %s clan:
-== Añadir clan %s:
-
-Remove %s name:
-== Quitar nombre %s:
-
-Remove %s clan:
-== Quitar clan %s:
-
-Add [group] [name] [reason]
-== Añadir [grupo] [nombre] [razón]
-
-Add [group] [clan] [reason]
-== Añadir [grupo] [clan] [razón]
-
-Remove [group] [name]
-== Quitar [grupo] [nombre]
-
-Remove [group] [clan]
-== Quitar [grupo] [clan]
 
 Name:
 == Nombre:
@@ -110,9 +77,6 @@ Visual
 Custom Font: 
 == Fuente personalizada: 
 
-Update tee skin faster after being frozen
-== Actualizar skin del tee más rápido al congelarse
-
 Show ping colored circle before names
 == Mostrar círculo de ping antes del nombre
 
@@ -127,15 +91,6 @@ Freeze stars
 
 Color frozen tee skins
 == Colorear skins congeladas
-
-Make hammer rotate with cursor
-== Hacer que el martillo rote con el cursor
-
-Tiny tees
-== Tees pequeños
-
-Tiny tees others
-== Tees pequeños (otros)
 
 Render all custom colored feet as white feet skin
 == Mostrar pies personalizados como pies blancos
@@ -193,12 +148,6 @@ Other
 
 Run cl_run_on_join as console command
 == Ejecutar cl_run_on_join como comando
-
-Auto verify
-== Verificación automática
-
-Manual Verify
-== Verificación manual
 
 Voting
 == Votación
@@ -283,9 +232,6 @@ Indicator safe color
 
 HUD
 == HUD
-
-Show screen center
-== Mostrar centro de pantalla
 
 Show position and angle (mini debug)
 == Mostrar posición y ángulo (mini debug)
@@ -542,9 +488,6 @@ TClient Settings
 Profiles
 == Perfiles
 
-Chatbinds
-== Binds de chat
-
 TClient Developers
 == Desarrolladores de TClient
 
@@ -688,3 +631,248 @@ Add Item
 
 Remove Item
 == Quitar elemento
+
+Translated text hidden due to streamer mode
+== 
+
+(On Latest)
+== 
+
+(Fetching Update Info)
+== 
+
+[bgdraw]
+Failed to create bgdraw folder
+== 
+
+[bgdraw]
+Opening %s for %s
+== 
+
+[bgdraw]
+writing
+== 
+
+[bgdraw]
+reading
+== 
+
+[bgdraw]
+Failed to open %s for %s
+== 
+
+[bgdraw]
+Writing item %zu failed
+== 
+
+[bgdraw]
+Written %zu items
+== 
+
+[bgdraw]
+Loaded %zu items
+== 
+
+[bgdraw]
+Loaded %zu items (discarded %zu items)
+== 
+
+Cute:
+== 
+
+Lenny:
+== 
+
+Add war name:
+== 
+
+Add war clan:
+== 
+
+Add team name:
+== 
+
+Add team clan:
+== 
+
+Remove war name:
+== 
+
+Remove team name:
+== 
+
+Remove team clan:
+== 
+
+Add [group] [name] [reason]:
+== Añadir [grupo] [nombre] [razón]
+
+Add [group] [clan] [reason]:
+== Añadir [grupo] [clan] [razón]
+
+Remove [group] [name]:
+== Quitar [grupo] [nombre]
+
+Remove [group] [clan]:
+== Quitar [grupo] [clan]
+
+Mod
+== 
+
+Mute ID:
+== 
+
+Mute Name:
+== 
+
+Unmute Last:
+== 
+
+Kick ID:
+== 
+
+Kick Name:
+== 
+
+Ban ID:
+== 
+
+Ban Name:
+== 
+
+Unban Last:
+== 
+
+Kill Ids:
+== 
+
+Kill Names:
+== 
+
+Translate:
+== 
+
+Translate ID:
+== 
+
+Unmute:
+== 
+
+Bind Wheel
+== 
+
+War List
+== 
+
+Bind Wheel Key
+== 
+
+[Hammer Mode]
+Normal
+== 
+
+[Hammer Mode]
+Rotate with cursor
+== 
+
+[Hammer Mode]
+Rotate with cursor like gun
+== 
+
+Hammer Mode: 
+== 
+
+Ingame cursor scale
+== 
+
+Wheel animate
+== 
+
+Show katan on frozen players
+== 
+
+Tiny Tees
+== 
+
+Tiny Tee Size
+== 
+
+Pet
+== 
+
+Show the pet
+== 
+
+Pet size
+== 
+
+Pet alpha
+== 
+
+Pet Skin:
+== 
+
+Show mini vote HUD
+== 
+
+Horizontal Position
+== 
+
+Vertical Position
+== 
+
+Font Size
+== 
+
+Show screen center lines
+== 
+
+Screen center line color
+== 
+
+Screen center line width
+== 
+
+Toggle ghosts key
+== 
+
+Background Draw
+== 
+
+Time until strokes dissapear
+== 
+
+ seconds (never)
+== 
+
+ seconds
+== 
+
+Width
+== 
+
+Draw where mouse is
+== 
+
+Finish Name
+== 
+
+Attempt to change your name when near finish
+== 
+
+Finish Name:
+== 
+
+Overwrite clan even if empty
+== 
+
+Changing name to %s near finish
+== 
+
+[translate]
+[%s translating to %s]
+== 
+
+[translate]
+[%s to %s failed: %s]
+== 

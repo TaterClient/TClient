@@ -61,11 +61,11 @@ void CRainbow::OnRender()
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!m_pClient->m_Snap.m_aCharacters[i].m_Active)
+		if(!GameClient()->m_Snap.m_aCharacters[i].m_Active)
 			continue;
 		// check if local player
-		bool Local = m_pClient->m_Snap.m_LocalClientId == i;
-		CTeeRenderInfo *RenderInfo = &m_pClient->m_aClients[i].m_RenderInfo;
+		bool Local = GameClient()->m_Snap.m_LocalClientId == i;
+		CTeeRenderInfo *RenderInfo = &GameClient()->m_aClients[i].m_RenderInfo;
 
 		// check if rainbow is enabled
 		if(Local ? g_Config.m_ClRainbowTees : (g_Config.m_ClRainbowTees && g_Config.m_ClRainbowOthers))

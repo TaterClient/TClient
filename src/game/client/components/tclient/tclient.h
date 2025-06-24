@@ -47,7 +47,6 @@ public:
 
 	std::shared_ptr<CHttpRequest> m_pTClientInfoTask = nullptr;
 	void FetchTClientInfo();
-	void LoadTClientInfoJson();
 	void FinishTClientInfo();
 	void ResetTClientInfoTask();
 	bool NeedUpdate();
@@ -56,7 +55,8 @@ public:
 	void RenderCenterLines();
 
 	bool ChatDoSpecId(const char *pInput);
-
+	bool InfoTaskDone() { return m_pTClientInfoTask && m_pTClientInfoTask->State() == EHttpState::DONE; }
+	bool m_FetchedTClientInfo = false;
 	char m_aVersionStr[10] = "0";
 };
 

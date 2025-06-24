@@ -91,7 +91,7 @@ void CPet::OnRender()
 	m_Dir = (DirTarget + m_Dir) / 2.0f; // TODO: stop being lazy
 
 	CTeeRenderInfo TeeRenderInfo;
-	TeeRenderInfo.Apply(m_pClient->m_Skins.Find(g_Config.m_ClPetSkin));
+	TeeRenderInfo.Apply(GameClient()->m_Skins.Find(g_Config.m_ClPetSkin));
 	// TeeRenderInfo.ApplyColors(g_Config.m_ClPlayerUseCustomColor, g_Config.m_ClPlayerColorBody, g_Config.m_ClPlayerColorFeet);
 	TeeRenderInfo.m_Size = 64.0f * Scale;
 	TeeRenderInfo.m_GotAirJump = m_Velocity.y > -10.0f;
