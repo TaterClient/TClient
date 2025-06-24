@@ -35,7 +35,7 @@ SteamAPICall_t SteamAPI_ISteamMatchmaking_CreateLobby(ISteamMatchmaking *, int, 
 SteamAPICall_t SteamAPI_ISteamMatchmaking_JoinLobby(ISteamMatchmaking *, CSteamID) { abort(); }
 bool SteamAPI_ISteamMatchmaking_LeaveLobby(ISteamMatchmaking *, CSteamID) { abort(); }
 
-ISteamNetworkingUtils *SteamAPI_SteamNetworkingUtils_v003() { abort(); }
+ISteamNetworkingUtils *SteamAPI_SteamNetworkingUtils_SteamAPI_v004() { abort(); }
 void SteamAPI_ISteamNetworkingUtils_InitRelayNetworkAccess(ISteamNetworkingUtils *) { abort(); }
 
 uint64_t SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex(ISteamMatchmaking *self, uint64_t steamIDLobby, int iMember) { abort(); }

@@ -224,14 +224,7 @@ struct LobbyEnter_t
 	EResult m_EChatRoomEnterResponse; // 0 == OK
 };
 
-struct SteamNetworkingMessagesSessionRequest_t
-{
-	enum
-	{
-		k_iCallback = 1250 + 1
-	};
-	SteamNetworkingIdentity m_identityRemote;
-};
+
 
 struct LobbyKicked_t
 {
@@ -540,6 +533,16 @@ struct SteamNetConnectionInfo_t
 };
 inline void SteamNetworkingMessage_t::Release() { (*m_pfnRelease)(this); }
 
+struct SteamNetworkingMessagesSessionRequest_t
+{
+	enum
+	{
+		k_iCallback = 1250 + 1
+	};
+	SteamNetworkingIdentity m_identityRemote;
+};
+
+
 STEAMAPI ISteamNetworkingMessages *SteamAPI_SteamNetworkingMessages_SteamAPI_v002();
 STEAMAPI EResult SteamAPI_ISteamNetworkingMessages_SendMessageToUser(ISteamNetworkingMessages *self, const SteamNetworkingIdentity &identityRemote, const void *pubData, uint32_t cubData, int nSendFlags, int nRemoteChannel);
 STEAMAPI int SteamAPI_ISteamNetworkingMessages_ReceiveMessagesOnChannel(ISteamNetworkingMessages *self, int nLocalChannel, SteamNetworkingMessage_t **ppOutMessages, int nMaxMessages);
@@ -553,7 +556,7 @@ STEAMAPI SteamAPICall_t SteamAPI_ISteamMatchmaking_CreateLobby(ISteamMatchmaking
 STEAMAPI SteamAPICall_t SteamAPI_ISteamMatchmaking_JoinLobby(ISteamMatchmaking *self, CSteamID steamIDLobby);
 STEAMAPI bool SteamAPI_ISteamMatchmaking_LeaveLobby(ISteamMatchmaking *self, CSteamID steamIDLobby);
 
-STEAMAPI ISteamNetworkingUtils *SteamAPI_SteamNetworkingUtils_v003();
+STEAMAPI ISteamNetworkingUtils *SteamAPI_SteamNetworkingUtils_SteamAPI_v004();
 STEAMAPI void SteamAPI_ISteamNetworkingUtils_InitRelayNetworkAccess(ISteamNetworkingUtils *self);
 
 STEAMAPI uint64_t SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex(ISteamMatchmaking *self, uint64_t steamIDLobby, int iMember);

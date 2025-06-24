@@ -20,7 +20,7 @@ bool CSteamP2PManager::Init()
 	m_pSteamMatchmaking = SteamAPI_SteamMatchmaking_v009();
 	m_pSteamMessages = SteamAPI_SteamNetworkingMessages_SteamAPI_v002();
 	m_pSteamUser = SteamAPI_SteamUser_v021();
-	m_pSteamNetUtils = SteamAPI_SteamNetworkingUtils_v003();
+	m_pSteamNetUtils = SteamAPI_SteamNetworkingUtils_SteamAPI_v004();
 	m_Initalized = m_pSteamMatchmaking && m_pSteamMessages && m_pSteamUser && m_pSteamNetUtils;
 	if(m_Initalized)
 		SteamAPI_ISteamNetworkingUtils_InitRelayNetworkAccess(m_pSteamNetUtils);
