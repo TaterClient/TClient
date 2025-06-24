@@ -449,9 +449,9 @@ int CSteamP2PManager::GetPeerRTT(uint64_t SteamID64) const
 
 	SteamNetworkingIdentity Identity{};
 	Identity.SetSteamID64(SteamID64);
+	int ConnectionState = SteamAPI_ISteamNetworkingMessages_GetSessionConnectionInfo(m_pSteamMessages, Identity, &Info, &Status);
 
-	if(SteamAPI_ISteamNetworkingMessages_GetSessionConnectionInfo(m_pSteamMessages, Identity, &Info, &Status) 
-== k_ESteamNetworkingConnectionState_Connected)
+	if(ConnectionState == k_ESteamNetworkingConnectionState_Connected)
 	{
 		return Status.m_nPing;
 	}
