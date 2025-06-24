@@ -89,6 +89,16 @@ private:
 	std::chrono::steady_clock::time_point m_LastMemberUpdate;
 };
 
+struct CPeerProfile
+{
+	char m_aPlayerName[MAX_NAME_LENGTH] = {};
+	char m_aSkinName[MAX_SKIN_LENGTH] = {};
+	bool m_CustomColor = 0;
+	int m_BodyColor = 0;
+	int m_FeetColor = 0;
+};
+
+
 struct CPeerConnection
 {
 	uint64_t m_SteamID64;
@@ -99,6 +109,7 @@ struct CPeerConnection
 	int m_RTT; // ms
 	int m_ClientId;
 	uint32_t m_ServerCRC; // If we are not in the same server we don't need to send inputs
+	CPeerProfile m_Profile;
 
 	CPeerConnection(uint64_t SteamID64) :
 		m_SteamID64(SteamID64),

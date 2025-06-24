@@ -60,6 +60,10 @@ struct CP2PPeerInfoMsg
 	CP2PPacketHeader m_Header;
 
 	char m_aPlayerName[MAX_NAME_LENGTH] = {};
+	char m_aSkinName[MAX_SKIN_LENGTH] = {};
+	bool m_CustomColor = 0;
+	int m_BodyColor = 0;
+	int m_FeetColor = 0;
 
 	CP2PPeerInfoMsg()
 	{

@@ -279,8 +279,11 @@ void CSteamP2PManager::ProcessPacket(const void *pData, size_t Size, uint64_t Se
 			return;
 
 		const CP2PPeerInfoMsg *pInfo = static_cast<const CP2PPeerInfoMsg *>(pData);
-		char aPlayerName[MAX_NAME_LENGTH];
-		str_copy(aPlayerName, pInfo->m_aPlayerName, sizeof(aPlayerName));
+		str_copy(pPeer->m_Profile.m_aPlayerName, pInfo->m_aPlayerName, sizeof(pPeer->m_Profile.m_aPlayerName));
+		str_copy(pPeer->m_Profile.m_aSkinName, pInfo->m_aSkinName, sizeof(pPeer->m_Profile.m_aPlayerName));
+		pPeer->m_Profile.m_BodyColor = pInfo->m_BodyColor;
+		pPeer->m_Profile.m_FeetColor = pInfo->m_FeetColor;
+		pPeer->m_Profile.m_CustomColor = pInfo->m_CustomColor;
 		break;
 	}
 	default:
@@ -299,8 +302,7 @@ void CSteamP2PManager::UpdateLobbyMembers()
 
 	for(int i = 0; i < NumMembers; ++i)
 	{
-		CSteamID MemberID = SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex(
-			m_pSteamMatchmaking, m_LobbyID.ConvertToUint64(), i);
+		CSteamID MemberID = SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex(m_pSteamMatchmaking, m_LobbyID.ConvertToUint64(), i);
 
 		if(MemberID.IsValid())
 		{
@@ -309,8 +311,10 @@ void CSteamP2PManager::UpdateLobbyMembers()
 
 			if(SteamID64 != SteamAPI_ISteamUser_GetSteamID(m_pSteamUser))
 			{
-				GetOrCreatePeer(SteamID64);
+				CPeerConnection *Peer = GetOrCreatePeer(SteamID64);
+				Peer->m_RTT = GetPeerRTT(SteamID64);
 			}
+
 		}
 	}
 	std::vector<uint64_t> ToRemove;
@@ -338,10 +342,12 @@ CPeerConnection *CSteamP2PManager::GetOrCreatePeer(uint64_t SteamID64)
 	auto [NewIt, Inserted] = m_Peers.emplace(SteamID64, CPeerConnection(SteamID64));
 
 	// Send our info to the new peer
-	// TODO: Fill out the InfoMsg data with our tee name
 	CP2PPeerInfoMsg InfoMsg;
-
-	str_copy(InfoMsg.m_aPlayerName, "Player", sizeof(InfoMsg.m_aPlayerName));
+	str_copy(InfoMsg.m_aPlayerName, g_Config.m_PlayerName, sizeof(InfoMsg.m_aPlayerName));
+	str_copy(InfoMsg.m_aSkinName, g_Config.m_ClPlayerSkin, sizeof(InfoMsg.m_aSkinName));
+	InfoMsg.m_CustomColor = g_Config.m_ClPlayerUseCustomColor;
+	InfoMsg.m_BodyColor = g_Config.m_ClPlayerColorBody;
+	InfoMsg.m_FeetColor = g_Config.m_ClPlayerColorFeet;
 
 	SendMessageToPeer(SteamID64, kReliableSendFlags, &InfoMsg, sizeof(InfoMsg));
 
@@ -445,9 +451,9 @@ int CSteamP2PManager::GetPeerRTT(uint64_t SteamID64) const
 	Identity.SetSteamID64(SteamID64);
 
 	if(SteamAPI_ISteamNetworkingMessages_GetSessionConnectionInfo(m_pSteamMessages, Identity, &Info, &Status) 
-		== k_ESteamNetworkingConnectionState_Connected)
+== k_ESteamNetworkingConnectionState_Connected)
 	{
-		return Status.m_nPing; // RTT in milliseconds
+		return Status.m_nPing;
 	}
 	return -1;
 }

@@ -14,6 +14,7 @@
 #include <game/generated/protocol.h>
 #include <game/localization.h>
 
+#include "engine/client/steamp2p/steam_p2p.h"
 #include <game/client/animstate.h>
 #include <game/client/components/chat.h>
 #include <game/client/components/countryflags.h>
@@ -24,7 +25,6 @@
 #include <game/client/components/tclient/bindchat.h>
 #include <game/client/components/tclient/bindwheel.h>
 #include <game/client/components/tclient/trails.h>
-#include "engine/client/steamp2p/steam_p2p.h"
 
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
@@ -214,7 +214,8 @@ void CMenus::RenderSettingsTClient(CUIRect MainView)
 			continue;
 
 		TabBar.VSplitLeft(TabWidth, &Button, &TabBar);
-		const int Corners = Tab == 0 ? IGraphics::CORNER_L : Tab == NUMBER_OF_TCLIENT_TABS - 1 ? IGraphics::CORNER_R : IGraphics::CORNER_NONE;
+		const int Corners = Tab == 0 ? IGraphics::CORNER_L : Tab == NUMBER_OF_TCLIENT_TABS - 1 ? IGraphics::CORNER_R :
+													 IGraphics::CORNER_NONE;
 		if(DoButton_MenuTab(&s_aPageTabs[Tab], apTabNames[Tab], s_CurCustomTab == Tab, &Button, Corners, nullptr, nullptr, nullptr, nullptr, 4.0f))
 			s_CurCustomTab = Tab;
 	}
@@ -1783,6 +1784,7 @@ void CMenus::RenderSettingsInfo(CUIRect MainView)
 		TCLocalize("War List"),
 		TCLocalize("Chat Binds"),
 		TCLocalize("Status Bar"),
+		TCLocalize("Steam Lobby"),
 		TCLocalize("Info")};
 	static int s_aShowTabs[NUMBER_OF_TCLIENT_TABS] = {};
 	for(int i = 0; i < NUMBER_OF_TCLIENT_TABS - 1; ++i)
@@ -2441,7 +2443,7 @@ void CMenus::RenderSettingsSteamLobby(CUIRect MainView)
 
 	LeftView.HSplitTop(LineSize * 2.0f, &Button, &LeftView);
 
-	if(DoButton_Menu(&s_CreateLobbyButton, TCLocalize("Create New Lobby"), 0, &Button)) 
+	if(DoButton_Menu(&s_CreateLobbyButton, TCLocalize("Create New Lobby"), 0, &Button))
 	{
 		CSteamP2PManager::Instance().LeaveLobby();
 		CSteamP2PManager::Instance().HostLobbyPrivate(2);
@@ -2486,6 +2488,63 @@ void CMenus::RenderSettingsSteamLobby(CUIRect MainView)
 	{
 		str_format(s_aLobbyId, sizeof(s_aLobbyId), "%llu", CSteamP2PManager::Instance().GetLobbyID());
 	}
+
+	RightView.HSplitTop(HeadlineHeight, &Label, &RightView);
+	Ui()->DoLabel(&Label, TCLocalize("Lobby Members"), HeadlineFontSize, TEXTALIGN_ML);
+	RightView.HSplitTop(MarginSmall, nullptr, &RightView);
+
+	auto &Peers = CSteamP2PManager::Instance().GetPeers();
+
+	static CListBox s_PeerList;
+	static std::vector<uint64_t> s_vPeerIds;
+	s_vPeerIds.resize(Peers.size()); 
+
+	const float RowHeight = 42.0f; 
+	int SelDummy = -1;
+	s_PeerList.DoStart(RowHeight, Peers.size(), 1, 2, SelDummy, &RightView);
+
+	int i = 0;
+	for(auto &kv : Peers)
+	{
+		const uint64_t SteamID64 = kv.first;
+		const CPeerConnection &Peer = kv.second;
+		s_vPeerIds[i] = SteamID64;
+
+		CListboxItem Item = s_PeerList.DoNextItem(&s_vPeerIds[i], false);
+		if(!Item.m_Visible)
+		{
+			++i;
+			continue;
+		}
+
+		CUIRect TeeRect, NameRect, RttRect;
+		Item.m_Rect.VSplitLeft(RowHeight, &TeeRect, &Item.m_Rect); 
+		Item.m_Rect.VSplitRight(60.0f, &NameRect, &RttRect); 
+		NameRect.HMargin(4.0f, &NameRect);
+		RttRect.HMargin(4.0f, &RttRect);
+
+		const char *pSkinName = Peer.m_Profile.m_aSkinName[0] ? Peer.m_Profile.m_aSkinName : "default";
+		RenderDevSkin(TeeRect.Center(), TeeRect.h * 0.9f,
+			pSkinName, 
+			"default",
+			Peer.m_Profile.m_CustomColor != 0,
+			Peer.m_Profile.m_FeetColor,
+			Peer.m_Profile.m_BodyColor,
+			0 , false); 
+
+		const char *pName = Peer.m_Profile.m_aPlayerName[0] ? Peer.m_Profile.m_aPlayerName : "(unknown)";
+		Ui()->DoLabel(&NameRect, pName, FontSize, TEXTALIGN_ML);
+
+		char aRtt[32];
+		if(Peer.m_RTT >= 0)
+			str_format(aRtt, sizeof(aRtt), "%d ms", Peer.m_RTT);
+		else
+			str_copy(aRtt, "--", sizeof(aRtt));
+		Ui()->DoLabel(&RttRect, aRtt, FontSize, TEXTALIGN_MR);
+
+		++i;
+	}
+	s_PeerList.DoEnd();
 }
 
 void CMenus::RenderDevSkin(vec2 RenderPos, float Size, const char *pSkinName, const char *pBackupSkin, bool CustomColors, int FeetColor, int BodyColor, int Emote, bool Rainbow, ColorRGBA ColorFeet, ColorRGBA ColorBody)

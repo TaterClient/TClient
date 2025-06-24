@@ -2404,6 +2404,8 @@ void CGameClient::OnPredict()
 	if(g_Config.m_ClFastInput && !g_Config.m_ClFastInputOthers)
 		FinalTickOthers = FinalTickSelf - g_Config.m_ClFastInput;
 
+	CSteamP2PManager &SteamP2P = CSteamP2PManager::Instance();
+
 	for(int Tick = Client()->GameTick(g_Config.m_ClDummy) + 1; Tick <= FinalTickSelf; Tick++)
 	{
 		// fetch the previous characters
@@ -2476,10 +2478,10 @@ void CGameClient::OnPredict()
 					}
 
 					// Steam Preinput
-					if(CSteamP2P.m_Initalized && CSteamP2P.IsLobbyValid())
+					if(SteamP2P.m_Initalized && SteamP2P.IsLobbyValid())
 					{
 						CNetObj_PlayerInput P2PInput;
-						if(pDummyChar == pChar || pLocalChar == pChar || !CSteamP2P.GetPeerInput(i, Tick, P2PInput))
+						if(pDummyChar == pChar || pLocalChar == pChar || !SteamP2P.GetPeerInput(i, Tick, P2PInput))
 							continue;
 						pChar->OnPredictedInput(&P2PInput);
 					}
@@ -2521,10 +2523,10 @@ void CGameClient::OnPredict()
 					}
 
 					// Steam Preinput
-					if(CSteamP2P.m_Initalized && CSteamP2P.IsLobbyValid())
+					if(SteamP2P.m_Initalized && SteamP2P.IsLobbyValid())
 					{
 						CNetObj_PlayerInput P2PInput;
-						if(pDummyChar == pChar || pLocalChar == pChar || !CSteamP2P.GetPeerInput(i, Tick, P2PInput))
+						if(pDummyChar == pChar || pLocalChar == pChar || !SteamP2P.GetPeerInput(i, Tick, P2PInput))
 							continue;
 						pChar->OnPredictedInput(&P2PInput);
 					}
