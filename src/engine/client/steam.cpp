@@ -119,8 +119,9 @@ public:
 					*reinterpret_cast<LobbyKicked_t *>(Callback.m_pubParam));
 				break;
 			case SteamNetworkingMessagesSessionRequest_t::k_iCallback:
+				CSteamP2PManager::Instance().OnSessionRequest(
+					*reinterpret_cast<SteamNetworkingMessagesSessionRequest_t *>(Callback.m_pubParam));
 				break;
-
 			default:
 				if(g_Config.m_Debug)
 				{

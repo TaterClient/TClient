@@ -15,6 +15,11 @@ CSteamP2PManager &CSteamP2PManager::Instance()
 	return Instance;
 }
 
+static void DebugOutput(ESteamNetworkingSocketsDebugOutputType t, const char *msg)
+{
+	dbg_msg("STEAM", "%s", msg);
+}
+
 bool CSteamP2PManager::Init()
 {
 	m_pSteamMatchmaking = SteamAPI_SteamMatchmaking_v009();
@@ -44,10 +49,16 @@ bool CSteamP2PManager::Init()
 		SteamAPI_ISteamNetworkingUtils_SetConfigValueStruct(m_pSteamNetUtils, opt[0], k_ESteamNetworkingConfig_Global, 0);
 		SteamAPI_ISteamNetworkingUtils_SetConfigValueStruct(m_pSteamNetUtils, opt[1], k_ESteamNetworkingConfig_Global, 0);
 		SteamAPI_ISteamNetworkingUtils_SetConfigValueStruct(m_pSteamNetUtils, opt[2], k_ESteamNetworkingConfig_Global, 0);
+		SteamAPI_ISteamNetworkingUtils_SetDebugOutputFunction(m_pSteamNetUtils, 
+			k_ESteamNetworkingSocketsDebugOutputType_Verbose, DebugOutput);
+
 
 	}
 	return m_Initalized;
 }
+
+
+
 
 void CSteamP2PManager::Shutdown()
 {
