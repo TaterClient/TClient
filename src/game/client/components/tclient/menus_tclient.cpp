@@ -2054,7 +2054,7 @@ void CMenus::RenderSettingsTClientInfo(CUIRect MainView)
 	const float TeeSize = 50.0f;
 	const float CardSize = TeeSize + MarginSmall;
 	CUIRect TeeRect, DevCardRect;
-	static CButtonContainer s_LinkButton1, s_LinkButton2, s_LinkButton3, s_LinkButton4;
+	static CButtonContainer s_LinkButton1, s_LinkButton2, s_LinkButton3, s_LinkButton4, s_LinkButton5;
 	{
 		RightView.HSplitTop(CardSize, &DevCardRect, &RightView);
 		DevCardRect.VSplitLeft(CardSize, &TeeRect, &Label);
@@ -2098,6 +2098,17 @@ void CMenus::RenderSettingsTClientInfo(CUIRect MainView)
 		if(Ui()->DoButton_FontIcon(&s_LinkButton4, FONT_ICON_ARROW_UP_RIGHT_FROM_SQUARE, 0, &Button, IGraphics::CORNER_ALL))
 			Client()->ViewLink("https://github.com/Teero888");
 		RenderDevSkin(TeeRect.Center(), 50.0f, "glow_mermyfox", "mermyfox", true, 0, 0, 0, false, ColorRGBA(1.00f, 1.00f, 1.00f, 1.00f), ColorRGBA(1.00f, 0.02f, 0.13f, 1.00f));
+	}
+	{
+		RightView.HSplitTop(CardSize, &DevCardRect, &RightView);
+		DevCardRect.VSplitLeft(CardSize, &TeeRect, &Label);
+		Label.VSplitLeft(TextRender()->TextWidth(LineSize, "ChillerDragon"), &Label, &Button);
+		Button.VSplitLeft(MarginSmall, nullptr, &Button);
+		Button.w = LineSize, Button.h = LineSize, Button.y = Label.y + (Label.h / 2.0f - Button.h / 2.0f);
+		Ui()->DoLabel(&Label, "ChillerDragon", LineSize, TEXTALIGN_ML);
+		if(Ui()->DoButton_FontIcon(&s_LinkButton5, FONT_ICON_ARROW_UP_RIGHT_FROM_SQUARE, 0, &Button, IGraphics::CORNER_ALL))
+			Client()->ViewLink("https://github.com/ChillerDragon");
+		RenderDevSkin(TeeRect.Center(), 50.0f, "glow_greensward", "greensward", false, 0, 0, 0, false, ColorRGBA(1.00f, 1.00f, 1.00f, 1.00f), ColorRGBA(1.00f, 0.02f, 0.13f, 1.00f));
 	}
 
 	RightView.HSplitTop(MarginSmall, nullptr, &RightView);
