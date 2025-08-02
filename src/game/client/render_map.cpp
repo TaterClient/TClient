@@ -836,6 +836,10 @@ void CRenderTools::RenderGameTileOutlines(CTile *pTiles, int w, int h, float Sca
 			}
 
 			float Size = (float)g_Config.m_ClOutlineWidth;
+			if(TileType == TILE_FREEZE)
+				Size = (float)g_Config.m_ClOutlineWidthFreeze;
+			else if(TileType == TILE_NOHOOK || TileType == TILE_SOLID)
+				Size = (float)g_Config.m_ClOutlineWidthSolid;
 			int NumQuads = 0;
 
 			// Do lonely corners first
@@ -965,7 +969,7 @@ void CRenderTools::RenderTeleOutlines(CTile *pTiles, CTeleTile *pTele, int w, in
 			Neighbors[6] = pTiles[(mx + 0) + (my + 1) * w].m_Index == 0 && !pTele[(mx + 0) + (my + 1) * w].m_Number;
 			Neighbors[7] = pTiles[(mx + 1) + (my + 1) * w].m_Index == 0 && !pTele[(mx + 1) + (my + 1) * w].m_Number;
 
-			float Size = (float)g_Config.m_ClOutlineWidth;
+			float Size = (float)g_Config.m_ClOutlineWidthTele;
 			int NumQuads = 0;
 
 			// Do lonely corners first
