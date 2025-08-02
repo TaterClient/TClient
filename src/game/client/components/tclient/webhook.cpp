@@ -110,7 +110,7 @@ void CWebhook::OnRender()
 		return;
 	m_TimeSinceLastRequest += Client()->RenderFrameTime();
 	m_TimeSinceBufferStart += Client()->RenderFrameTime();
-	if(m_TimeSinceLastRequest >= Client()->RconAuthed() ? BUFFER_MIN_TIME_AUTHED : BUFFER_MIN_TIME)
+	if(m_TimeSinceLastRequest >= (Client()->RconAuthed() ? BUFFER_MIN_TIME_AUTHED : BUFFER_MIN_TIME))
 		FlushBuffer();
 	if(m_TimeSinceBufferStart >= BUFFER_MAX_TIME)
 		FlushBuffer();
