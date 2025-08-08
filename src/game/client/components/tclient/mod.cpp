@@ -35,7 +35,7 @@ public:
 		case EType::ADDR:
 			return std::to_string(m_ClientId);
 		case EType::NAME:
-			return "'" + std::to_string(m_ClientId) + ": " + m_Content + "'";
+			return std::string("'") + std::to_string(m_ClientId) + ": " + m_Content + "'";
 		case EType::ERROR:
 			dbg_assert(false, "Tried to get Printable of error Iden");
 		default:
@@ -99,7 +99,7 @@ public:
 					return;
 				}
 			m_Type = EType::ERROR;
-			m_Content = "'" + std::string(pStr) + "' was not found";
+			m_Content = std::string("'") + std::string(pStr) + "' was not found";
 			return;
 		}
 		int Id;
@@ -133,19 +133,19 @@ public:
 				if(net_addr_is_local(&Addr))
 				{
 					m_Type = EType::ERROR;
-					m_Content = "'" + std::string(aAddr) + "' is a local address";
+					m_Content = std::string("'") + std::string(aAddr) + "' is a local address";
 					return;
 				}
 				m_Type = EType::ADDR;
 				m_Content = std::string(aAddr);
 			}
 			m_Type = EType::ERROR;
-			m_Content = "'" + std::string(pStr) + "' is not a valid address or id";
+			m_Content = std::string("'") + std::string(pStr) + "' is not a valid address or id";
 		}
 		else
 		{
 			m_Type = EType::ERROR;
-			m_Content = "'" + std::string(pStr) + "' is not a valid id";
+			m_Content = std::string("'") + std::string(pStr) + "' is not a valid id";
 		}
 	}
 };
