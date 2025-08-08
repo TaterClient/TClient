@@ -31,7 +31,7 @@ public:
 		switch(m_Type)
 		{
 		case EType::ID:
-			return "#" + m_Content;
+			return std::string("#") + m_Content;
 		case EType::ADDR:
 			return std::to_string(m_ClientId);
 		case EType::NAME:
