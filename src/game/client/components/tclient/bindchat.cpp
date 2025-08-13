@@ -54,7 +54,7 @@ decltype(CBindChat::BIND_DEFAULTS) CBindChat::BIND_DEFAULTS = {
 					   {TCLocalizable("Add team name:"), {"!team", "war_name_index 2"}},
 					   {TCLocalizable("Add team clan:"), {"!teamclan", "war_clan_index 2"}},
 					   {TCLocalizable("Remove war name:"), {"!delwar", "remove_war_name_index 1"}},
-					   {TCLocalizable("Remove war name:"), {"!delwarclan", "remove_war_clan_index 1"}},
+					   {TCLocalizable("Remove war clan:"), {"!delwarclan", "remove_war_clan_index 1"}},
 					   {TCLocalizable("Remove team name:"), {"!delteam", "remove_war_name_index 2"}},
 					   {TCLocalizable("Remove team clan:"), {"!delteamclan", "remove_war_clan_index 2"}},
 					   {TCLocalizable("Add [group] [name] [reason]:"), {"!name", "war_name"}},
