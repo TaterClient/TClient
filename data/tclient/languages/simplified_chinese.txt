@@ -2,9 +2,10 @@
 
 # 2025-01-16 潘潘NO.1
 # 2025-01-16 EdEnd
-# 2025-01-27 LuoChu
+# 2025-01-27 洛初
 # 2025-01-30 潘潘NO.1 & EdEnd
-# 2025-05-25 LuoChu
+# 2025-05-25 洛初
+# 2025-08-13 洛初
 ##### /authors #####
 
 ##### translated strings #####
@@ -319,7 +320,7 @@ Override Selected
 == 覆盖选定项
 
 Remove Bind
-== 移除绑定
+== 删除绑定
 
 Add Bind
 == 添加绑定
@@ -759,131 +760,134 @@ Unmute:
 == 取消禁言：
 
 (On Latest)
-== 
+== (已是最新版本)
 
 (Fetching Update Info)
-== 
+== (正在获取更新信息)
 
 [bgdraw]
 Failed to create bgdraw folder
-== 
+== 创建 bgdraw 文件夹失败
 
 [bgdraw]
 Failed to open %s for %s
-== 
+== 打开 %s 失败因为 %s
 
 Add war name:
-== 
+== 添加敌对玩家:
 
 Add war clan:
-== 
+== 添加敌对战队:
 
 Add team name:
-== 
+== 添加友好玩家:
 
 Add team clan:
-== 
+== 添加友好战队:
 
 Remove war name:
-== 
+== 删除敌对玩家:
+
+Remove war clan:
+== 删除敌对战队
 
 Remove team name:
-== 
+== 删除友好玩家:
 
 Remove team clan:
-== 
+== 删除友好战队:
 
 Add [group] [name] [reason]:
-== 
+== 添加 [组名] [玩家名] [原因]
 
 Add [group] [clan] [reason]:
-== 
+== 添加 [组名] [战队名] [原因]
 
 Remove [group] [name]:
-== 
+== 删除 [组名] [玩家名] [原因]
 
 Remove [group] [clan]:
-== 
+== 删除 [组名] [战队名] [原因]
 
 Mod
-== 
+== 管理
 
 Mute ID:
-== 
+== 禁言玩家(ID):
 
 Mute Name:
-== 
+== 禁言玩家(名字):
 
 Unmute Last:
-== 
+== 取消上一个禁言:
 
 Kick ID:
-== 
+== 踢出玩家(ID):
 
 Kick Name:
-== 
+== 踢出玩家(名字):
 
 Ban ID:
-== 
+== Ban玩家(ID):
 
 Ban Name:
-== 
+== Ban玩家(名字):
 
 Unban Last:
-== 
+== 取消上一个Ban:
 
 Kill Ids:
-== 
+== 杀掉玩家(ID):
 
 Kill Names:
-== 
+== 杀掉玩家(名字):
 
 Translate ID:
-== 
+== 翻译ID:
 
 Bind Wheel
-== 
+== 绑定轮盘
 
 War List
-== 
+== 战争列表
 
 [Hammer Mode]
 Normal
-== 
+== 正常(不旋转)
 
 [Hammer Mode]
 Rotate with cursor
-== 
+== 随光标旋转(垂直)
 
 [Hammer Mode]
 Rotate with cursor like gun
-== 
+== 像枪一样随光标旋转(平行)
 
 Show katan on frozen players
-== 
+== 在被冻结的玩家身上显示武士刀
 
 Tiny Tees
-== 
+== 更小的Tee
 
 Tiny Tee Size
-== 
+== 更小的Tee大小
 
 Show screen center lines
-== 
+== 显示屏幕中心线
 
 Screen center line color
-== 
+== 屏幕中心线的颜色
 
 Screen center line width
-== 
+== 屏幕中心线的宽度
 
 Overwrite clan even if empty
-== 
+== 即使战队为空也覆盖
 
 [translate]
 [%s translating to %s]
-== 
+== %s 翻译为 %s
 
 [translate]
 [%s to %s failed: %s]
-== 
+== %s 翻译到 %s 失败: %s
