@@ -37,6 +37,10 @@ class CScoreboard : public CComponent
 	void UpdateTeamStateTracking();
 	void ResetInviteState(int ClientId = -1);
 	bool IsGlobalInviteCooldownActive() const;
+	bool IsServerJoinCooldownActive() const;
+	bool IsLocalPlayerInActiveRun() const;
+	bool IsLocalPlayerFrozen() const;
+	bool ShouldDisableInteraction() const;
 	int FindNextEmptyTeam() const;
 
 	float m_InviteButtonWidth;
@@ -49,6 +53,8 @@ class CScoreboard : public CComponent
 	bool m_InAutoJoinSequence;
 
 	bool m_aPlayerWasActive[64];
+	
+	int64_t m_ServerJoinTime;
 
 	bool m_MouseModeWasAbsolute;
 
