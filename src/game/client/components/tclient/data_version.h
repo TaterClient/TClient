@@ -6,9 +6,10 @@
 
 // Check validity of data/data_version.txt
 // This is extracted to this file for ease of editing
+// TODO: this is a stub
 
-#include <format>
-#include <string>
+// #include <format>
+// #include <string>
 
 #include <engine/shared/linereader.h>
 
@@ -19,15 +20,15 @@
 
 #define DATA_VERSION_PATH "data_version.txt"
 
-static std::string VersionNumberToString(int Version)
-{
-	return std::format("{}.{}.{}", Version / 1000, (Version / 100) % 10, Version % 10);
-}
+// static std::string VersionNumberToString(int Version)
+// {
+// 	return std::format("{}.{}.{}", Version / 1000, (Version / 100) % 10, Version % 10);
+// }
 
-static const std::pair<std::string, std::string> DOMAINS[] = {
-	{"DDNet", VersionNumberToString(DDNET_VERSION_NUMBER)},
-	{"TClient", TCLIENT_VERSION},
-};
+// static const std::pair<std::string, std::string> DOMAINS[] = {
+// 	{"DDNet", VersionNumberToString(DDNET_VERSION_NUMBER)},
+// 	{"TClient", TCLIENT_VERSION},
+// };
 
 inline void CheckDataVersion(char *pError, int Length, IOHANDLE File)
 {
@@ -36,8 +37,6 @@ inline void CheckDataVersion(char *pError, int Length, IOHANDLE File)
 		str_format(pError, Length, TCLocalize("%s could not be read", DATA_VERSION_PATH), DATA_VERSION_PATH);
 		return;
 	}
-
-	// TODO check file
 
 	// CLineReader LineReader;
 	// LineReader.OpenFile(File);
