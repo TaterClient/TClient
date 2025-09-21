@@ -40,6 +40,9 @@ X-TRANS
 X-AROACE
 == -205
 
+X-BI
+== -206
+
 ##### other #####
 
 X-TOTAR
