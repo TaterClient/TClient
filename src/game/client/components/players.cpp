@@ -167,7 +167,7 @@ void CPlayers::RenderHookCollLine(
 	float Intra)
 {
 	// TClient
-	if(GameClient()->m_aClients[ClientId].m_IsVolleyBall)
+	if(ClientId >= 0 && GameClient()->m_aClients[ClientId].m_IsVolleyBall)
 		return;
 
 	CNetObj_Character Prev;
@@ -519,7 +519,7 @@ void CPlayers::RenderPlayer(
 	GameClient()->m_Flow.Add(Position, Vel * 100.0f, 10.0f);
 
 	// TClient
-	if(GameClient()->m_aClients[ClientId].m_IsVolleyBall)
+	if(ClientId >= 0 && GameClient()->m_aClients[ClientId].m_IsVolleyBall)
 	{
 		// Update
 		const float Delta = Client()->IntraGameTickSincePrev(g_Config.m_ClDummy);
