@@ -1422,6 +1422,7 @@ set(EXPECTED_DATA
   countryflags/WF.png
   countryflags/WS.png
   countryflags/X-AROACE.png
+  countryflags/X-BI.png
   countryflags/X-BLACK.png
   countryflags/X-BLUEKITTY.png
   countryflags/X-BLUESTRIPE.png
