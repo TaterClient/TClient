@@ -6,6 +6,7 @@
 #include <base/vmath.h>
 
 #include <optional>
+#include <type_traits>
 
 /*
 	Title: Color handling
@@ -89,6 +90,12 @@ public:
 		z = ((col >> 0) & 0xFF) / 255.0f;
 	}
 
+	// Disallow casting between different instantiations of the color4_base template.
+	// The color_cast functions below should be used to convert between colors.
+	template<typename OtherDerivedT>
+	requires(!std::is_same_v<DerivedT, OtherDerivedT>)
+		color4_base(const color4_base<OtherDerivedT> &Other) = delete;
+
 	constexpr vec4 v4() const { return vec4(x, y, z, a); }
 	constexpr operator vec4() const { return vec4(x, y, z, a); }
 	constexpr float &operator[](int index)
@@ -123,16 +130,6 @@ public:
 		DerivedT col(static_cast<const DerivedT &>(*this));
 		col.a *= alpha;
 		return col;
-	}
-
-	constexpr DerivedT Multiply(const DerivedT &Other) const
-	{
-		DerivedT Color(static_cast<const DerivedT &>(*this));
-		Color.x *= Other.x;
-		Color.y *= Other.y;
-		Color.z *= Other.z;
-		Color.a *= Other.a;
-		return Color;
 	}
 
 	template<typename UnpackT>
@@ -199,6 +196,27 @@ class ColorRGBA : public color4_base<ColorRGBA>
 public:
 	using color4_base::color4_base;
 	constexpr ColorRGBA() = default;
+
+	constexpr ColorRGBA Multiply(const ColorRGBA &Other) const
+	{
+		ColorRGBA Color = *this;
+		Color.r *= Other.r;
+		Color.g *= Other.g;
+		Color.b *= Other.b;
+		Color.a *= Other.a;
+		return Color;
+	}
+
+	template<Numeric T>
+	constexpr ColorRGBA Multiply(const T &Factor) const
+	{
+		ColorRGBA Color = *this;
+		Color.r *= Factor;
+		Color.g *= Factor;
+		Color.b *= Factor;
+		Color.a *= Factor;
+		return Color;
+	}
 };
 
 template<typename T, typename F>
