@@ -536,7 +536,7 @@ private:
 protected:
 	bool UpdateNeeded(CGameClient &This, const CNamePlateData &Data) override
 	{
-		m_Visible = Data.m_InGame ? g_Config.m_TcShowSkinName > (This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Local ? 1 : 0) : g_Config.m_TcShowSkinName > 0;
+		m_Visible = Data.m_InGame ? g_Config.m_TcNameplateSkins > (This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Local ? 1 : 0) : g_Config.m_TcNameplateSkins > 0;
 		if(!m_Visible)
 			return false;
 		m_Color = Data.m_Color;
