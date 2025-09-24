@@ -476,10 +476,10 @@ public:
 		m_Radius = Data.m_FontSize / 2.5f;
 		m_Size = vec2(m_Radius, m_Radius) * 2.0f;
 		m_Visible = Data.m_InGame ? (
-						    This.Client()->State() != IClient::STATE_DEMOPLAYBACK && ((Data.m_ShowName && g_Config.m_TcPingNameCircle > 0) ||
+						    This.Client()->State() != IClient::STATE_DEMOPLAYBACK && ((Data.m_ShowName && g_Config.m_TcNameplatePingCircle > 0) ||
 														     (This.m_Scoreboard.IsActive() && !This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Local))) :
 					    (
-						    (Data.m_ShowName && g_Config.m_TcPingNameCircle > 0));
+						    (Data.m_ShowName && g_Config.m_TcNameplatePingCircle > 0));
 		if(!m_Visible)
 			return;
 		int ping = Data.m_InGame ? This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Latency : (1 + Data.m_ClientId) * 25;
