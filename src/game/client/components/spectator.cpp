@@ -520,7 +520,7 @@ void CSpectator::OnRender()
 		NameCursor.m_FontSize = FontSize;
 		NameCursor.m_Flags |= TEXTFLAG_ELLIPSIS_AT_END;
 		NameCursor.m_LineWidth = 180.0f;
-		if(g_Config.m_ClShowIds || g_Config.m_TcSpecmenuID)
+		if(g_Config.m_ClShowIds || g_Config.m_TcSpecMenuId)
 		{
 			char aClientId[16];
 			GameClient()->FormatClientId(GameClient()->m_Snap.m_apInfoByDDTeamName[i]->m_ClientId, aClientId, EClientIdFormat::INDENT_AUTO);
