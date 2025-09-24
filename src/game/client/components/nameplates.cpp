@@ -455,6 +455,36 @@ public:
 
 // ***** TClient Parts *****
 
+class CNamePlatePartCountry : public CNamePlatePart
+{
+protected:
+	static constexpr float FLAG_WIDTH = 128.0f;
+	static constexpr float FLAG_HEIGHT = 64.0f;
+	static constexpr float FLAG_RATIO = FLAG_HEIGHT / FLAG_WIDTH;
+	int m_CountryCode = -1;
+	float m_Alpha = 1.0f;
+
+public:
+	friend class CGameClient;
+	void Update(CGameClient &This, const CNamePlateData &Data) override
+	{
+		m_Visible = g_Config.m_TcNameplateCountry;
+		if(!m_Visible)
+			return;
+		m_Alpha = Data.m_Color.a;
+		m_Size = vec2(Data.m_FontSize / FLAG_RATIO, Data.m_FontSize);
+		m_CountryCode = This.m_aClients[Data.m_ClientId].m_Country;
+	}
+	void Render(CGameClient &This, vec2 Pos) const override
+	{
+		This.m_CountryFlags.Render(m_CountryCode, ColorRGBA(1.0f, 1.0f, 1.0f, m_Alpha),
+			Pos.x - m_Size.x / 2.0f, Pos.y - m_Size.y / 2.0f,
+			m_Size.x, m_Size.y);
+	}
+	CNamePlatePartCountry(CGameClient &This) :
+		CNamePlatePart(This) {}
+};
+
 class CNamePlatePartPing : public CNamePlatePart
 {
 protected:
@@ -628,6 +658,7 @@ private:
 			return;
 		m_Inited = true;
 
+		AddPart<CNamePlatePartCountry>(This); // TClient
 		AddPart<CNamePlatePartPing>(This); // TClient
 		AddPart<CNamePlatePartIgnoreMark>(This); // TClient
 		AddPart<CNamePlatePartFriendMark>(This);
