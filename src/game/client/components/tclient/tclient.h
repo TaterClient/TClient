@@ -61,6 +61,7 @@ public:
 
 	void RenderMiniVoteHud();
 	void RenderCenterLines();
+	void RenderCtfFlag(vec2 Pos, float Alpha);
 
 	bool ChatDoSpecId(const char *pInput);
 	bool InfoTaskDone() { return m_pTClientInfoTask && m_pTClientInfoTask->State() == EHttpState::DONE; }

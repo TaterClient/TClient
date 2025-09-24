@@ -828,3 +828,23 @@ void CTClient::RenderCenterLines()
 		Graphics()->QuadsEnd();
 	}
 }
+
+void CTClient::RenderCtfFlag(vec2 Pos, float Alpha)
+{
+	// from CItems::RenderFlag
+	float Size = 42.0f;
+	int QuadOffset;
+	if(g_Config.m_TcFakeCtfFlags == 1)
+	{
+		Graphics()->TextureSet(GameClient()->m_GameSkin.m_SpriteFlagRed);
+		QuadOffset = GameClient()->m_Items.m_RedFlagOffset;
+	}
+	else
+	{
+		Graphics()->TextureSet(GameClient()->m_GameSkin.m_SpriteFlagBlue);
+		QuadOffset = GameClient()->m_Items.m_BlueFlagOffset;
+	}
+	Graphics()->QuadsSetRotation(0.0f);
+	Graphics()->SetColor(1.0f, 1.0f, 1.0f, Alpha);
+	Graphics()->RenderQuadContainerAsSprite(GameClient()->m_Items.m_ItemsQuadContainerIndex, QuadOffset, Pos.x, Pos.y - Size * 0.75f);
+}

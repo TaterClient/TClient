@@ -43,6 +43,8 @@ private:
 	int m_DoorHeadOffset;
 	int m_PulleyHeadOffset;
 	int m_FreezeHeadOffset;
+
+	friend class CTClient;
 };
 
 #endif

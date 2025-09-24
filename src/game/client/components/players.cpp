@@ -550,6 +550,8 @@ void CPlayers::RenderPlayer(
 		Graphics()->QuadsEnd();
 		return;
 	}
+	if(g_Config.m_TcFakeCtfFlags > 0)
+		GameClient()->m_TClient.RenderCtfFlag(Position, Alpha);
 
 	RenderInfo.m_GotAirJump = Player.m_Jumped & 2 ? false : true;
 
