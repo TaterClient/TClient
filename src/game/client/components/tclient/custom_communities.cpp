@@ -10,6 +10,23 @@
 
 static constexpr char CUSTOM_COMMUNITIES_DDNET_INFO_FILE[] = "custom-communities-ddnet-info.json";
 
+void CCustomCommunities::StartLoadCustomCommunitiesDDNetInfo()
+{
+	if(m_pCustomCommunitiesDDNetInfoTask != nullptr)
+	{
+		m_pCustomCommunitiesDDNetInfoTask->Abort();
+	}
+	if(g_Config.m_TcCustomCommunitiesUrl[0] != '\0')
+	{
+		m_pCustomCommunitiesDDNetInfoTask = HttpGetFile(g_Config.m_TcCustomCommunitiesUrl, Storage(), CUSTOM_COMMUNITIES_DDNET_INFO_FILE, IStorage::TYPE_SAVE);
+		m_pCustomCommunitiesDDNetInfoTask->Timeout(CTimeout{10000, 0, 500, 10});
+		m_pCustomCommunitiesDDNetInfoTask->SkipByFileTime(false); // Always re-download.
+		// Use ipv4 so we can know the ingame ip addresses of players before they join game servers
+		m_pCustomCommunitiesDDNetInfoTask->IpResolve(IPRESOLVE::V4);
+	}
+	LoadCustomCommunitiesDDNetInfo();
+}
+
 void CCustomCommunities::LoadCustomCommunitiesDDNetInfo()
 {
 	void *pBuf;
@@ -46,7 +63,7 @@ void CCustomCommunities::LoadCustomCommunitiesDDNetInfo()
 
 void CCustomCommunities::CustomCommunitiesFunction(std::vector<json_value *> &vCommunities)
 {
-	if(m_pCustomCommunitiesDDNetInfo)
+	if(m_pCustomCommunitiesDDNetInfo && g_Config.m_TcCustomCommunitiesUrl[0] != '\0')
 	{
 		const json_value &Communities = (*m_pCustomCommunitiesDDNetInfo)["communities"];
 		if(Communities.type == json_array)
@@ -59,16 +76,12 @@ void CCustomCommunities::CustomCommunitiesFunction(std::vector<json_value *> &vC
 	}
 }
 
-void CCustomCommunities::OnInit()
+void CCustomCommunities::OnConsoleInit()
 {
-	m_pCustomCommunitiesDDNetInfoTask = HttpGetFile(g_Config.m_TcCustomCommunitiesUrl, Storage(), CUSTOM_COMMUNITIES_DDNET_INFO_FILE, IStorage::TYPE_SAVE);
-	m_pCustomCommunitiesDDNetInfoTask->Timeout(CTimeout{10000, 0, 500, 10});
-	m_pCustomCommunitiesDDNetInfoTask->SkipByFileTime(false); // Always re-download.
-	// Use ipv4 so we can know the ingame ip addresses of players before they join game servers
-	m_pCustomCommunitiesDDNetInfoTask->IpResolve(IPRESOLVE::V4);
-	Http()->Run(m_pCustomCommunitiesDDNetInfoTask);
-
-	LoadCustomCommunitiesDDNetInfo();
+	Console()->Chain("tc_custom_communities_url", [](IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData) {
+		pfnCallback(pResult, pCallbackUserData);
+		((CCustomCommunities *)pUserData)->StartLoadCustomCommunitiesDDNetInfo();
+	}, this);
 }
 
 void CCustomCommunities::OnRender()
