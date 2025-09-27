@@ -38,8 +38,7 @@ class CPlayers : public CComponent
 	void RenderHookCollLine(
 		const CNetObj_Character *pPrevChar,
 		const CNetObj_Character *pPlayerChar,
-		int ClientId,
-		float Intra = 0.f);
+		int ClientId);
 	bool IsPlayerInfoAvailable(int ClientId) const;
 
 	int m_WeaponEmoteQuadContainerIndex;
