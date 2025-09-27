@@ -80,7 +80,8 @@ void CCustomCommunities::OnConsoleInit()
 {
 	Console()->Chain("tc_custom_communities_url", [](IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData) {
 		pfnCallback(pResult, pCallbackUserData);
-		((CCustomCommunities *)pUserData)->StartLoadCustomCommunitiesDDNetInfo();
+		if(pResult->NumArguments() > 0)
+			((CCustomCommunities *)pUserData)->StartLoadCustomCommunitiesDDNetInfo();
 	}, this);
 }
 
