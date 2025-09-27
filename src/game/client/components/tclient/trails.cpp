@@ -309,7 +309,7 @@ void CTrails::OnRender()
 		if(LineMode)
 			Graphics()->LinesBegin();
 		else
-			Graphics()->TrianglesBegin();
+			Graphics()->QuadsBegin();
 
 		// Draw the trail
 		for(int i = 0; i < (int)s_Trail.size() - 1; i++)
@@ -349,6 +349,6 @@ void CTrails::OnRender()
 		if(LineMode)
 			Graphics()->LinesEnd();
 		else
-			Graphics()->TrianglesEnd();
+			Graphics()->QuadsEnd();
 	}
 }
