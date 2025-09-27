@@ -11,11 +11,11 @@ class CCustomCommunities : public CComponent
 private:
 	std::shared_ptr<CHttpRequest> m_pCustomCommunitiesDDNetInfoTask = nullptr;
 	json_value *m_pCustomCommunitiesDDNetInfo = nullptr;
-	void StartLoadCustomCommunitiesDDNetInfo();
+	void DownloadCustomCommunitiesDDNetInfo();
 	void LoadCustomCommunitiesDDNetInfo();
-	void CustomCommunitiesFunction(std::vector<json_value *> &vCommunities);
 
 public:
+	void OnInit() override;
 	void OnConsoleInit() override;
 	void OnRender() override;
 	int Sizeof() const override { return sizeof(*this); }
