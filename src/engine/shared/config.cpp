@@ -452,12 +452,12 @@ bool CConfigManager::Save()
 		{
 			if(io_sync(m_aConfigFile[ConfigDomain]) != 0)
 			{
-				log_error("config", "ERROR: synchronizing %s failed", aaConfigFileTmp);
+				log_error("config", "ERROR: synchronizing %s failed", aaConfigFileTmp[ConfigDomain]);
 				aFailedError[ConfigDomain] = m_aFailed[ConfigDomain] = true;
 			}
 			else if(io_close(m_aConfigFile[ConfigDomain]) != 0)
 			{
-				log_error("config", "ERROR: closing %s failed", aaConfigFileTmp);
+				log_error("config", "ERROR: closing %s failed", aaConfigFileTmp[ConfigDomain]);
 				aFailedError[ConfigDomain] = m_aFailed[ConfigDomain] = true;
 			}
 			else if(!m_pStorage->RenameFile(aaConfigFileTmp[ConfigDomain], s_aConfigDomains[ConfigDomain].m_aConfigPath, IStorage::TYPE_SAVE))
