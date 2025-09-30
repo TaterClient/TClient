@@ -36,6 +36,30 @@ static bool line_intersects(vec2 A, vec2 B, vec2 C, vec2 D)
 	return (T >= 0.0f && T <= 1.0f) && (U >= 0.0f && U <= 1.0f);
 }
 
+class CBoundingBox {
+public:
+	vec2 m_Min = vec2(0.0f, 0.0f);
+	vec2 m_Max = vec2(0.0f, 0.0f);
+	void ExtendBoundingBox(vec2 Pos, float Radius)
+	{
+		const vec2 MinPos = Pos - vec2(Radius, Radius);
+		const vec2 MaxPos = Pos + vec2(Radius, Radius);
+		if(m_Min == m_Max) {
+			m_Min = MinPos;
+			m_Max = MaxPos;
+			return;
+		}
+		if(MinPos.x < m_Min.x)
+			m_Min.x = MinPos.x;
+		if(MinPos.y < m_Min.y)
+			m_Min.y = MinPos.y;
+		if(MaxPos.x > m_Max.x)
+			m_Max.x = MaxPos.x;
+		if(MaxPos.y > m_Max.y)
+			m_Max.y = MaxPos.y;
+	}
+};
+
 class CBgDrawItem
 {
 private:
@@ -44,24 +68,10 @@ private:
 	int m_Drawing = true;
 	int m_QuadContainerIndex = -1;
 	int m_QuadCount = 0;
-
-	vec2 m_BoundingBoxMin = vec2(0.0f, 0.0f);
-	vec2 m_BoundingBoxMax = vec2(0.0f, 0.0f);
+	CBoundingBox m_BoundingBox;
+	
 	CBgDrawItemData m_Data;
 
-	void ExtendBoundingBox(vec2 Pos, float Radius)
-	{
-		const vec2 MinPos = Pos - vec2(Radius, Radius);
-		const vec2 MaxPos = Pos + vec2(Radius, Radius);
-		if(MinPos.x < m_BoundingBoxMin.x)
-			m_BoundingBoxMin.x = MinPos.x;
-		if(MinPos.y < m_BoundingBoxMin.y)
-			m_BoundingBoxMin.y = MinPos.y;
-		if(MaxPos.x > m_BoundingBoxMax.x)
-			m_BoundingBoxMax.x = MaxPos.x;
-		if(MaxPos.y > m_BoundingBoxMax.y)
-			m_BoundingBoxMax.y = MaxPos.y;
-	}
 	void AddCircle(vec2 Pos, float Angle1, float Angle2, float Width, ColorRGBA Color)
 	{
 		const float Radius = Width / 2.0f;
@@ -108,8 +118,7 @@ public:
 	float m_SecondsAge = 0.0f;
 
 	const CBgDrawItemData &Data() const { return m_Data; }
-	const vec2 &BoundingBoxMin() const { return m_BoundingBoxMin; }
-	const vec2 &BoundingBoxMax() const { return m_BoundingBoxMax; }
+	const CBoundingBox &BoundingBox() const { return m_BoundingBox; }
 
 	bool PenUp(const CBgDrawItemDataPoint &Point)
 	{
@@ -234,8 +243,9 @@ public:
 
 	CBgDrawItem() = delete;
 	CBgDrawItem(CGameClient &This, vec2 StartPos) :
-		m_This(This), m_QuadContainerIndex(m_This.Graphics()->CreateQuadContainer()), m_BoundingBoxMin(StartPos), m_BoundingBoxMax(StartPos)
+		m_This(This), m_QuadContainerIndex(m_This.Graphics()->CreateQuadContainer())
 	{
+		m_BoundingBox.ExtendBoundingBox(StartPos, CurrentWidth());
 		m_Data.emplace_back(StartPos, CurrentWidth(), CurrentColor());
 	}
 	CBgDrawItem(CGameClient &This, CBgDrawItemDataPoint StartPoint) :
@@ -515,8 +525,8 @@ void CBgDraw::OnRender()
 			if(g_Config.m_TcBgDrawFadeTime > 0 && Item.m_SecondsAge > (float)g_Config.m_TcBgDrawFadeTime)
 				Item.m_Killed = true;
 		}
-		const bool InRangeX = Item.BoundingBoxMin().x < ScreenX1 || Item.BoundingBoxMax().x > ScreenX0;
-		const bool InRangeY = Item.BoundingBoxMin().y < ScreenY1 || Item.BoundingBoxMax().y > ScreenY0;
+		const bool InRangeX = Item.BoundingBox().m_Min.x < ScreenX1 || Item.BoundingBox().m_Max.x > ScreenX0;
+		const bool InRangeY = Item.BoundingBox().m_Min.y < ScreenY1 || Item.BoundingBox().m_Max.y > ScreenY0;
 		if(InRangeX && InRangeY)
 			Item.Render();
 	}
