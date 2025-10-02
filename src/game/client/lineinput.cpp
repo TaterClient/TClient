@@ -696,7 +696,6 @@ int CLineInputNumber::GetInteger(int Base) const
 	if(Base == 10)
 	{
 		double Result = te_interp(GetString(), nullptr);
-		;
 		if(std::isfinite(Result))
 			return (int)std::round(Result);
 	}
