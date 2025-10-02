@@ -12,6 +12,8 @@
 
 #include <game/client/components/tclient/bg_draw_file.h>
 
+#include <engine/external/spt.h>
+
 #include "bg_draw.h"
 
 #define MAX_ITEMS_TO_LOAD 65536
@@ -60,22 +62,45 @@ public:
 	}
 };
 
-class CBgDrawItem
-{
+class CPathContainer {
 private:
-	CGameClient &m_This;
-
-	int m_Drawing = true;
-	int m_QuadContainerIndex = -1;
+	static constexpr int MAX_QUADS_PER_CONTAINER = 512; // Don't crash on OGL
+	std::vector<int> m_vQuadContainerIndexes;
 	int m_QuadCount = 0;
-	CBoundingBox m_BoundingBox;
-	
-	CBgDrawItemData m_Data;
-
+	IGraphics &m_Graphics;
+	void Clear()
+	{
+		for(int QuadContainerIndex : m_vQuadContainerIndexes)
+			m_Graphics.DeleteQuadContainer(QuadContainerIndex);
+		m_vQuadContainerIndexes.clear();
+		m_QuadCount = 0;
+	}
+	void Upload() {
+		int &QuadContainerIndex = *(m_vQuadContainerIndexes.end() - 1);
+		m_Graphics.QuadContainerUpload(QuadContainerIndex);
+	}
+	void AddQuads(IGraphics::CFreeformItem *pFreeformItem, int Count, ColorRGBA Color)
+	{
+		m_QuadCount += Count;
+		if(m_vQuadContainerIndexes.size() == 0)
+		{
+			m_vQuadContainerIndexes.push_back(m_Graphics.CreateQuadContainer(false));
+		}
+		else if(m_QuadCount > MAX_QUADS_PER_CONTAINER)
+		{
+			int &QuadContainerIndex = *(m_vQuadContainerIndexes.end() - 1);
+			m_Graphics.QuadContainerUpload(QuadContainerIndex);
+			m_vQuadContainerIndexes.push_back(m_Graphics.CreateQuadContainer(false));
+			m_QuadCount = 0;
+		}
+		int &QuadContainerIndex = *(m_vQuadContainerIndexes.end() - 1);
+		m_Graphics.SetColor(Color);
+		m_Graphics.QuadContainerAddQuads(QuadContainerIndex, pFreeformItem, Count);
+	}
 	void AddCircle(vec2 Pos, float Angle1, float Angle2, float Width, ColorRGBA Color)
 	{
 		const float Radius = Width / 2.0f;
-		const int Segments = (int)(std::fabs(Angle2 - Angle1) / (pi * 2.0f) * 20.0f);
+		const int Segments = (int)(std::fabs(Angle2 - Angle1) / (pi / 8.0f));
 		const float SegmentAngle = (Angle2 - Angle1) / Segments;
 		IGraphics::CFreeformItem FreeformItems[20];
 		for(int i = 0; i < Segments; ++i)
@@ -86,23 +111,65 @@ private:
 			const vec2 P2 = Pos + direction(A2) * Radius;
 			FreeformItems[i] = IGraphics::CFreeformItem(P1.x, P1.y, P2.x, P2.y, Pos.x, Pos.y, Pos.x, Pos.y);
 		}
-		m_This.Graphics()->SetColor(Color);
-		m_This.Graphics()->QuadContainerAddQuads(m_QuadContainerIndex, FreeformItems, Segments);
-		m_QuadCount += Segments;
+		AddQuads(FreeformItems, Segments, Color);
 	}
-	void AddLine(vec2 Pos, vec2 LastPos, float Width, ColorRGBA Color)
+
+public:
+	CPathContainer(IGraphics &Graphics) : m_Graphics(Graphics) {}
+	void Update(const CBgDrawItemData &Data) {
+		Clear();
+		if(Data.size() == 0)
+		{
+			return;
+		}
+		size_t i = 0;
+		auto SPTGetPt = [&](SPT_pt *pPt) {
+			if (i >= Data.size())
+				return false;
+			pPt->color = {Data[i].r, Data[i].g, Data[i].b, Data[i].a};
+			pPt->pos = {Data[i].x, Data[i].y};
+			pPt->w = Data[i].w;
+			i += 1;
+			return true;
+		};
+		auto SPTAddQuad = [&](SPT_quad Quad, SPT_color Color) {
+			IGraphics::CFreeformItem FreeformItem(
+				Quad.a.x, Quad.a.y,
+				Quad.b.x, Quad.b.y,
+				Quad.d.x, Quad.d.y,
+				Quad.c.x, Quad.c.y
+			);
+			AddQuads(&FreeformItem, 1, {Color.r, Color.g, Color.b, Color.a});
+			return true;
+		};
+		auto SPTAddArc = [&](SPT_vec2 Pos, float A1, float A2, float R, SPT_color Color) {
+			AddCircle({Pos.x, Pos.y}, A1, A2, R * 2.0f, {Color.r, Color.g, Color.b, Color.a});
+			return true;
+		};
+		SPT_prims(SPTGetPt, SPTAddQuad, SPTAddArc);
+		Upload();
+	}
+	void Render()
 	{
-		const float Angle = angle(LastPos - Pos);
-		const vec2 Offset = direction(Angle + pi / 2.0f) * (Width / 2.0f);
-		const vec2 P1 = LastPos + Offset;
-		const vec2 P2 = LastPos - Offset;
-		const vec2 P3 = Pos + Offset;
-		const vec2 P4 = Pos - Offset;
-		IGraphics::CFreeformItem FreeformItem(P1.x, P1.y, P2.x, P2.y, P3.x, P3.y, P4.x, P4.y);
-		m_This.Graphics()->SetColor(Color);
-		m_This.Graphics()->QuadContainerAddQuads(m_QuadContainerIndex, &FreeformItem, 1);
-		m_QuadCount += 1;
+		for(int QuadContainerIndex : m_vQuadContainerIndexes)
+			m_Graphics.RenderQuadContainer(QuadContainerIndex, -1);
 	}
+	~CPathContainer()
+	{
+		Clear();
+	}
+};
+
+class CBgDrawItem
+{
+private:
+	CGameClient &m_This;
+
+	int m_Drawing = true;
+
+	CBoundingBox m_BoundingBox;
+	CPathContainer m_PathContainer;
+	CBgDrawItemData m_Data;
 
 	float CurrentWidth() const
 	{
@@ -125,41 +192,13 @@ public:
 		if(!m_Drawing)
 			return false;
 		m_Drawing = false;
-		const vec2 LastPos = m_Data.empty() ? Point.Pos() : m_Data.back().Pos();
-		const float Distance = distance(LastPos, Point.Pos());
-		if(Distance < Point.w / 2.0f)
-		{
-			// Draw only a circle for a tiny segment
-			AddCircle(m_Data.size() <= 1 ? Point.Pos() : LastPos, 0.0f, pi * 2.0f, Point.w, Point.Color());
-		}
-		else
-		{
-			const float Angle = angle(LastPos - Point.Pos());
-			if(m_Data.size() <= 1)
-			{
-				// Start round cap
-				AddCircle(LastPos, Angle + pi / 2.0f, Angle - pi / 2.0f, Point.w, Point.Color());
-				// Join last position to position
-				AddLine(LastPos, Point.Pos(), Point.w, Point.Color());
-				// End round cap
-				AddCircle(Point.Pos(), Angle + pi / 2.0f, Angle + pi * 1.5f, Point.w, Point.Color());
-			}
-			else
-			{
-				// Lazy round bevel
-				AddCircle(LastPos, 0.0f, pi * 2.0f, Point.w, Point.Color());
-				// Join from last position to end
-				AddLine(LastPos, Point.Pos(), Point.w, Point.Color());
-				// End round cap
-				AddCircle(Point.Pos(), Angle + pi / 2.0f, Angle + pi * 1.5f, Point.w, Point.Color());
-			}
-		}
 		m_Data.emplace_back(Point.Pos(), Point.w, Point.Color());
+		m_PathContainer.Update(m_Data);
 		return true;
 	}
 	bool PenUp(vec2 Pos)
 	{
-		return PenUp(CBgDrawItemDataPoint(Pos, CurrentWidth(), CurrentColor()));
+		return PenUp({Pos, CurrentWidth(), CurrentColor()});
 	}
 	bool MoveTo(const CBgDrawItemDataPoint &Point)
 	{
@@ -167,26 +206,11 @@ public:
 			return false;
 		if(m_Data.size() > BG_DRAW_MAX_POINTS_PER_ITEM)
 			return PenUp(Point.Pos());
-		const vec2 LastPos = m_Data.empty() ? Point.Pos() : m_Data.back().Pos();
-		const float Distance = distance(LastPos, Point.Pos());
-		// Don't draw short segments
-		if(Distance < Point.w * 1.25f)
-			return true;
-		// Draw cap or bevel
-		if(m_Data.size() <= 1)
-		{
-			// Start round cap
-			const float Angle = angle(LastPos - Point.Pos());
-			AddCircle(LastPos, Angle + pi / 2.0f, Angle - pi / 2.0f, Point.w, Point.Color());
-		}
+		if(m_Data.size() >= 2 && distance((m_Data.end() - 2)->Pos(), (m_Data.end() - 1)->Pos()) < Point.w * 0.75f)
+			*(m_Data.end() - 1) = Point;
 		else
-		{
-			// Lazy round bevel
-			AddCircle(LastPos, 0.0f, pi * 2.0f, Point.w, Point.Color());
-		}
-		// Join last position to position
-		AddLine(LastPos, Point.Pos(), Point.w, Point.Color());
-		m_Data.emplace_back(Point);
+			m_Data.emplace_back(Point);
+		m_PathContainer.Update(m_Data);
 		return true;
 	}
 	bool MoveTo(vec2 Pos)
@@ -236,14 +260,14 @@ public:
 		}
 		return false;
 	}
-	void Render() const
+	void Render()
 	{
-		m_This.Graphics()->RenderQuadContainer(m_QuadContainerIndex, m_QuadCount);
+		m_PathContainer.Render();
 	}
 
 	CBgDrawItem() = delete;
 	CBgDrawItem(CGameClient &This, vec2 StartPos) :
-		m_This(This), m_QuadContainerIndex(m_This.Graphics()->CreateQuadContainer())
+		m_This(This), m_PathContainer(*This.Graphics())
 	{
 		m_BoundingBox.ExtendBoundingBox(StartPos, CurrentWidth());
 		m_Data.emplace_back(StartPos, CurrentWidth(), CurrentColor());
@@ -264,10 +288,6 @@ public:
 				MoveTo(Point);
 			}
 		PenUp(Data.back());
-	}
-	~CBgDrawItem()
-	{
-		m_This.Graphics()->DeleteQuadContainer(m_QuadContainerIndex);
 	}
 };
 

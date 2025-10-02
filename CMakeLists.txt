@@ -2262,6 +2262,8 @@ set_src(ENGINE_SHARED GLOB_RECURSE src/engine/shared
 )
 set_src(ENGINE_EXTERNAL GLOB src/engine/external
   remimu.h
+  spt.cpp
+  spt.h
   tinyexpr.cpp
   tinyexpr.h
 )

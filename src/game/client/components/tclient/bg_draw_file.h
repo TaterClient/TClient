@@ -10,9 +10,9 @@
 class CBgDrawItemDataPoint
 {
 public:
-	const float x, y;
-	const float w;
-	const float r, g, b, a;
+	float x, y;
+	float w;
+	float r, g, b, a;
 
 	CBgDrawItemDataPoint(float X, float Y, float W, float R, float G, float B, float A) :
 		x(X), y(Y), w(W), r(R), g(G), b(B), a(A) {}
