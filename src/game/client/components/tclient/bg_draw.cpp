@@ -192,7 +192,6 @@ public:
 		if(!m_Drawing)
 			return false;
 		m_Drawing = false;
-		m_Data.emplace_back(Point.Pos(), Point.w, Point.Color());
 		m_PathContainer.Update(m_Data);
 		return true;
 	}
