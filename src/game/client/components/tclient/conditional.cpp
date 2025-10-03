@@ -1,12 +1,14 @@
+#include "conditional.h"
+
 #include <base/log.h>
+
 #include <engine/console.h>
 #include <engine/external/remimu.h>
 #include <engine/shared/config.h>
+
 #include <game/client/gameclient.h>
 
 #include <optional>
-
-#include "conditional.h"
 
 static std::optional<bool> RegexMatch(const char *pString, const char *pRegex)
 {

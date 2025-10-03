@@ -1,12 +1,11 @@
-#include <game/client/animstate.h>
-#include <game/client/render.h>
-
-#include <game/client/gameclient.h>
+#include "rainbow.h"
 
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
-#include "rainbow.h"
+#include <game/client/animstate.h>
+#include <game/client/gameclient.h>
+#include <game/client/render.h>
 
 template<typename T>
 static T color_lerp(T a, T b, float c)

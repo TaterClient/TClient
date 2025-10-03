@@ -1,11 +1,11 @@
+#include "trails.h"
+
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
 #include <game/client/animstate.h>
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
-
-#include "trails.h"
 
 bool CTrails::ShouldPredictPlayer(int ClientId)
 {

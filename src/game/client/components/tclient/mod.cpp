@@ -1,12 +1,11 @@
-#include <engine/shared/config.h>
-
-#include <game/client/gameclient.h>
+#include "mod.h"
 
 #include <base/system.h>
 
-#include <game/localization.h>
+#include <engine/shared/config.h>
 
-#include "mod.h"
+#include <game/client/gameclient.h>
+#include <game/localization.h>
 
 static constexpr const float MOD_WEAPON_TIME = 1.5f;
 

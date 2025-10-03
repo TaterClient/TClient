@@ -1,13 +1,13 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_SKINPROFILES_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_SKINPROFILES_H
 
-#include <game/client/component.h>
+#include <base/system.h>
 
 #include <engine/console.h>
 #include <engine/keys.h>
 #include <engine/shared/protocol.h>
 
-#include <base/system.h>
+#include <game/client/component.h>
 
 #include <vector>
 

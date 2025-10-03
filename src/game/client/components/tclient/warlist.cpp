@@ -1,12 +1,11 @@
+#include "warlist.h"
+
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
 #include <game/client/animstate.h>
-#include <game/client/render.h>
-
 #include <game/client/gameclient.h>
-
-#include "warlist.h"
+#include <game/client/render.h>
 
 void CWarList::OnNewSnapshot()
 {

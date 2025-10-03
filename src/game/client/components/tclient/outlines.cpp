@@ -1,13 +1,12 @@
-#include <game/client/animstate.h>
-#include <game/client/gameclient.h>
-#include <game/client/render.h>
-
-#include <game/mapitems.h>
+#include "outlines.h"
 
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
-#include "outlines.h"
+#include <game/client/animstate.h>
+#include <game/client/gameclient.h>
+#include <game/client/render.h>
+#include <game/mapitems.h>
 
 // The order of this is the order of priority for outlines
 enum

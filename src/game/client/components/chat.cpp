@@ -1,6 +1,8 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
+#include "chat.h"
+
 #include <engine/editor.h>
 #include <engine/external/remimu.h>
 #include <engine/graphics.h>
@@ -21,8 +23,6 @@
 #include <game/localization.h>
 
 #include <variant>
-
-#include "chat.h"
 
 char CChat::ms_aDisplayText[MAX_LINE_LENGTH] = "";
 

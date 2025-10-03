@@ -1,11 +1,10 @@
 #include "pet.h"
 
-#include <game/client/animstate.h>
-#include <game/client/gameclient.h>
-
+#include <engine/client.h>
 #include <engine/shared/config.h>
 
-#include <engine/client.h>
+#include <game/client/animstate.h>
+#include <game/client/gameclient.h>
 
 void CPet::OnRender()
 {

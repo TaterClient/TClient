@@ -1,10 +1,10 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_MOD_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_MOD_H
 
-#include <game/client/component.h>
-
 #include <engine/shared/console.h>
 #include <engine/shared/http.h>
+
+#include <game/client/component.h>
 
 class CMod : public CComponent
 {

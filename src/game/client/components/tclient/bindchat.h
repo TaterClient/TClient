@@ -1,10 +1,10 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_BINDCHAT_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_BINDCHAT_H
 
+#include <engine/console.h>
+
 #include <game/client/component.h>
 #include <game/client/lineinput.h>
-
-#include <engine/console.h>
 
 class IConfigManager;
 

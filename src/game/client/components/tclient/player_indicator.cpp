@@ -1,11 +1,11 @@
-#include <game/client/animstate.h>
-#include <game/client/gameclient.h>
-#include <game/client/render.h>
+#include "player_indicator.h"
 
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
-#include "player_indicator.h"
+#include <game/client/animstate.h>
+#include <game/client/gameclient.h>
+#include <game/client/render.h>
 
 static vec2 NormalizedDirection(vec2 Src, vec2 Dst)
 {

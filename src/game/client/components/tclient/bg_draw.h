@@ -1,10 +1,10 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_BG_DRAW_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_BG_DRAW_H
 
-#include <game/client/component.h>
-
 #include <engine/client/enums.h>
 #include <engine/console.h>
+
+#include <game/client/component.h>
 
 #include <list>
 #include <optional>

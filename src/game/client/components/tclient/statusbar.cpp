@@ -1,12 +1,11 @@
-#include <game/client/render.h>
-#include <game/client/ui.h>
-
-#include <game/client/gameclient.h>
+#include "statusbar.h"
 
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
-#include "statusbar.h"
+#include <game/client/gameclient.h>
+#include <game/client/render.h>
+#include <game/client/ui.h>
 
 CStatusItem::CStatusItem(std::function<void()> Render, std::function<float()> Width, const char *pLetters, const char *pName, const char *pDisplayName, const char *pDesc, bool ShowLabel)
 {

@@ -1,12 +1,14 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
-#include <base/math.h>
-#include <base/system.h>
-#include <engine/shared/config.h>
+#include "smooth_time.h"
 
 #include "graph.h"
-#include "smooth_time.h"
+
+#include <base/math.h>
+#include <base/system.h>
+
+#include <engine/shared/config.h>
 
 void CSmoothTime::Init(int64_t Target)
 {
@@ -14,12 +16,14 @@ void CSmoothTime::Init(int64_t Target)
 	m_Current = Target;
 	m_Target = Target;
 	m_Margin = 0;
-	m_SnapMargin = m_Snap;
-	m_CurrentMargin = 0;
-	m_TargetMargin = 0;
 	m_SpikeCounter = 0;
 	m_aAdjustSpeed[ADJUSTDIRECTION_DOWN] = 0.3f;
 	m_aAdjustSpeed[ADJUSTDIRECTION_UP] = 0.3f;
+
+	// TClient
+	m_SnapMargin = m_Snap;
+	m_CurrentMargin = 0;
+	m_TargetMargin = 0;
 }
 
 void CSmoothTime::SetAdjustSpeed(EAdjustDirection Direction, float Value)

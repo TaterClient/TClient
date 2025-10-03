@@ -1,13 +1,8 @@
 ﻿#include <base/log.h>
 
-#include <game/client/animstate.h>
-#include <game/client/components/chat.h>
-#include <game/client/gameclient.h>
-#include <game/client/render.h>
-#include <game/client/ui.h>
+#include "tclient.h"
 
-#include <game/localization.h>
-#include <game/version.h>
+#include "data_version.h"
 
 #include <engine/client/enums.h>
 #include <engine/external/tinyexpr.h>
@@ -17,9 +12,13 @@
 
 #include <generated/client_data.h>
 
-#include "data_version.h"
-
-#include "tclient.h"
+#include <game/client/animstate.h>
+#include <game/client/components/chat.h>
+#include <game/client/gameclient.h>
+#include <game/client/render.h>
+#include <game/client/ui.h>
+#include <game/localization.h>
+#include <game/version.h>
 
 static constexpr const char *TCLIENT_INFO_URL = "https://update.tclient.app/info.json";
 

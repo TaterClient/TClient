@@ -1,31 +1,29 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
+#include "players.h"
+
+#include <base/color.h>
+#include <base/math.h>
+
 #include <engine/client/enums.h>
 #include <engine/demo.h>
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
-#include <game/gamecore.h>
 
 #include <generated/client_data.h>
 #include <generated/client_data7.h>
 #include <generated/protocol.h>
 
-#include <game/mapitems.h>
-
 #include <game/client/animstate.h>
-#include <game/client/gameclient.h>
-
 #include <game/client/components/controls.h>
 #include <game/client/components/effects.h>
 #include <game/client/components/flow.h>
 #include <game/client/components/skins.h>
 #include <game/client/components/sounds.h>
-
-#include "players.h"
-
-#include <base/color.h>
-#include <base/math.h>
+#include <game/client/gameclient.h>
+#include <game/gamecore.h>
+#include <game/mapitems.h>
 
 // TClient
 #include <game/client/components/tclient/rainbow.h>
@@ -227,12 +225,7 @@ void CPlayers::RenderHookCollLine(
 	if(HookLength < HOOK_START_DISTANCE || HookFireSpeed <= 0.0f)
 		return;
 
-	// pre calculate quantization
-	vec2 QuantizedPos = Position + Direction * HookFireSpeed;
-	QuantizedPos.x = round_to_int(QuantizedPos.x);
-	QuantizedPos.y = round_to_int(QuantizedPos.y);
-	vec2 QuantizedDirection = normalize(QuantizedPos - Position);
-
+	vec2 QuantizedDirection = Direction;
 	vec2 StartOffset = Direction * HOOK_START_DISTANCE;
 	vec2 BasePos = Position;
 	vec2 LineStartPos = BasePos + StartOffset;
@@ -276,6 +269,13 @@ void CPlayers::RenderHookCollLine(
 			SegmentStartPos = SegmentEndPos;
 			SegmentStartPos.x = round_to_int(SegmentStartPos.x);
 			SegmentStartPos.y = round_to_int(SegmentStartPos.y);
+
+			// direction is always the same after the first tick quantization
+			if(HookTick == 0)
+			{
+				QuantizedDirection.x = round_to_int(QuantizedDirection.x * 256.0f) / 256.0f;
+				QuantizedDirection.y = round_to_int(QuantizedDirection.y * 256.0f) / 256.0f;
+			}
 			continue;
 		}
 
@@ -309,7 +309,16 @@ void CPlayers::RenderHookCollLine(
 		// go through one teleout, update positions and continue
 		BasePos = vTeleOuts[0];
 		LineStartPos = BasePos; // make the line start in the teleporter to prevent a gap
-		SegmentStartPos = BasePos + QuantizedDirection * HOOK_START_DISTANCE;
+		SegmentStartPos = BasePos + Direction * HOOK_START_DISTANCE;
+		SegmentStartPos.x = round_to_int(SegmentStartPos.x);
+		SegmentStartPos.y = round_to_int(SegmentStartPos.y);
+
+		// direction is always the same after the first tick quantization
+		if(HookTick == 0)
+		{
+			QuantizedDirection.x = round_to_int(QuantizedDirection.x * 256.0f) / 256.0f;
+			QuantizedDirection.y = round_to_int(QuantizedDirection.y * 256.0f) / 256.0f;
+		}
 	}
 
 	// The hook line is too expensive to calculate and didn't hit anything before, just set a straight line
@@ -1379,9 +1388,9 @@ void CPlayers::RenderPlayerGhost(
 }
 inline bool CPlayers::IsPlayerInfoAvailable(int ClientId) const
 {
-	const void *pPrevInfo = Client()->SnapFindItem(IClient::SNAP_PREV, NETOBJTYPE_PLAYERINFO, ClientId);
-	const void *pInfo = Client()->SnapFindItem(IClient::SNAP_CURRENT, NETOBJTYPE_PLAYERINFO, ClientId);
-	return pPrevInfo && pInfo;
+	return GameClient()->m_Snap.m_aCharacters[ClientId].m_Active &&
+	       GameClient()->m_Snap.m_apPrevPlayerInfos[ClientId] != nullptr &&
+	       GameClient()->m_Snap.m_apPlayerInfos[ClientId] != nullptr;
 }
 
 void CPlayers::OnRender()
@@ -1469,13 +1478,13 @@ void CPlayers::OnRender()
 	const int LocalClientId = GameClient()->m_Snap.m_LocalClientId;
 	for(int ClientId = 0; ClientId < MAX_CLIENTS; ClientId++)
 	{
-		if(ClientId == LocalClientId || !GameClient()->m_Snap.m_aCharacters[ClientId].m_Active || !IsPlayerInfoAvailable(ClientId))
+		if(ClientId == LocalClientId || !IsPlayerInfoAvailable(ClientId))
 		{
 			continue;
 		}
 		RenderHook(&GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, &aRenderInfo[ClientId], ClientId);
 	}
-	if(LocalClientId != -1 && GameClient()->m_Snap.m_aCharacters[LocalClientId].m_Active && IsPlayerInfoAvailable(LocalClientId))
+	if(LocalClientId != -1 && IsPlayerInfoAvailable(LocalClientId))
 	{
 		const CGameClient::CClientData *pLocalClientData = &GameClient()->m_aClients[LocalClientId];
 		RenderHook(&pLocalClientData->m_RenderPrev, &pLocalClientData->m_RenderCur, &aRenderInfo[LocalClientId], LocalClientId);
@@ -1503,7 +1512,7 @@ void CPlayers::OnRender()
 
 	for(int ClientId = 0; ClientId < MAX_CLIENTS; ClientId++)
 	{
-		if(ClientId == RenderLastId || !GameClient()->m_Snap.m_aCharacters[ClientId].m_Active || !IsPlayerInfoAvailable(ClientId))
+		if(ClientId == RenderLastId || !IsPlayerInfoAvailable(ClientId))
 		{
 			continue;
 		}
@@ -1536,7 +1545,7 @@ void CPlayers::OnRender()
 
 		RenderPlayer(&GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, &aRenderInfo[ClientId], ClientId);
 	}
-	if(RenderLastId != -1 && GameClient()->m_Snap.m_aCharacters[RenderLastId].m_Active && IsPlayerInfoAvailable(RenderLastId))
+	if(RenderLastId != -1 && IsPlayerInfoAvailable(RenderLastId))
 	{
 		const CGameClient::CClientData *pClientData = &GameClient()->m_aClients[RenderLastId];
 		RenderHookCollLine(&pClientData->m_RenderPrev, &pClientData->m_RenderCur, RenderLastId);

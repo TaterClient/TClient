@@ -2,10 +2,8 @@
 
 #include <base/log.h>
 
-#include <engine/external/json-parser/json.h>
-
 #include <engine/client/serverbrowser.h>
-
+#include <engine/external/json-parser/json.h>
 #include <engine/shared/config.h>
 
 static constexpr char CUSTOM_COMMUNITIES_DDNET_INFO_FILE[] = "custom-communities-ddnet-info.json";
@@ -97,11 +95,13 @@ void CCustomCommunities::OnInit()
 
 void CCustomCommunities::OnConsoleInit()
 {
-	Console()->Chain("tc_custom_communities_url", [](IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData) {
-		pfnCallback(pResult, pCallbackUserData);
-		if(pResult->NumArguments() > 0)
-			((CCustomCommunities *)pUserData)->DownloadCustomCommunitiesDDNetInfo();
-	}, this);
+	Console()->Chain(
+		"tc_custom_communities_url", [](IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData) {
+			pfnCallback(pResult, pCallbackUserData);
+			if(pResult->NumArguments() > 0)
+				((CCustomCommunities *)pUserData)->DownloadCustomCommunitiesDDNetInfo();
+		},
+		this);
 }
 
 void CCustomCommunities::OnRender()

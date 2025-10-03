@@ -1,3 +1,5 @@
+#include "bindwheel.h"
+
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
@@ -5,8 +7,6 @@
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
 #include <game/client/ui.h>
-
-#include "bindwheel.h"
 
 CBindWheel::CBindWheel()
 {

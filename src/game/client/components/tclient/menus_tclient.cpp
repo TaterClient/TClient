@@ -11,8 +11,6 @@
 #include <engine/textrender.h>
 #include <engine/updater.h>
 
-#include <game/localization.h>
-
 #include <game/client/animstate.h>
 #include <game/client/components/chat.h>
 #include <game/client/components/countryflags.h>
@@ -23,13 +21,13 @@
 #include <game/client/components/tclient/bindchat.h>
 #include <game/client/components/tclient/bindwheel.h>
 #include <game/client/components/tclient/trails.h>
-
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
 #include <game/client/skin.h>
 #include <game/client/ui.h>
 #include <game/client/ui_listbox.h>
 #include <game/client/ui_scrollregion.h>
+#include <game/localization.h>
 
 #include <vector>
 
@@ -453,10 +451,10 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 		static std::vector<CButtonContainer> s_vButtonContainers = {{}, {}, {}};
 		int Value = g_Config.m_TcTinyTees ? (g_Config.m_TcTinyTeesOthers ? 2 : 1) : 0;
 		if(DoLine_RadioMenu(Column, TCLocalize("Tiny Tees"),
-			s_vButtonContainers,
-			{Localize("None"), Localize("Own"), Localize("All")},
-			{0, 1, 2},
-			Value))
+			   s_vButtonContainers,
+			   {Localize("None"), Localize("Own"), Localize("All")},
+			   {0, 1, 2},
+			   Value))
 		{
 			g_Config.m_TcTinyTees = Value > 0 ? 1 : 0;
 			g_Config.m_TcTinyTeesOthers = Value > 1 ? 1 : 0;
@@ -470,15 +468,15 @@ void CMenus::RenderSettingsTClientSettngs(CUIRect MainView)
 		static std::vector<CButtonContainer> s_vButtonContainers = {{}, {}, {}};
 		int Value = g_Config.m_TcFakeCtfFlags;
 		if(DoLine_RadioMenu(Column, TCLocalize("Fake CTF flags"),
-			s_vButtonContainers,
-			{Localize("None"), Localize("Red"), Localize("Blue")},
-			{0, 1, 2},
-			Value))
+			   s_vButtonContainers,
+			   {Localize("None"), Localize("Red"), Localize("Blue")},
+			   {0, 1, 2},
+			   Value))
 		{
 			g_Config.m_TcFakeCtfFlags = Value;
 		}
 	}
-	
+
 	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 

@@ -1,7 +1,11 @@
+#include "bg_draw.h"
+
+#include <engine/external/spt.h>
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 
 #include <game/client/animstate.h>
+#include <game/client/components/tclient/bg_draw_file.h>
 #include <game/client/gameclient.h>
 #include <game/client/render.h>
 #include <game/localization.h>
@@ -9,12 +13,6 @@
 #include <algorithm>
 #include <deque>
 #include <vector>
-
-#include <game/client/components/tclient/bg_draw_file.h>
-
-#include <engine/external/spt.h>
-
-#include "bg_draw.h"
 
 #define MAX_ITEMS_TO_LOAD 65536
 
@@ -38,7 +36,8 @@ static bool line_intersects(vec2 A, vec2 B, vec2 C, vec2 D)
 	return (T >= 0.0f && T <= 1.0f) && (U >= 0.0f && U <= 1.0f);
 }
 
-class CBoundingBox {
+class CBoundingBox
+{
 public:
 	vec2 m_Min = vec2(0.0f, 0.0f);
 	vec2 m_Max = vec2(0.0f, 0.0f);
@@ -46,7 +45,8 @@ public:
 	{
 		const vec2 MinPos = Pos - vec2(Radius, Radius);
 		const vec2 MaxPos = Pos + vec2(Radius, Radius);
-		if(m_Min == m_Max) {
+		if(m_Min == m_Max)
+		{
 			m_Min = MinPos;
 			m_Max = MaxPos;
 			return;
@@ -62,7 +62,8 @@ public:
 	}
 };
 
-class CPathContainer {
+class CPathContainer
+{
 private:
 	static constexpr int MAX_QUADS_PER_CONTAINER = 512; // Don't crash on OGL
 	std::vector<int> m_vQuadContainerIndexes;
@@ -75,7 +76,8 @@ private:
 		m_vQuadContainerIndexes.clear();
 		m_QuadCount = 0;
 	}
-	void Upload() {
+	void Upload()
+	{
 		int &QuadContainerIndex = *(m_vQuadContainerIndexes.end() - 1);
 		m_Graphics.QuadContainerUpload(QuadContainerIndex);
 	}
@@ -115,8 +117,10 @@ private:
 	}
 
 public:
-	CPathContainer(IGraphics &Graphics) : m_Graphics(Graphics) {}
-	void Update(const CBgDrawItemData &Data) {
+	CPathContainer(IGraphics &Graphics) :
+		m_Graphics(Graphics) {}
+	void Update(const CBgDrawItemData &Data)
+	{
 		Clear();
 		if(Data.size() == 0)
 		{
@@ -124,7 +128,7 @@ public:
 		}
 		size_t i = 0;
 		auto SPTGetPt = [&](SPT_pt *pPt) {
-			if (i >= Data.size())
+			if(i >= Data.size())
 				return false;
 			pPt->color = {Data[i].r, Data[i].g, Data[i].b, Data[i].a};
 			pPt->pos = {Data[i].x, Data[i].y};
@@ -137,8 +141,7 @@ public:
 				Quad.a.x, Quad.a.y,
 				Quad.b.x, Quad.b.y,
 				Quad.d.x, Quad.d.y,
-				Quad.c.x, Quad.c.y
-			);
+				Quad.c.x, Quad.c.y);
 			AddQuads(&FreeformItem, 1, {Color.r, Color.g, Color.b, Color.a});
 			return true;
 		};

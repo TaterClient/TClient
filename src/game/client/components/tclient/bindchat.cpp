@@ -1,13 +1,13 @@
+#include "bindchat.h"
+
+#include <base/log.h>
+#include <base/system.h>
+
 #include <engine/shared/config.h>
 #include <engine/shared/localization.h>
 
 #include <game/client/gameclient.h>
 #include <game/localization.h>
-
-#include <base/log.h>
-#include <base/system.h>
-
-#include "bindchat.h"
 
 static constexpr LOG_COLOR BINDCHAT_PRINT_COLOR{255, 255, 204};
 

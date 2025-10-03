@@ -35,20 +35,21 @@ public:
 
 using CBgDrawItemData = std::vector<CBgDrawItemDataPoint>;
 
-namespace BgDrawFile {
-[[nodiscard]] bool Write(const std::function<bool(const char *)> &WriteLine, const CBgDrawItemData &Data);
-[[nodiscard]] bool Read(const std::function<bool(char *pBuf, int Length)> &ReadLine, CBgDrawItemData &Data);
-[[nodiscard]] bool Write(FILE *pFile, const CBgDrawItemData &Data);
-[[nodiscard]] bool Read(FILE *pFile, CBgDrawItemData &Data);
+namespace BgDrawFile
+{
+	[[nodiscard]] bool Write(const std::function<bool(const char *)> &WriteLine, const CBgDrawItemData &Data);
+	[[nodiscard]] bool Read(const std::function<bool(char *pBuf, int Length)> &ReadLine, CBgDrawItemData &Data);
+	[[nodiscard]] bool Write(FILE *pFile, const CBgDrawItemData &Data);
+	[[nodiscard]] bool Read(FILE *pFile, CBgDrawItemData &Data);
 #ifdef BASE_SYSTEM_H
-[[nodiscard]] bool Write(IOHANDLE File, const CBgDrawItemData &Data)
-{
-	return Write((FILE *)File, Data);
-}
-[[nodiscard]] bool Read(IOHANDLE File, CBgDrawItemData &Data)
-{
-	return Read((FILE *)File, Data);
-}
+	[[nodiscard]] bool Write(IOHANDLE File, const CBgDrawItemData &Data)
+	{
+		return Write((FILE *)File, Data);
+	}
+	[[nodiscard]] bool Read(IOHANDLE File, CBgDrawItemData &Data)
+	{
+		return Read((FILE *)File, Data);
+	}
 #endif
 }; // namespace BgDrawFile
 

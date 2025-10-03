@@ -1,9 +1,9 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_BINDWHEEL_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_BINDWHEEL_H
 
-#include <game/client/component.h>
-
 #include <engine/console.h>
+
+#include <game/client/component.h>
 
 #include <vector>
 

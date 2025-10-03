@@ -11,12 +11,12 @@
 // #include <format>
 // #include <string>
 
+#include <base/system.h>
+
 #include <engine/shared/linereader.h>
 
 #include <game/localization.h>
 #include <game/version.h>
-
-#include <base/system.h>
 
 #define DATA_VERSION_PATH "data_version.txt"
 

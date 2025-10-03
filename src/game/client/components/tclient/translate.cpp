@@ -1,15 +1,15 @@
-#include <game/client/gameclient.h>
-#include <game/client/lineinput.h>
-#include <game/localization.h>
+#include "translate.h"
 
 #include <engine/shared/json.h>
 #include <engine/shared/jsonwriter.h>
 #include <engine/shared/protocol.h>
 
+#include <game/client/gameclient.h>
+#include <game/client/lineinput.h>
+#include <game/localization.h>
+
 #include <algorithm>
 #include <memory>
-
-#include "translate.h"
 
 static void UrlEncode(const char *pText, char *pOut, size_t Length)
 {

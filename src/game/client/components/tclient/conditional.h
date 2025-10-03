@@ -2,6 +2,7 @@
 #define GAME_CLIENT_COMPONENTS_TCLIENT_CONDITIONAL_H
 
 #include <engine/console.h>
+
 #include <game/client/component.h>
 
 #include <functional>

@@ -1,12 +1,11 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_TCLIENT_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_TCLIENT_H
 
-#include <game/client/component.h>
-
 #include <engine/client/enums.h>
-
 #include <engine/shared/console.h>
 #include <engine/shared/http.h>
+
+#include <game/client/component.h>
 
 #include <deque>
 
