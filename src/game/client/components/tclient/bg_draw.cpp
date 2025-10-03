@@ -1,5 +1,7 @@
 #include "bg_draw.h"
+#include <base/log.h>
 
+#include <engine/client.h>
 #include <engine/external/spt.h>
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
@@ -15,6 +17,8 @@
 #include <vector>
 
 #define MAX_ITEMS_TO_LOAD 65536
+
+constexpr float AUTO_SAVE_INTERVAL = 60.0f;
 
 static float cross(vec2 A, vec2 B)
 {
@@ -321,13 +325,13 @@ void CBgDraw::ConBgDrawReset(IConsole::IResult *pResult, void *pUserData)
 void CBgDraw::ConBgDrawSave(IConsole::IResult *pResult, void *pUserData)
 {
 	CBgDraw *pThis = (CBgDraw *)pUserData;
-	pThis->Save(pResult->GetString(0));
+	pThis->Save(pResult->GetString(0), true);
 }
 
 void CBgDraw::ConBgDrawLoad(IConsole::IResult *pResult, void *pUserData)
 {
 	CBgDraw *pThis = (CBgDraw *)pUserData;
-	pThis->Load(pResult->GetString(0));
+	pThis->Load(pResult->GetString(0), true);
 }
 
 static IOHANDLE BgDrawOpenFile(CGameClient &This, const char *pFilename, int Flags)
@@ -354,34 +358,32 @@ static IOHANDLE BgDrawOpenFile(CGameClient &This, const char *pFilename, int Fla
 		if(!This.Storage()->CreateFolder("bgdraw", IStorage::TYPE_SAVE))
 			This.Echo(TCLocalize("Failed to create bgdraw folder", "bgdraw"));
 	}
-	IOHANDLE Handle = This.Storage()->OpenFile(aFilename, Flags, IStorage::TYPE_SAVE);
-	char aMsg[IO_MAX_PATH_LENGTH + 32];
-	if(Handle)
-	{
-		str_format(aMsg, sizeof(aMsg), TCLocalize("Opening %s for %s", "bgdraw"), aFilename, Flags == IOFLAG_WRITE ? TCLocalize("writing", "bgdraw") : TCLocalize("reading", "bgdraw"));
-		dbg_msg("bgdraw", "Opening %s for %s", aFilename, Flags == IOFLAG_WRITE ? "writing" : "reading");
-	}
-	else
-	{
-		str_format(aMsg, sizeof(aMsg), TCLocalize("Failed to open %s for %s", "bgdraw"), aFilename, Flags == IOFLAG_WRITE ? TCLocalize("writing", "bgdraw") : TCLocalize("reading", "bgdraw"));
-		dbg_msg("bgdraw", "Failed to open %s for %s", aFilename, Flags == IOFLAG_WRITE ? "writing" : "reading");
-	}
-	This.Echo(aMsg);
-	return Handle;
+	return This.Storage()->OpenFile(aFilename, Flags, IStorage::TYPE_SAVE);
 }
 
-bool CBgDraw::Save(const char *pFilename)
+bool CBgDraw::Save(const char *pFilename, bool Verbose)
 {
-	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+	if(m_pvItems->size() == 0)
+	{
+		if(Verbose)
+			GameClient()->Echo(TCLocalize("No items to write", "bgdraw"));
 		return false;
+	}
+	if(!m_Dirty)
+	{
+		if(Verbose)
+			GameClient()->Echo(TCLocalize("No changes since last save", "bgdraw"));
+		return false;
+	}
+	m_Dirty = false;
 	IOHANDLE Handle = BgDrawOpenFile(*GameClient(), pFilename, IOFLAG_WRITE);
 	if(!Handle)
 		return false;
 	size_t Written = 0;
 	bool Success = true;
+	char aMsg[256];
 	for(const CBgDrawItem &Item : *m_pvItems)
 	{
-		char aMsg[256];
 		if(!BgDrawFile::Write(Handle, Item.Data()))
 		{
 			str_format(aMsg, sizeof(aMsg), TCLocalize("Writing item %zu failed", "bgdraw"), Written);
@@ -391,14 +393,16 @@ bool CBgDraw::Save(const char *pFilename)
 		}
 		Written += 1;
 	}
-	char aMsg[256];
-	str_format(aMsg, sizeof(aMsg), TCLocalize("Written %zu items", "bgdraw"), Written);
-	GameClient()->Echo(aMsg);
+	if(Verbose || !Success)
+	{
+		str_format(aMsg, sizeof(aMsg), TCLocalize("Written %zu items", "bgdraw"), Written);
+		GameClient()->Echo(aMsg);
+	}
 	io_close(Handle);
 	return Success;
 }
 
-bool CBgDraw::Load(const char *pFilename)
+bool CBgDraw::Load(const char *pFilename, bool Verbose)
 {
 	if(Client()->State() != IClient::STATE_ONLINE && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 		return false;
@@ -424,12 +428,15 @@ bool CBgDraw::Load(const char *pFilename)
 	MakeSpaceFor(Queue.size());
 	for(const CBgDrawItemData &Data : Queue)
 		AddItem(*GameClient(), Data);
-	char aInfo[256];
-	if(ItemsDiscarded == 0)
-		str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %zu items", "bgdraw"), ItemsLoaded);
-	else
-		str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %zu items (discarded %zu items)", "bgdraw"), ItemsLoaded - ItemsDiscarded, ItemsDiscarded);
-	GameClient()->Echo(aInfo);
+	if(Verbose)
+	{
+		char aInfo[256];
+		if(ItemsDiscarded == 0)
+			str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %zu items", "bgdraw"), ItemsLoaded);
+		else
+			str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %zu items (discarded %zu items)", "bgdraw"), ItemsLoaded - ItemsDiscarded, ItemsDiscarded);
+		GameClient()->Echo(aInfo);
+	}
 
 	return true;
 }
@@ -441,6 +448,7 @@ CBgDrawItem *CBgDraw::AddItem(Args &&... args)
 	if(g_Config.m_TcBgDrawMaxItems == 0)
 		return nullptr;
 	m_pvItems->emplace_back(std::forward<Args>(args)...);
+	m_Dirty = true;
 	return &m_pvItems->back();
 }
 
@@ -484,6 +492,14 @@ void CBgDraw::OnRender()
 
 	float Delta = Client()->RenderFrameTime();
 
+	m_NextAutoSave -= Delta;
+	if(m_NextAutoSave < 0)
+	{
+		if(g_Config.m_TcBgDrawAutoSaveLoad)
+			Save(nullptr, false);
+		m_NextAutoSave = AUTO_SAVE_INTERVAL;
+	}
+
 	for(int Dummy = 0; Dummy < NUM_DUMMIES; ++Dummy)
 	{
 		// Handle updating active item
@@ -500,6 +516,7 @@ void CBgDraw::OnRender()
 				(*ActiveItem)->MoveTo(Pos);
 			else
 				ActiveItem = AddItem(*GameClient(), Pos);
+			m_Dirty = true;
 		}
 		else if(ActiveItem.has_value())
 		{
@@ -553,7 +570,8 @@ void CBgDraw::OnRender()
 			Item.Render();
 	}
 	// Remove killed items
-	m_pvItems->remove_if([&](CBgDrawItem &Item) { return Item.m_Killed; });
+	if(m_pvItems->remove_if([&](CBgDrawItem &Item) { return Item.m_Killed; }))
+		m_Dirty = true;
 	Graphics()->SetColor(ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f));
 }
 
@@ -567,8 +585,25 @@ void CBgDraw::Reset()
 
 void CBgDraw::OnMapLoad()
 {
-	Reset();
 }
+
+void CBgDraw::OnStateChange(int NewState, int OldState)
+{
+	log_info("hI", "Old: %d, New: %d", OldState, NewState);
+	if(OldState == IClient::STATE_ONLINE || OldState == IClient::STATE_DEMOPLAYBACK)
+	{
+		if(g_Config.m_TcBgDrawAutoSaveLoad > 0)
+			Save(nullptr, true);
+	}
+	Reset();
+	m_NextAutoSave = AUTO_SAVE_INTERVAL;
+	if(NewState == IClient::STATE_ONLINE || OldState == IClient::STATE_DEMOPLAYBACK)
+	{
+		if(g_Config.m_TcBgDrawAutoSaveLoad > 0)
+			Load(nullptr, false);
+	}
+}
+
 
 void CBgDraw::OnShutdown()
 {

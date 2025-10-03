@@ -16,6 +16,8 @@ class CBgDrawItem;
 class CBgDraw : public CComponent
 {
 private:
+	float m_NextAutoSave;
+	bool m_Dirty;
 	std::array<std::optional<CBgDrawItem *>, NUM_DUMMIES> m_apActiveItems;
 	std::array<std::optional<vec2>, NUM_DUMMIES> m_aLastPos;
 	std::list<CBgDrawItem> *m_pvItems;
@@ -25,8 +27,8 @@ private:
 	static void ConBgDrawSave(IConsole::IResult *pResult, void *pUserData);
 	static void ConBgDrawLoad(IConsole::IResult *pResult, void *pUserData);
 	void Reset();
-	bool Save(const char *pFile);
-	bool Load(const char *pFile);
+	bool Save(const char *pFile, bool Verbose);
+	bool Load(const char *pFile, bool Verbose);
 	template<typename... Args>
 	CBgDrawItem *AddItem(Args &&... args);
 	void MakeSpaceFor(size_t Count);
@@ -43,6 +45,7 @@ public:
 	int Sizeof() const override { return sizeof(*this); }
 	void OnConsoleInit() override;
 	void OnRender() override;
+	void OnStateChange(int NewState, int OldState) override;
 	void OnMapLoad() override;
 	void OnShutdown() override;
 
