@@ -10,7 +10,6 @@ static constexpr char CUSTOM_COMMUNITIES_DDNET_INFO_FILE[] = "custom-communities
 
 void CCustomCommunities::DownloadCustomCommunitiesDDNetInfo()
 {
-	log_info("a", "%s %p\n", g_Config.m_TcCustomCommunitiesUrl, m_pCustomCommunitiesDDNetInfoTask.get());
 	if(g_Config.m_TcCustomCommunitiesUrl[0] == '\0')
 	{
 		LoadCustomCommunitiesDDNetInfo();
@@ -33,7 +32,6 @@ void CCustomCommunities::DownloadCustomCommunitiesDDNetInfo()
 
 void CCustomCommunities::LoadCustomCommunitiesDDNetInfo()
 {
-	log_info("a", "hello");
 	auto *pServerBrowser = dynamic_cast<CServerBrowser *>(ServerBrowser());
 	dbg_assert(pServerBrowser, "pServerBrowser is nullptr");
 
@@ -44,7 +42,6 @@ void CCustomCommunities::LoadCustomCommunitiesDDNetInfo()
 		pServerBrowser->LoadDDNetServers();
 		return;
 	}
-	log_info("a", "jello");
 
 	// Read and parse file
 	void *pBuf;
@@ -68,7 +65,6 @@ void CCustomCommunities::LoadCustomCommunitiesDDNetInfo()
 		json_value_free(pCustomCommunitiesDDNetInfo);
 		return;
 	}
-	log_info("a", "kello");
 
 	// Apply new data
 	if(m_pCustomCommunitiesDDNetInfo)
@@ -84,7 +80,6 @@ void CCustomCommunities::LoadCustomCommunitiesDDNetInfo()
 				Communities.u.array.values + Communities.u.array.length);
 		}
 	};
-	log_info("a", "feelo");
 	pServerBrowser->LoadDDNetServers();
 }
 
@@ -108,7 +103,6 @@ void CCustomCommunities::OnRender()
 {
 	if(m_pCustomCommunitiesDDNetInfoTask)
 	{
-		log_info("a", "%d %d", m_pCustomCommunitiesDDNetInfoTask->State(), EHttpState::DONE);
 		const auto State = m_pCustomCommunitiesDDNetInfoTask->State();
 		if(State != EHttpState::RUNNING && State != EHttpState::QUEUED)
 		{
