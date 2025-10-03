@@ -79,7 +79,7 @@ void CPet::OnRender()
 	else
 	{
 		Emote = Character.m_Emote;
-		vec2 DirMouse = GameClient()->m_Players.GetPlayerTargetAngle(&Player.m_RenderPrev, &Player.m_RenderCur, Player.ClientId());
+		vec2 DirMouse = GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy];
 		if(length(DirMouse) > 1.0f)
 			DirMouse = normalize(DirMouse);
 		vec2 DirVel = m_Velocity;
