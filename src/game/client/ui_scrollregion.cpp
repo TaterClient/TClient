@@ -144,16 +144,17 @@ void CScrollRegion::End()
 	// Hack to allow slider scroll adjustment -Tater
 	if(!Input()->ModifierIsPressed())
 	{
-		if(m_AnimTime > 0.0f)
+		m_AnimTime -= Client()->RenderFrameTime();
+		if(m_AnimTime < 0.0f)
 		{
-			m_AnimTime -= Client()->RenderFrameTime();
-			float AnimProgress = (1.0f - std::pow(m_AnimTime / m_AnimTimeMax, 3.0f)); // cubic ease out
-			m_ScrollY = m_AnimInitScrollY + (m_AnimTargetScrollY - m_AnimInitScrollY) * AnimProgress;
+			m_AnimTime = 0.0f;
 		}
-		else
-		{
-			m_ScrollY = m_AnimTargetScrollY;
-		}
+		float AnimProgress = (1.0f - std::pow(m_AnimTime / m_AnimTimeMax, 3.0f)); // cubic ease out
+		m_ScrollY = m_AnimInitScrollY + (m_AnimTargetScrollY - m_AnimInitScrollY) * AnimProgress;
+	}
+	else
+	{
+		m_ScrollY = m_AnimTargetScrollY;
 	}
 
 	Slider.y += m_ScrollY / MaxScroll * MaxSlider;
