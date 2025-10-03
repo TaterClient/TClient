@@ -1,6 +1,8 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_BINDWHEEL_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_BINDWHEEL_H
 
+#include <base/str.h>
+
 #include <engine/console.h>
 
 #include <game/client/component.h>

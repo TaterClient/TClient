@@ -15,40 +15,49 @@
 	} while(0)
 
 static inline SPT_vec2 vsub(SPT_vec2 a, SPT_vec2 b) {
-	return (SPT_vec2){a.x - b.x, a.y - b.y};
+	SPT_vec2 out;
+	out.x = a.x - b.x;
+	out.y = a.y - b.y;
+	return out;
 }
 static inline SPT_vec2 vadd(SPT_vec2 a, SPT_vec2 b) {
-	return (SPT_vec2){a.x + b.x, a.y + b.y};
+	SPT_vec2 out;
+	out.x = a.x + b.x;
+	out.y = a.y + b.y;
+	return out;
 }
 static inline SPT_vec2 vdivf(SPT_vec2 v, float f) {
-	return (SPT_vec2){v.x / f, v.y / f};
+	SPT_vec2 out;
+	out.x = v.x / f;
+	out.y = v.y / f;
+	return out;
 }
 static inline SPT_vec2 vmulf(SPT_vec2 v, float f) {
-	return (SPT_vec2){v.x * f, v.y * f};
+	SPT_vec2 out;
+	out.x = v.x * f;
+	out.y = v.y * f;
+	return out;
 }
 static inline SPT_vec2 vdir(float angle) {
-	return (SPT_vec2){cosf(angle), sinf(angle)};
+	SPT_vec2 out;
+	out.x = cosf(angle);
+	out.y = sinf(angle);
+	return out;
 }
 static inline float vangle(SPT_vec2 v) {
 	return atan2f(v.y, v.x);
-}
-static inline float vlength(SPT_vec2 v) {
-	return sqrtf(v.y * v.y + v.x * v.x);
-}
-static inline SPT_vec2 vnorm(SPT_vec2 v) {
-	return vdivf(v, vlength(v));
 }
 static inline float vcross(SPT_vec2 a, SPT_vec2 b) {
 	return a.x * b.y - a.y * b.x;
 }
 
 static inline SPT_color cavg(SPT_color a, SPT_color b) {
-	return (SPT_color){
-		(a.r + b.r) / 2.0f,
-		(a.g + b.g) / 2.0f,
-		(a.b + b.b) / 2.0f,
-		(a.a + b.a) / 2.0f,
-	};
+	SPT_color color;
+	color.r = (a.r + b.r) / 2.0f;
+	color.g = (a.g + b.g) / 2.0f;
+	color.b = (a.b + b.b) / 2.0f;
+	color.a = (a.a + b.a) / 2.0f;
+	return color;
 }
 
 void SPT_prims(SPT_cb_get_pt getPt, SPT_cb_add_quad addQuad, SPT_cb_add_arc addArc, void* user) {
@@ -68,12 +77,13 @@ void SPT_prims(SPT_cb_get_pt getPt, SPT_cb_add_quad addQuad, SPT_cb_add_arc addA
 		addArc(pts[1].pos, angle - PI / 2.0f, angle + PI / 2.0f, pts[1].w / 2.0f, pts[1].color, user);
 		const SPT_vec2 perp1 = vmulf(vdir(angle + PI / 2.0f), pts[0].w / 2.0f);
 		const SPT_vec2 perp2 = vmulf(vdir(angle + PI / 2.0f), pts[1].w / 2.0f);
-		addQuad((SPT_quad){
+		const SPT_quad quad = {
 			vadd(pts[1].pos, perp2),
 			vadd(pts[0].pos, perp1),
 			vsub(pts[0].pos, perp1),
 			vsub(pts[1].pos, perp2),
-		}, cavg(pts[0].color, pts[1].color), user);
+		};
+		addQuad(quad, cavg(pts[0].color, pts[1].color), user);
 		return;
 	}
 	// 3 points
@@ -106,16 +116,21 @@ void SPT_prims(SPT_cb_get_pt getPt, SPT_cb_add_quad addQuad, SPT_cb_add_arc addA
 		const SPT_vec2 r = vadd(pts[1].pos, vmulf(vdir(bevelAngle2), pts[1].w / 2.0f));
 		const float bevelAngle = bevelAngle2 - bevelAngle1;
 		if (bevelAngle < BEVEL_ANGLE_SINGLE) { // No bevel
-			addQuad((SPT_quad){top0, bot0, t, cross > 0.0f ? l : r}, cavg(pts[0].color, pts[1].color), user);
+			const SPT_quad quad = {top0, bot0, t, cross > 0.0f ? l : r};
+			addQuad(quad, cavg(pts[0].color, pts[1].color), user);
 		} else if (bevelAngle < BEVEL_ANGLE_FULL) { // Small bevel
-			addQuad((SPT_quad){l, l, t, r}, pts[1].color, user);
+			const SPT_quad quad = {l, l, t, r};
+			addQuad(quad, pts[1].color, user);
 			// Draw 01
-			addQuad((SPT_quad){top0, bot0, t, cross > 0.0f ? r : l}, cavg(pts[0].color, pts[1].color), user);
+			const SPT_quad quad01 = {top0, bot0, t, cross > 0.0f ? r : l};
+			addQuad(quad01, cavg(pts[0].color, pts[1].color), user);
 		} else { // Full curved bevel
 			addArc(pts[1].pos, bevelAngle1, bevelAngle2, pts[1].w / 2.0f, pts[1].color, user);
-			addQuad((SPT_quad){pts[1].pos, l, t, r}, pts[1].color, user);
+			const SPT_quad quad = {pts[1].pos, l, t, r};
+			addQuad(quad, pts[1].color, user);
 			// Draw 01
-			addQuad((SPT_quad){top0, bot0, t, cross > 0.0f ? r : l}, cavg(pts[0].color, pts[1].color), user);
+			const SPT_quad quad01 = {top0, bot0, t, cross > 0.0f ? r : l};
+			addQuad(quad01, cavg(pts[0].color, pts[1].color), user);
 		}
 		// Setup for next
 		top0 = t;
@@ -129,7 +144,8 @@ void SPT_prims(SPT_cb_get_pt getPt, SPT_cb_add_quad addQuad, SPT_cb_add_arc addA
 			const SPT_vec2 perp = vmulf(vdir(a12 + PI / 2.0f), pts[2].w / 2.0f);
 			const SPT_vec2 bot2 = vadd(pts[2].pos, perp);
 			const SPT_vec2 top2 = vsub(pts[2].pos, perp);
-			addQuad((SPT_quad){top0, bot0, bot2, top2}, cavg(pts[1].color, pts[2].color), user);
+			const SPT_quad quad = {top0, bot0, bot2, top2};
+			addQuad(quad, cavg(pts[1].color, pts[2].color), user);
 			// Draw end cap
 			addArc(pts[2].pos, a12 - PI / 2.0f, a12 + PI / 2.0f, pts[2].w / 2.0f, pts[2].color, user);
 			break;
@@ -154,10 +170,12 @@ static bool SPT_tris_getPt(SPT_pt* pt, void* user) {
 }
 
 static bool SPT_tris_addQuad(SPT_quad quad, SPT_color color, void* user) {
+	const SPT_tri tri1 = {quad.a, quad.b, quad.c};
+	const SPT_tri tri2 = {quad.a, quad.c, quad.d};
 	UserData *user2 = (UserData *)user;
 	bool out = true;
-	out &= user2->addTri((SPT_tri){quad.a, quad.b, quad.c}, color, user2->user);
-	out &= user2->addTri((SPT_tri){quad.a, quad.c, quad.d}, color, user2->user);
+	out &= user2->addTri(tri1, color, user2->user);
+	out &= user2->addTri(tri2, color, user2->user);
 	return out;
 }
 
@@ -168,7 +186,8 @@ static bool SPT_tris_addArc(SPT_vec2 pos, float a1, float a2, float r, SPT_color
 	for (int i = 0; i < segments; ++i) {
 		const float start = a1 + (a2 - a1) * ((float)i / segments);
 		const float stop = a1 + (a2 - a1) * ((float)(i + 1) / segments);
-		out &= user2->addTri((SPT_tri){pos, vadd(pos, vmulf(vdir(start), r)), vadd(pos, vmulf(vdir(stop), r))}, color, user2->user);
+		const SPT_tri tri = {pos, vadd(pos, vmulf(vdir(start), r)), vadd(pos, vmulf(vdir(stop), r))};
+		out &= user2->addTri(tri, color, user2->user);
 	}
 	return out;
 }
