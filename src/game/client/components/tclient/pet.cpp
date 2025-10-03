@@ -17,8 +17,8 @@ void CPet::OnRender()
 	if(PlayerId < 0)
 		return;
 	const auto &Player = GameClient()->m_aClients[PlayerId];
-
 	const float Delta = Client()->RenderFrameTime();
+	const float Now = (float)Client()->GameTick(g_Config.m_ClDummy) / (float)Client()->GameTickSpeed();
 
 	const float Scale = (float)g_Config.m_TcPetSize / 100.0f;
 
@@ -27,7 +27,7 @@ void CPet::OnRender()
 		m_Target = Player.m_RenderPos;
 		m_Target.x += (64.0f + Scale * 32.0f) * (m_Position.x > m_Target.x ? 1 : -1);
 		m_Target.y -= 100.0f + Scale * 32.0f;
-		m_Target.y += std::sin((float)Client()->GameTick(g_Config.m_ClDummy) / (float)Client()->GameTickSpeed() / 2.0f) * 8.0f;
+		m_Target.y += std::sin(Now / 2.0f) * 8.0f;
 		if(m_Alpha == 0.0f)
 		{
 			m_Position = m_Target;
@@ -79,7 +79,7 @@ void CPet::OnRender()
 	else
 	{
 		Emote = Character.m_Emote;
-		vec2 DirMouse = GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy];
+		vec2 DirMouse = GameClient()->m_Players.GetPlayerTargetAngle(&Player.m_RenderPrev, &Player.m_RenderCur, Player.ClientId());
 		if(length(DirMouse) > 1.0f)
 			DirMouse = normalize(DirMouse);
 		vec2 DirVel = m_Velocity;
