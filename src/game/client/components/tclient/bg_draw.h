@@ -6,6 +6,7 @@
 
 #include <game/client/component.h>
 
+#include <array>
 #include <list>
 #include <optional>
 
