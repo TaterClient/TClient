@@ -141,8 +141,7 @@ void CScrollRegion::End()
 	if(absolute(m_AnimInitScrollY - m_AnimTargetScrollY) < 0.5f)
 		m_AnimTime = 0.0f;
 
-	if(m_AnimTime > 0.0f
-		&& !Input()->ModifierIsPressed()) // TClient:: Hack to allow slider scroll adjustment
+	if(m_AnimTime > 0.0f && !Input()->ModifierIsPressed()) // TClient: Hack to allow slider scroll adjustment
 	{
 		m_AnimTime -= Client()->RenderFrameTime();
 		if(m_AnimTime < 0.0f)
