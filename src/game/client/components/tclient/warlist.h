@@ -1,6 +1,8 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_WARLIST_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_WARLIST_H
 
+#include <base/str.h>
+
 #include <engine/console.h>
 #include <engine/shared/protocol.h>
 

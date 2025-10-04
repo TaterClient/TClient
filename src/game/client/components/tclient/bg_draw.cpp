@@ -1,4 +1,5 @@
 #include "bg_draw.h"
+
 #include <base/log.h>
 
 #include <engine/client.h>
@@ -13,6 +14,7 @@
 #include <game/localization.h>
 
 #include <algorithm>
+#include <array>
 #include <deque>
 #include <vector>
 
@@ -603,7 +605,6 @@ void CBgDraw::OnStateChange(int NewState, int OldState)
 			Load(nullptr, false);
 	}
 }
-
 
 void CBgDraw::OnShutdown()
 {
