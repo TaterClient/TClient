@@ -381,14 +381,14 @@ bool CBgDraw::Save(const char *pFilename, bool Verbose)
 	IOHANDLE Handle = BgDrawOpenFile(*GameClient(), pFilename, IOFLAG_WRITE);
 	if(!Handle)
 		return false;
-	size_t Written = 0;
+	int Written = 0;
 	bool Success = true;
 	char aMsg[256];
 	for(const CBgDrawItem &Item : *m_pvItems)
 	{
 		if(!BgDrawFile::Write(Handle, Item.Data()))
 		{
-			str_format(aMsg, sizeof(aMsg), TCLocalize("Writing item %zu failed", "bgdraw"), Written);
+			str_format(aMsg, sizeof(aMsg), TCLocalize("Writing item %d failed", "bgdraw"), Written);
 			GameClient()->Echo(aMsg);
 			Success = false;
 			break;
@@ -397,7 +397,7 @@ bool CBgDraw::Save(const char *pFilename, bool Verbose)
 	}
 	if(Verbose || !Success)
 	{
-		str_format(aMsg, sizeof(aMsg), TCLocalize("Written %zu items", "bgdraw"), Written);
+		str_format(aMsg, sizeof(aMsg), TCLocalize("Written %d items", "bgdraw"), Written);
 		GameClient()->Echo(aMsg);
 	}
 	io_close(Handle);
@@ -412,13 +412,13 @@ bool CBgDraw::Load(const char *pFilename, bool Verbose)
 	if(!Handle)
 		return false;
 	std::deque<CBgDrawItemData> Queue;
-	size_t ItemsLoaded = 0;
-	size_t ItemsDiscarded = 0;
+	int ItemsLoaded = 0;
+	int ItemsDiscarded = 0;
 	{
 		CBgDrawItemData Data;
 		while(BgDrawFile::Read(Handle, Data) && (ItemsLoaded++) < MAX_ITEMS_TO_LOAD)
 		{
-			if(Queue.size() > (size_t)g_Config.m_TcBgDrawMaxItems)
+			if((int)Queue.size() > g_Config.m_TcBgDrawMaxItems)
 			{
 				ItemsDiscarded += 1;
 				Queue.pop_front();
@@ -434,9 +434,9 @@ bool CBgDraw::Load(const char *pFilename, bool Verbose)
 	{
 		char aInfo[256];
 		if(ItemsDiscarded == 0)
-			str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %zu items", "bgdraw"), ItemsLoaded);
+			str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %d items", "bgdraw"), ItemsLoaded);
 		else
-			str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %zu items (discarded %zu items)", "bgdraw"), ItemsLoaded - ItemsDiscarded, ItemsDiscarded);
+			str_format(aInfo, sizeof(aInfo), TCLocalize("Loaded %d items (discarded %d items)", "bgdraw"), ItemsLoaded - ItemsDiscarded, ItemsDiscarded);
 		GameClient()->Echo(aInfo);
 	}
 
@@ -454,14 +454,14 @@ CBgDrawItem *CBgDraw::AddItem(Args &&... args)
 	return &m_pvItems->back();
 }
 
-void CBgDraw::MakeSpaceFor(size_t Count)
+void CBgDraw::MakeSpaceFor(int Count)
 {
-	if(g_Config.m_TcBgDrawMaxItems == 0 || Count >= (size_t)g_Config.m_TcBgDrawMaxItems)
+	if(g_Config.m_TcBgDrawMaxItems == 0 || Count >= g_Config.m_TcBgDrawMaxItems)
 	{
 		m_pvItems->clear();
 		return;
 	}
-	while(m_pvItems->size() + Count > (size_t)g_Config.m_TcBgDrawMaxItems)
+	while((int)m_pvItems->size() + Count > g_Config.m_TcBgDrawMaxItems)
 	{
 		// Prevent floating pointer
 		for(std::optional<CBgDrawItem *> &ActiveItem : m_apActiveItems)

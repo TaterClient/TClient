@@ -666,12 +666,12 @@ Ingame cursor scale
 == 游戏内光标缩放
 
 [bgdraw]
-Loaded %zu items
-== 加载了 %zu 项
+Loaded %d items
+== 加载了 %d 项
 
 [bgdraw]
-Loaded %zu items (discarded %zu items)
-== 加载了 %zu 项（丢弃了 %zu 项）
+Loaded %d items (discarded %d items)
+== 加载了 %d 项（丢弃了 %d 项）
 
 [bgdraw]
 Opening %s for %s
@@ -711,12 +711,12 @@ Width
 == 宽度
 
 [bgdraw]
-Writing item %zu failed
-== 写入项目 %zu 失败
+Writing item %d failed
+== 写入项目 %d 失败
 
 [bgdraw]
-Written %zu items
-== 写入了 %zu 项
+Written %d items
+== 写入了 %d 项
 
 [bgdraw]
 reading

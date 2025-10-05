@@ -669,20 +669,20 @@ Failed to open %s for %s
 == Не вдалося відкрити %s для %s
 
 [bgdraw]
-Writing item %zu failed
-== Не вдалося записати елемент %zu
+Writing item %d failed
+== Не вдалося записати елемент %d
 
 [bgdraw]
-Written %zu items
-== Записано елементів: %zu
+Written %d items
+== Записано елементів: %d
 
 [bgdraw]
-Loaded %zu items
-== Завантажено елементів: %zu
+Loaded %d items
+== Завантажено елементів: %d
 
 [bgdraw]
-Loaded %zu items (discarded %zu items)
-== Завантажено елементів: %zu (відкинуто елементів: %zu)
+Loaded %d items (discarded %d items)
+== Завантажено елементів: %d (відкинуто елементів: %d)
 
 Cute:
 == Мило:

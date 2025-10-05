@@ -32,7 +32,7 @@ private:
 	bool Load(const char *pFile, bool Verbose);
 	template<typename... Args>
 	CBgDrawItem *AddItem(Args &&... args);
-	void MakeSpaceFor(size_t Count);
+	void MakeSpaceFor(int Count);
 
 public:
 	enum class InputMode

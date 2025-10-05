@@ -671,20 +671,20 @@ Failed to open %s for %s
 == Не удалось открыть %s для %s
 
 [bgdraw]
-Writing item %zu failed
-== Не удалось записать элемент %zu
+Writing item %d failed
+== Не удалось записать элемент %d
 
 [bgdraw]
-Written %zu items
-== Записано элементов: %zu
+Written %d items
+== Записано элементов: %d
 
 [bgdraw]
-Loaded %zu items
-== Загружено элементов: %zu
+Loaded %d items
+== Загружено элементов: %d
 
 [bgdraw]
-Loaded %zu items (discarded %zu items)
-== Загружено элементов: %zu (отброшено элементов: %zu)
+Loaded %d items (discarded %d items)
+== Загружено элементов: %d (отброшено элементов: %d)
 
 Cute:
 == Мило:

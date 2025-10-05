@@ -37,19 +37,19 @@ Failed to open %s for %s
 == 
 
 [bgdraw]
-Writing item %zu failed
+Writing item %d failed
 == 
 
 [bgdraw]
-Written %zu items
+Written %d items
 == 
 
 [bgdraw]
-Loaded %zu items
+Loaded %d items
 == 
 
 [bgdraw]
-Loaded %zu items (discarded %zu items)
+Loaded %d items (discarded %d items)
 == 
 
 Kaomoji
