@@ -83,7 +83,7 @@ Spectate cursor alpha
 Show when you are the last alive
 == Показывать когда остался последний выживший
 
-Frozen Tee Display
+Frozen  Display
 == Дисплей замороженных тии
 
 Show frozen tee display
@@ -801,10 +801,10 @@ Show katan on frozen players
 == Показывать катану на замороженных игроках
 
 Tiny Tees
-== Маленькие персонажи
+== Маленькие тии
 
 Tiny Tee Size
-== Размер маленьких персонажей
+== Размер маленьких тии
 
 Pet
 == Питомец
