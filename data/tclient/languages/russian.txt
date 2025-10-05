@@ -83,7 +83,7 @@ Spectate cursor alpha
 Show when you are the last alive
 == Показывать когда остался последний выживший
 
-Frozen  Display
+Frozen Tee Display
 == Дисплей замороженных тии
 
 Show frozen tee display
