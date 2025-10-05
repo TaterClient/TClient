@@ -105,18 +105,22 @@ float CPlayers::GetPlayerTargetAngle(
 {
 	if(GameClient()->m_Snap.m_LocalClientId == ClientId && !GameClient()->m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK)
 	{
-		// just use the direct input if it's the local player we are rendering
 		// TClient
-		vec2 Pos = GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy];
+		vec2 Direction = GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy];
 		if(g_Config.m_TcScaleMouseDistance)
 		{
 			const int MaxDistance = g_Config.m_ClDyncam ? g_Config.m_ClDyncamMaxDistance : g_Config.m_ClMouseMaxDistance;
 			if(MaxDistance > 5 && MaxDistance < 1000) // Don't scale if angle bind or reduces precision
-				Pos *= 1000.0f / (float)MaxDistance;
+				Direction *= 1000.0f / (float)MaxDistance;
 		}
-		Pos.x = (int)Pos.x;
-		Pos.y = (int)Pos.y;
-		return angle(Pos);
+		Direction.x = (int)Direction.x;
+		Direction.y = (int)Direction.y;
+
+		// fix direction if mouse is exactly in the center
+		if(Direction == vec2(0.0f, 0.0f))
+			Direction = vec2(1.0f, 0.0f);
+
+		return angle(Direction);
 	}
 
 	// using unpredicted angle when rendering other players in-game
@@ -206,16 +210,6 @@ void CPlayers::RenderHookCollLine(
 		RenderHookCollPlayer = GameClient()->m_Controls.m_aShowHookColl[g_Config.m_ClDummy] && g_Config.m_ClShowHookCollOwn > 0;
 	if(!AlwaysRenderHookColl && !RenderHookCollPlayer)
 		return;
-
-	// TClient dead code
-	// if(Local && !GameClient()->m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK)
-	// {
-	// 	Direction = normalize(vec2((int)GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy].x, (int)GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy].y));
-
-	// 	// fix direction if mouse is exactly in the center
-	// 	if(!(int)GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy].x && !(int)GameClient()->m_Controls.m_aMousePos[g_Config.m_ClDummy].y)
-	// 		Direction = vec2(1.0f, 0.0f);
-	// }
 
 	static constexpr float HOOK_START_DISTANCE = CCharacterCore::PhysicalSize() * 1.5f;
 	float HookLength = (float)GameClient()->m_aClients[ClientId].m_Predicted.m_Tuning.m_HookLength;
