@@ -642,76 +642,76 @@ _ or \' \' = Space
 == _ или \' \' = Пробел
 
 Translated text hidden due to streamer mode
-== 
+== Переведенный текст скрыт из-за режима стримера
 
 (On Latest)
-== 
+== (Актуальная версия)
 
 (Fetching Update Info)
-== 
+== (Получение информации об обновлениях)
 
 [bgdraw]
 Failed to create bgdraw folder
-== 
+== Не удалось создать папку bgdraw
 
 [bgdraw]
 Opening %s for %s
-== 
+== Открытие %s для %s
 
 [bgdraw]
 writing
-== 
+== запись
 
 [bgdraw]
 reading
-== 
+== чтение
 
 [bgdraw]
 Failed to open %s for %s
-== 
+== Не удалось открыть %s для %s
 
 [bgdraw]
 Writing item %zu failed
-== 
+== Не удалось записать элемент %zu
 
 [bgdraw]
 Written %zu items
-== 
+== Записано элементов: %zu
 
 [bgdraw]
 Loaded %zu items
-== 
+== Загружено элементов: %zu
 
 [bgdraw]
 Loaded %zu items (discarded %zu items)
-== 
+== Загружено элементов: %zu (отброшено элементов: %zu)
 
 Cute:
-== 
+== Мило:
 
 Lenny:
-== 
+== Ленни:
 
 Add war name:
-== 
+== Добавить имя в войну:
 
 Add war clan:
-== 
+== Добавить клан в войну:
 
 Add team name:
-== 
+== Добавить имя в команду:
 
 Add team clan:
-== 
+== Добавить клан в команду:
 
 Remove war name:
-== 
+== Убрать имя из войны:
 
 Remove team name:
-== 
+== Убрать имя из команды:
 
 Remove team clan:
-== 
+== Убрать клан из команды:
 
 Add [group] [name] [reason]:
 == Добавить [группа] [клан] [причина]:
@@ -726,162 +726,162 @@ Remove [group] [clan]:
 == Убрать клан [группа] [клан]:
 
 Mod
-== 
+== Модератор
 
 Mute ID:
-== 
+== Заглушить ID:
 
 Mute Name:
-== 
+== Заглушить имя:
 
 Unmute Last:
-== 
+== Снять мут с последнего:
 
 Kick ID:
-== 
+== Кикнуть ID:
 
 Kick Name:
-== 
+== Кикнуть имя:
 
 Ban ID:
-== 
+== Забанить ID:
 
 Ban Name:
-== 
+== Забанить имя:
 
 Unban Last:
-== 
+== Разбанить последнего:
 
 Kill Ids:
-== 
+== Убить ID:
 
 Kill Names:
-== 
+== Убить имена:
 
 Translate:
-== 
+== Перевести:
 
 Translate ID:
-== 
+== Перевести ID:
 
 Unmute:
-== Quitar silencio:
+== Снять мут:
 
 Bind Wheel
 == Колесо биндов
 
 War List
-== 
+== Список войн
 
 Bind Wheel Key
-== 
+== Клавиша колеса биндов
 
 [Hammer Mode]
 Normal
-== 
+== Обычный
 
 [Hammer Mode]
 Rotate with cursor
-== 
+== Вращение с курсором
 
 [Hammer Mode]
 Rotate with cursor like gun
-== 
+== Вращение с курсором как у пистолета
 
 Hammer Mode: 
-== 
+== Режим молота: 
 
 Ingame cursor scale
-== 
+== Масштаб курсора в игре
 
 Wheel animate
-== 
+== Анимация колеса
 
 Show katan on frozen players
-== 
+== Показывать катану на замороженных игроках
 
 Tiny Tees
-== 
+== Маленькие персонажи
 
 Tiny Tee Size
-== 
+== Размер маленьких персонажей
 
 Pet
-== 
+== Питомец
 
 Show the pet
-== 
+== Показать питомца
 
 Pet size
-== 
+== Размер питомца
 
 Pet alpha
-== 
+== Прозрачность питомца
 
 Pet Skin:
-== 
+== Скин питомца:
 
 Show mini vote HUD
-== 
+== Показывать мини-HUD голосования
 
 Horizontal Position
-== 
+== Горизонтальная позиция
 
 Vertical Position
-== 
+== Вертикальная позиция
 
 Font Size
-== 
+== Размер шрифта
 
 Show screen center lines
-== 
+== Показывать центральные линии экрана
 
 Screen center line color
-== 
+== Цвет центральной линии экрана
 
 Screen center line width
-== 
+== Ширина центральной линии экрана
 
 Toggle ghosts key
-== 
+== Клавиша переключения призраков
 
 Background Draw
-== 
+== Фоновое рисование
 
 Time until strokes dissapear
-== 
+== Время до исчезновения штрихов
 
  seconds (never)
-== 
+==  секунд (никогда)
 
  seconds
-== 
+==  секунд
 
 Width
-== 
+== Ширина
 
 Draw where mouse is
-== 
+== Рисовать в месте курсора
 
 Finish Name
-== 
+== Имя при финише
 
 Attempt to change your name when near finish
-== 
+== Попытаться изменить имя при приближении к финишу
 
 Finish Name:
-== 
+== Имя при финише:
 
 Overwrite clan even if empty
-== 
+== Перезаписать клан, даже если пустой
 
 Changing name to %s near finish
-== 
+== Изменение имени на %s возле финиша
 
 [translate]
 [%s translating to %s]
-== 
+== %s переводит на %s
 
 [translate]
 [%s to %s failed: %s]
-== 
+== %s на %s не удался: %s
