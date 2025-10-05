@@ -640,246 +640,247 @@ _ or \' \' = Space
 == _ або \' \' = Пробіл
 
 Translated text hidden due to streamer mode
-== 
+== Перекладений текст прихований через режим стримера
 
 (On Latest)
-== 
+== (Актуальна версія)
 
 (Fetching Update Info)
-== 
+== (Отримання інформації про оновлення)
 
 [bgdraw]
 Failed to create bgdraw folder
-== 
+== Не вдалося створити папку bgdraw
 
 [bgdraw]
 Opening %s for %s
-== 
+== Відкриття %s для %s
 
 [bgdraw]
 writing
-== 
+== запис
 
 [bgdraw]
 reading
-== 
+== читання
 
 [bgdraw]
 Failed to open %s for %s
-== 
+== Не вдалося відкрити %s для %s
 
 [bgdraw]
 Writing item %zu failed
-== 
+== Не вдалося записати елемент %zu
 
 [bgdraw]
 Written %zu items
-== 
+== Записано елементів: %zu
 
 [bgdraw]
 Loaded %zu items
-== 
+== Завантажено елементів: %zu
 
 [bgdraw]
 Loaded %zu items (discarded %zu items)
-== 
+== Завантажено елементів: %zu (відкинуто елементів: %zu)
 
 Cute:
-== 
+== Мило:
 
 Lenny:
-== 
+== Ленні:
 
 Add war name:
-== 
+== Додати ім'я у війну:
 
 Add war clan:
-== 
+== Додати клан у війну:
 
 Add team name:
-== 
+== Додати ім'я у команду:
 
 Add team clan:
-== 
+== Додати клан у команду:
 
 Remove war name:
-== 
+== Прибрати ім'я з війни:
 
 Remove team name:
-== 
+== Прибрати ім'я з команди:
 
 Remove team clan:
-== 
+== Прибрати клан з команди:
 
 Add [group] [name] [reason]:
-== 
+== Додати [група] [ім'я] [причина]:
 
 Add [group] [clan] [reason]:
-== 
+== Додати [група] [клан] [причина]:
 
 Remove [group] [name]:
-== 
+== Прибрати гравця [група] [ім'я]:
 
 Remove [group] [clan]:
-== 
+== Прибрати клан [група] [клан]:
 
 Mod
-== 
+== Модератор
 
 Mute ID:
-== 
+== Заглушити ID:
 
 Mute Name:
-== 
+== Заглушити ім'я:
 
 Unmute Last:
-== 
+== Зняти мут з останнього:
 
 Kick ID:
-== 
+== Кікнути ID:
 
 Kick Name:
-== 
+== Кікнути ім'я:
 
 Ban ID:
-== 
+== Забанити ID:
 
 Ban Name:
-== 
+== Забанити ім'я:
 
 Unban Last:
-== 
+== Розбанити останнього:
 
 Kill Ids:
-== 
+== Вбити ID:
 
 Kill Names:
-== 
+== Вбити імена:
 
 Translate:
-== 
+== Перекласти:
 
 Translate ID:
-== 
+== Перекласти ID:
 
 Unmute:
-== 
+== Зняти мут:
 
 Bind Wheel
-== 
+== Колесо біндів
 
 War List
-== 
+== Список воєн
 
 Bind Wheel Key
-== 
+== Клавіша колеса біндів
 
 [Hammer Mode]
 Normal
-== 
+== Звичайний
 
 [Hammer Mode]
 Rotate with cursor
-== 
+== Обертання з курсором
 
 [Hammer Mode]
 Rotate with cursor like gun
-== 
+== Обертання з курсором як у пістолета
 
 Hammer Mode: 
-== 
+== Режим молота: 
 
 Ingame cursor scale
-== 
+== Масштаб курсора в грі
 
 Wheel animate
-== 
+== Анімація колеса
 
 Show katan on frozen players
-== 
+== Показувати катану на заморожених гравцях
 
 Tiny Tees
-== 
+== Маленькі тії
 
 Tiny Tee Size
-== 
+== Розмір маленьких тії
 
 Pet
-== 
+== Питомець
 
 Show the pet
-== 
+== Показати питомця
 
 Pet size
-== 
+== Розмір питомця
 
 Pet alpha
-== 
+== Прозорість питомця
 
 Pet Skin:
-== 
+== Скін питомця:
 
 Show mini vote HUD
-== 
+== Показувати міні-HUD голосування
 
 Horizontal Position
-== 
+== Горизонтальна позиція
 
 Vertical Position
-== 
+== Вертикальна позиція
 
 Font Size
-== 
+== Розмір шрифту
 
 Show screen center lines
-== 
+== Показувати центральні лінії екрану
 
 Screen center line color
-== 
+== Колір центральної лінії екрану
 
 Screen center line width
-== 
+== Ширина центральної лінії екрану
 
 Toggle ghosts key
-== 
+== Клавіша перемикання привидів
 
 Background Draw
-== 
+== Фонове малювання
 
 Time until strokes dissapear
-== 
+== Час до зникнення штрихів
 
  seconds (never)
-== 
+==  секунд (ніколи)
 
  seconds
-== 
+==  секунд
 
 Width
-== 
+== Ширина
 
 Draw where mouse is
-== 
+== Малювати в місці курсора
 
 Finish Name
-== 
+== Ім'я при фініші
 
 Attempt to change your name when near finish
-== 
+== Спробувати змінити ім'я при наближенні до фінішу
 
 Finish Name:
-== 
+== Ім'я при фініші:
 
 Overwrite clan even if empty
-== 
+== Перезаписати клан, навіть якщо порожній
 
 Changing name to %s near finish
-== 
+== Зміна імені на %s біля фінішу
 
 [translate]
 [%s translating to %s]
-== 
+== %s перекладає на %s
 
 [translate]
 [%s to %s failed: %s]
-== 
+== %s на %s не вдався: %s
+
