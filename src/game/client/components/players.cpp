@@ -116,10 +116,6 @@ float CPlayers::GetPlayerTargetAngle(
 		Direction.x = (int)Direction.x;
 		Direction.y = (int)Direction.y;
 
-		// fix direction if mouse is exactly in the center
-		if(Direction == vec2(0.0f, 0.0f))
-			Direction = vec2(1.0f, 0.0f);
-
 		return angle(Direction);
 	}
 
