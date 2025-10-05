@@ -119,7 +119,7 @@ private:
 			if(pError->type != json_string)
 				str_copy(Out.m_Text, "Error is not string");
 			else
-				str_format(Out.m_Text, sizeof(Out.m_Text), "Error from server: %s", pError->u.string);
+				str_format(Out.m_Text, sizeof(Out.m_Text), "Error from server: %s", pError->u.string.ptr);
 			return false;
 		}
 
