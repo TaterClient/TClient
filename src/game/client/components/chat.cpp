@@ -2,9 +2,9 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
 #include "chat.h"
+#include <base/log.h>
 
 #include <engine/editor.h>
-#include <engine/external/remimu.h>
 #include <engine/graphics.h>
 #include <engine/keys.h>
 #include <engine/shared/config.h>
@@ -23,6 +23,8 @@
 #include <game/localization.h>
 
 #include <variant>
+
+#include <re2/re2.h>
 
 char CChat::ms_aDisplayText[MAX_LINE_LENGTH] = "";
 
@@ -561,12 +563,19 @@ void CChat::OnMessage(int MsgType, void *pRawMsg)
 
 		if(g_Config.m_TcRegexChatIgnore[0])
 		{
-			RegexToken aTokens[512];
-			int16_t TokenCount = 512;
-			if(regex_parse(g_Config.m_TcRegexChatIgnore, aTokens, &TokenCount, 0))
-				GameClient()->Echo("Regex error");
-			else if(regex_match(aTokens, pMsg->m_pMessage, 0, 0, 0, 0) != -1)
-				return;
+			RE2 Regex(g_Config.m_TcRegexChatIgnore);
+			if(Regex.ok())
+			{
+				if(RE2::PartialMatch(pMsg->m_pMessage, Regex))
+					return;
+			}
+			else
+			{
+				char aBuf[256];
+				str_format(aBuf, sizeof(aBuf), TCLocalize("Invalid regex: %s"), Regex.error());
+				log_error("regex", "Invalid regex: %s", Regex.error().c_str());
+				// Fail open
+			}
 		}
 
 		if(g_Config.m_ClCensorChat)

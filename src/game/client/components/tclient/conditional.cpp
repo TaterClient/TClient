@@ -3,20 +3,26 @@
 #include <base/log.h>
 
 #include <engine/console.h>
-#include <engine/external/remimu.h>
 #include <engine/shared/config.h>
 
 #include <game/client/gameclient.h>
 
 #include <optional>
 
+#include <re2/re2.h>
+
 static std::optional<bool> RegexMatch(const char *pString, const char *pRegex)
 {
-	RegexToken aTokens[512];
-	int16_t TokenCount = 512;
-	if(regex_parse(pRegex, aTokens, &TokenCount, 0))
+	RE2 Regex(pRegex);
+	if(Regex.ok())
+	{
+		return RE2::PartialMatch(pString, Regex);
+	}
+	else
+	{
+		log_error("regex", "Invalid regex: %s", Regex.error().c_str());
 		return std::nullopt;
-	return regex_match(aTokens, pString, 0, 0, 0, 0) != -1;
+	}
 }
 
 int CConditional::ParseValue(char *pBuf, int Length)
@@ -210,10 +216,7 @@ void CConditional::ConIfreq(IConsole::IResult *pResult, void *pUserData)
 	CConditional *pThis = (CConditional *)pUserData;
 	std::optional<bool> Result = RegexMatch(pResult->GetString(0), pResult->GetString(1));
 	if(!Result.has_value())
-	{
-		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "conditional", "regex error");
 		return;
-	}
 	if(!Result.value())
 		return;
 	pThis->Console()->ExecuteLine(pResult->GetString(2));
@@ -224,10 +227,7 @@ void CConditional::ConIfrneq(IConsole::IResult *pResult, void *pUserData)
 	CConditional *pThis = (CConditional *)pUserData;
 	std::optional<bool> Result = RegexMatch(pResult->GetString(0), pResult->GetString(1));
 	if(!Result.has_value())
-	{
-		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "conditional", "regex error");
 		return;
-	}
 	if(Result.value())
 		return;
 	pThis->Console()->ExecuteLine(pResult->GetString(2));

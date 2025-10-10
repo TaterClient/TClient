@@ -24,10 +24,39 @@ endif()
 
 # <TClient>
 
+# re2
+
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+  pkg_check_modules(RE2 QUIET re2)
+else()
+  find_package(re2 REQUIRED)
+  message(STATUS "PkgConfig not found")
+  message(STATUS "    RE2 will probably be built even if installed")
+endif()
+if (NOT RE2_FOUND)
+  message(STATUS "RE2 not found")
+  message(STATUS "    building 2025-08-12 instead")
+  message(STATUS "    you should install RE2 for a faster build")
+  include(FetchContent)
+  FetchContent_Declare(
+      re2
+      GIT_REPOSITORY https://github.com/google/re2.git
+      GIT_TAG 2025-08-12
+      GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(re2)
+  set(RE2_LIBRARIES, re2::re2)
+endif()
+
+# data_version.txt
+
 set(DATA_VERSION_FILE "${CMAKE_BINARY_DIR}/data/data_version.txt")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/data")
 
 file(WRITE "${DATA_VERSION_FILE}" "DDNet ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\n")
+
+# tclient version
 
 file(STRINGS src/game/version.h TCLIENT_VERSION_LINE
   LIMIT_COUNT 1
@@ -2262,7 +2291,6 @@ set_src(ENGINE_SHARED GLOB_RECURSE src/engine/shared
   websockets.h
 )
 set_src(ENGINE_EXTERNAL GLOB src/engine/external
-  remimu.h
   spt.cpp
   spt.h
   tinyexpr.cpp
@@ -2737,6 +2765,7 @@ if(CLIENT)
 
   # Libraries
   set(LIBS_CLIENT
+    ${RE2_LIBRARIES} # TClient
     ${FREETYPE_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${PNG_LIBRARIES}
