@@ -491,6 +491,7 @@ protected:
 	void RenderDemoBrowserList(CUIRect ListView, bool &WasListboxItemActivated);
 	void RenderDemoBrowserDetails(CUIRect DetailsView);
 	void RenderDemoBrowserButtons(CUIRect ButtonsView, bool WasListboxItemActivated);
+	void PopupConfirmPlayDemo();
 	void PopupConfirmDeleteDemo();
 	void PopupConfirmDeleteFolder();
 	static void ConchainDemoPlay(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
@@ -499,7 +500,6 @@ protected:
 	// found in menus_ingame.cpp
 	STextContainerIndex m_MotdTextContainerIndex;
 	void RenderGame(CUIRect MainView);
-	void RenderTouchControlsEditor(CUIRect MainView);
 	void PopupConfirmDisconnect();
 	void PopupConfirmDisconnectDummy();
 	void PopupConfirmDiscardTouchControlsChanges();
@@ -569,7 +569,6 @@ protected:
 	void RenderThemeSelection(CUIRect MainView);
 	void RenderSettingsGeneral(CUIRect MainView);
 	void RenderSettingsPlayer(CUIRect MainView);
-	void RenderSettingsDummyPlayer(CUIRect MainView);
 	void RenderSettingsTee(CUIRect MainView);
 	void RenderSettingsTee7(CUIRect MainView);
 	void RenderSettingsTeeCustom7(CUIRect MainView);

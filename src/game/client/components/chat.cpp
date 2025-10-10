@@ -578,6 +578,7 @@ void CChat::OnMessage(int MsgType, void *pRawMsg)
 			}
 		}
 
+		/*
 		if(g_Config.m_ClCensorChat)
 		{
 			char aMessage[MAX_LINE_LENGTH];
@@ -587,6 +588,9 @@ void CChat::OnMessage(int MsgType, void *pRawMsg)
 		}
 		else
 			AddLine(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
+		*/
+
+		AddLine(pMsg->m_ClientId, pMsg->m_Team, pMsg->m_pMessage);
 	}
 	else if(MsgType == NETMSGTYPE_SV_COMMANDINFO)
 	{
