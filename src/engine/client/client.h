@@ -136,8 +136,7 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	char m_aCurrentMapPath[IO_MAX_PATH_LENGTH] = "";
 
 	char m_aTimeoutCodes[NUM_DUMMIES][32] = {"", ""};
-	bool m_aCodeRunAfterJoin[NUM_DUMMIES] = {false, false};
-	bool m_aCodeRunAfterJoinConsole[NUM_DUMMIES] = {false, false};
+	bool m_aDidPostConnect[NUM_DUMMIES] = {false, false};
 	bool m_GenerateTimeoutSeed = true;
 
 	// TClient
@@ -333,6 +332,9 @@ public:
 	// called when the map is loaded and we should init for a new round
 	void OnEnterGame(bool Dummy);
 	void EnterGame(int Conn) override;
+
+	// called once after being ingame for 1 second
+	void OnPostConnect(int Conn, bool Dummy);
 
 	void Connect(const char *pAddress, const char *pPassword = nullptr) override;
 	void DisconnectWithReason(const char *pReason);
