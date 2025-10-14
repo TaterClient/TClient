@@ -36,14 +36,21 @@ else()
 endif()
 if (NOT RE2_FOUND)
   message(STATUS "RE2 not found")
-  message(STATUS "    building 2025-08-12 instead")
+  message(STATUS "    building RE2 2025-08-12 and absl 2025-08-14.1 instead")
   message(STATUS "    you should install RE2 for a faster build")
   include(FetchContent)
   FetchContent_Declare(
-      re2
-      GIT_REPOSITORY https://github.com/google/re2.git
-      GIT_TAG 2025-08-12
-      GIT_SHALLOW TRUE
+    absl
+    GIT_REPOSITORY https://github.com/abseil/abseil-cpp.git
+    GIT_TAG 20250814.1
+    GIT_SHALLOW TRUE
+  )
+  FetchContent_MakeAvailable(absl)
+  FetchContent_Declare(
+    re2
+    GIT_REPOSITORY https://github.com/google/re2.git
+    GIT_TAG 2025-08-12
+    GIT_SHALLOW TRUE
   )
   FetchContent_MakeAvailable(re2)
   set(RE2_LIBRARIES, re2::re2)
