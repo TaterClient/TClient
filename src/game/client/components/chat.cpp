@@ -572,7 +572,7 @@ void CChat::OnMessage(int MsgType, void *pRawMsg)
 			else
 			{
 				char aBuf[256];
-				str_format(aBuf, sizeof(aBuf), TCLocalize("Invalid regex: %s"), Regex.error());
+				str_format(aBuf, sizeof(aBuf), TCLocalize("Invalid regex: %s"), Regex.error().c_str());
 				log_error("regex", "Invalid regex: %s", Regex.error().c_str());
 				// Fail open
 			}
