@@ -2176,10 +2176,10 @@ void CMenus::RenderSettingsTClientInfo(CUIRect MainView)
 		SetFlag(g_Config.m_TcTClientSettingsTabs, i, s_aShowTabs[i]);
 	}
 
-	RightView.HSplitTop(HeadlineHeight, &Label, &RightView);
-	Ui()->DoLabel(&Label, TCLocalize("Integration"), HeadlineFontSize, TEXTALIGN_ML);
-	RightView.HSplitTop(MarginSmall, nullptr, &RightView);
-	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcDiscordRPC, TCLocalize("Enable Discord Integration"), &g_Config.m_TcDiscordRPC, &RightView, LineSize);
+	// RightView.HSplitTop(HeadlineHeight, &Label, &RightView);
+	// Ui()->DoLabel(&Label, TCLocalize("Integration"), HeadlineFontSize, TEXTALIGN_ML);
+	// RightView.HSplitTop(MarginSmall, nullptr, &RightView);
+	// DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcDiscordRPC, TCLocalize("Enable Discord Integration"), &g_Config.m_TcDiscordRPC, &RightView, LineSize);
 }
 
 void CMenus::RenderSettingsTClientProfiles(CUIRect MainView)

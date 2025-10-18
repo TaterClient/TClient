@@ -19,6 +19,6 @@ public:
 	virtual void UpdatePlayerCount(int Count) = 0;
 };
 
-IDiscord *CreateDiscord(bool UseStub = false);
+IDiscord *CreateDiscord();
 
 #endif // ENGINE_DISCORD_H

@@ -219,10 +219,10 @@ class CDiscordStub : public IDiscord
 	void UpdatePlayerCount(int Count) override {}
 };
 
-IDiscord *CreateDiscord(bool UseStub)
+IDiscord *CreateDiscord()
 {
 	IDiscord *pDiscord = CreateDiscordImpl();
-	if(pDiscord && !UseStub)
+	if(pDiscord)
 	{
 		return pDiscord;
 	}
