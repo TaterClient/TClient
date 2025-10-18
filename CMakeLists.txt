@@ -38,6 +38,8 @@ if (NOT RE2_FOUND)
   message(STATUS "RE2 not found")
   message(STATUS "    building RE2 2025-08-12 and absl 2025-08-14.1 instead")
   message(STATUS "    you should install RE2 for a faster build")
+  set(ABSL_ENABLE_INSTALL FALSE CACHE BOOL "" FORCE)
+  set(RE2_INSTALL OFF CACHE BOOL "" FORCE)
   include(FetchContent)
   FetchContent_Declare(
     absl
