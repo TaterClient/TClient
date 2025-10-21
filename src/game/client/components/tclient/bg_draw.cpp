@@ -591,7 +591,6 @@ void CBgDraw::OnMapLoad()
 
 void CBgDraw::OnStateChange(int NewState, int OldState)
 {
-	log_info("hI", "Old: %d, New: %d", OldState, NewState);
 	if(OldState == IClient::STATE_ONLINE || OldState == IClient::STATE_DEMOPLAYBACK)
 	{
 		if(g_Config.m_TcBgDrawAutoSaveLoad > 0)
