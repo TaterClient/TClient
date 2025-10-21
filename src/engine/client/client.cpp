@@ -4939,7 +4939,7 @@ int main(int argc, const char **argv)
 		if(!pConsole->ExecuteFile(s_aConfigDomains[ConfigDomain].m_aConfigPath))
 		{
 			char aError[2048];
-			snprintf(aError, sizeof(aError), "Failed to load config from '%s'.", s_aConfigDomains[ConfigDomain].m_aConfigPath);
+			str_format(aError, sizeof(aError), "Failed to load config from '%s'.", s_aConfigDomains[ConfigDomain].m_aConfigPath);
 			log_error("client", "%s", aError);
 			pClient->ShowMessageBox({.m_pTitle = "Config File Error", .m_pMessage = aError});
 			PerformAllCleanup();
