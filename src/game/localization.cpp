@@ -103,9 +103,9 @@ void CLocalizationDatabase::LoadIndexfile(IStorage *pStorage, IConsole *pConsole
 			continue;
 		}
 
-		char aFileName[IO_MAX_PATH_LENGTH];
-		str_format(aFileName, sizeof(aFileName), "languages/%s.txt", aEnglishName);
-		m_vLanguages.emplace_back(aNativeName, aFileName, str_toint(aCountryCode), vLanguageCodes);
+		char aFilename[IO_MAX_PATH_LENGTH];
+		str_format(aFilename, sizeof(aFilename), "languages/%s.txt", aEnglishName);
+		m_vLanguages.emplace_back(aNativeName, aFilename, str_toint(aCountryCode), vLanguageCodes);
 	}
 
 	std::sort(m_vLanguages.begin(), m_vLanguages.end());
@@ -117,7 +117,7 @@ void CLocalizationDatabase::SelectDefaultLanguage(IConsole *pConsole, char *pFil
 		return;
 	if(Languages().size() == 1)
 	{
-		str_copy(pFilename, Languages()[0].m_FileName.c_str(), Length);
+		str_copy(pFilename, Languages()[0].m_Filename.c_str(), Length);
 		return;
 	}
 
@@ -136,7 +136,7 @@ void CLocalizationDatabase::SelectDefaultLanguage(IConsole *pConsole, char *pFil
 				if(LanguageCode == aLocaleStr)
 				{
 					// Exact match found, use it immediately
-					str_copy(pFilename, Language.m_FileName.c_str(), Length);
+					str_copy(pFilename, Language.m_Filename.c_str(), Length);
 					return;
 				}
 				else if(LanguageCode.starts_with(aLocaleStr))
@@ -149,7 +149,7 @@ void CLocalizationDatabase::SelectDefaultLanguage(IConsole *pConsole, char *pFil
 		// Use prefix match if no exact match was found
 		if(pPrefixMatch)
 		{
-			str_copy(pFilename, pPrefixMatch->m_FileName.c_str(), Length);
+			str_copy(pFilename, pPrefixMatch->m_Filename.c_str(), Length);
 			return;
 		}
 

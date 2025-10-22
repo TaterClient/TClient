@@ -470,7 +470,7 @@ public:
 	static void ConchainRegisterCommunityTokenRedact(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainLoglevel(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainStdoutOutputLevel(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
-	static void ConchainAnnouncementFileName(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
+	static void ConchainAnnouncementFilename(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 	static void ConchainInputFifo(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 #if defined(CONF_FAMILY_UNIX)
@@ -515,7 +515,7 @@ public:
 	const char *GetNetErrorString(int ClientId) override { return m_NetServer.ErrorString(ClientId); }
 	void ResetNetErrorString(int ClientId) override { m_NetServer.ResetErrorString(ClientId); }
 	bool SetTimedOut(int ClientId, int OrigId) override;
-	void SetTimeoutProtected(int ClientId) override { m_NetServer.SetTimeoutProtected(ClientId); }
+	void SetTimeoutProtected(int ClientId) override { m_NetServer.IgnoreTimeouts(ClientId); }
 
 	void SendMsgRaw(int ClientId, const void *pData, int Size, int Flags) override;
 

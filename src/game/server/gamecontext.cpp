@@ -1877,6 +1877,14 @@ void CGameContext::TeehistorianRecordTeamFinish(int TeamId, int TimeTicks)
 	}
 }
 
+void CGameContext::TeehistorianRecordAuthLogin(int ClientId, int Level, const char *pAuthName)
+{
+	if(m_TeeHistorianActive)
+	{
+		m_TeeHistorian.RecordAuthLogin(ClientId, Level, pAuthName);
+	}
+}
+
 bool CGameContext::OnClientDDNetVersionKnown(int ClientId)
 {
 	IServer::CClientInfo Info;
@@ -4048,7 +4056,7 @@ void CGameContext::OnInit(const void *pPersistentData)
 
 	m_pConfigManager->SetGameSettingsReadOnly(false);
 
-	Console()->ExecuteFile(g_Config.m_SvResetFile, -1);
+	Console()->ExecuteFile(g_Config.m_SvResetFile, IConsole::CLIENT_ID_UNSPECIFIED);
 
 	LoadMapSettings();
 
@@ -4140,20 +4148,6 @@ void CGameContext::OnInit(const void *pPersistentData)
 		}
 
 		m_TeeHistorian.Reset(&GameInfo, TeeHistorianWrite, this);
-
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(Server()->ClientSlotEmpty(i))
-			{
-				continue;
-			}
-			const int Level = Server()->GetAuthedState(i);
-			if(Level == AUTHED_NO)
-			{
-				continue;
-			}
-			m_TeeHistorian.RecordAuthInitial(i, Level, Server()->GetAuthName(i));
-		}
 	}
 
 	Server()->DemoRecorder_HandleAutoStart();
