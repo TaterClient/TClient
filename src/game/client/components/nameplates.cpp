@@ -529,7 +529,7 @@ public:
 class CNamePlatePartSkin : public CNamePlatePartText
 {
 private:
-	char m_aText[MAX_CLAN_LENGTH] = "";
+	char m_aText[MAX_SKIN_LENGTH] = "";
 	float m_FontSize = -INFINITY;
 
 protected:
@@ -647,7 +647,7 @@ private:
 		}
 	}
 	template<typename PartType, typename... ArgsType>
-	void AddPart(CGameClient &This, ArgsType &&... Args)
+	void AddPart(CGameClient &This, ArgsType &&...Args)
 	{
 		m_vpParts.push_back(std::make_unique<PartType>(This, std::forward<ArgsType>(Args)...));
 	}
@@ -1038,7 +1038,7 @@ void CNamePlates::OnRender()
 			// TClient
 			if(GameClient()->m_aClients[i].m_IsVolleyBall)
 				continue;
-			//if(g_Config.m_TcRenderNameplateSpec > 0)
+			// if(g_Config.m_TcRenderNameplateSpec > 0)
 			//	continue;
 			const vec2 RenderPos = GameClient()->m_aClients[i].m_RenderPos;
 			RenderNamePlateGame(RenderPos, pInfo, 1.0f);
