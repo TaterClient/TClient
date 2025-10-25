@@ -2,6 +2,7 @@
 #define GAME_CLIENT_COMPONENTS_TCLIENT_TCLIENT_H
 
 #include <engine/client/enums.h>
+#include <engine/shared/config.h>
 #include <engine/shared/console.h>
 #include <engine/shared/http.h>
 
@@ -66,6 +67,17 @@ public:
 	bool InfoTaskDone() { return m_pTClientInfoTask && m_pTClientInfoTask->State() == EHttpState::DONE; }
 	bool m_FetchedTClientInfo = false;
 	char m_aVersionStr[10] = "0";
+
+private:
+	std::array<int, NUM_DUMMIES> m_aFakeCountry; // 0 is none
+
+public:
+	int GetCountry(int Dummy) {
+		if(m_aFakeCountry[Dummy] == 0)
+			return Dummy ? g_Config.m_ClDummyCountry : g_Config.m_PlayerCountry;
+		return m_aFakeCountry[Dummy];
+	}
+	void SetFakeCountry(int Dummy, int Flag);
 };
 
 #endif

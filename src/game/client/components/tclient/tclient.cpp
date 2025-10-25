@@ -424,6 +424,18 @@ void CTClient::OnConsoleInit()
 			((CTClient *)pUserData)->SetForcedAspect();
 		},
 		this);
+
+	Console()->Register("dbg_set_flag", "i[dummy] i[flag]", CFGFLAG_CLIENT, [](IConsole::IResult *pResult, void *pUserData) {
+		if(pResult->GetInteger(0) < 0 || pResult->GetInteger(0) > 1)
+		{
+			log_error("TClient", "Invalid dummy");
+			return;
+		}
+		int &FakeCountry = ((CTClient *)pUserData)->m_aFakeCountry[pResult->GetInteger(0)];
+		int FakeCountryOld = FakeCountry;
+		((CTClient *)pUserData)->SetFakeCountry(pResult->GetInteger(0), pResult->GetInteger(1));
+		log_info("TClient", "Was %d, now %d", FakeCountryOld, FakeCountry);
+	}, this, "Debug: set the fake country flag used for TClient accounts");
 }
 
 void CTClient::RandomBodyColor()
@@ -494,7 +506,7 @@ void CTClient::DoFinishCheck()
 		CNetMsg_Cl_ChangeInfo Msg;
 		Msg.m_pName = pNewName;
 		Msg.m_pClan = Conn == 0 ? g_Config.m_PlayerClan : g_Config.m_ClDummyClan;
-		Msg.m_Country = Conn == 0 ? g_Config.m_PlayerCountry : g_Config.m_ClDummyCountry;
+		Msg.m_Country = GameClient()->m_TClient.GetCountry(Conn);
 		Msg.m_pSkin = Conn == 0 ? g_Config.m_ClPlayerSkin : g_Config.m_ClDummySkin;
 		Msg.m_UseCustomColor = Conn == 0 ? g_Config.m_ClPlayerUseCustomColor : g_Config.m_ClDummyUseCustomColor;
 		Msg.m_ColorBody = Conn == 0 ? g_Config.m_ClPlayerColorBody : g_Config.m_ClDummyColorBody;
@@ -846,4 +858,12 @@ void CTClient::RenderCtfFlag(vec2 Pos, float Alpha)
 	Graphics()->QuadsSetRotation(0.0f);
 	Graphics()->SetColor(1.0f, 1.0f, 1.0f, Alpha);
 	Graphics()->RenderQuadContainerAsSprite(GameClient()->m_Items.m_ItemsQuadContainerIndex, QuadOffset, Pos.x, Pos.y - Size * 0.75f);
+}
+
+void CTClient::SetFakeCountry(int Dummy, int Flag) {
+	m_aFakeCountry[Dummy] = Flag;
+	if(Dummy)
+		GameClient()->SendDummyInfo(false);
+	else
+		GameClient()->SendInfo(false);
 }

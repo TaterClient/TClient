@@ -881,7 +881,7 @@ void CGameClient::OnRender()
 				if(
 					str_comp(m_aClients[m_aLocalIds[0]].m_aName, Client()->PlayerName()) ||
 					str_comp(m_aClients[m_aLocalIds[0]].m_aClan, g_Config.m_PlayerClan) ||
-					m_aClients[m_aLocalIds[0]].m_Country != g_Config.m_PlayerCountry ||
+					m_aClients[m_aLocalIds[0]].m_Country != m_TClient.GetCountry(0) ||
 					str_comp(m_aClients[m_aLocalIds[0]].m_aSkinName, g_Config.m_ClPlayerSkin) ||
 					m_aClients[m_aLocalIds[0]].m_UseCustomColor != g_Config.m_ClPlayerUseCustomColor ||
 					m_aClients[m_aLocalIds[0]].m_ColorBody != (int)g_Config.m_ClPlayerColorBody ||
@@ -913,7 +913,7 @@ void CGameClient::OnRender()
 					if(
 						str_comp(m_aClients[m_aLocalIds[1]].m_aName, Client()->DummyName()) ||
 						str_comp(m_aClients[m_aLocalIds[1]].m_aClan, g_Config.m_ClDummyClan) ||
-						m_aClients[m_aLocalIds[1]].m_Country != g_Config.m_ClDummyCountry ||
+						m_aClients[m_aLocalIds[1]].m_Country != m_TClient.GetCountry(1) ||
 						str_comp(m_aClients[m_aLocalIds[1]].m_aSkinName, g_Config.m_ClDummySkin) ||
 						m_aClients[m_aLocalIds[1]].m_UseCustomColor != g_Config.m_ClDummyUseCustomColor ||
 						m_aClients[m_aLocalIds[1]].m_ColorBody != (int)g_Config.m_ClDummyColorBody ||
@@ -3231,7 +3231,7 @@ void CGameClient::SendStartInfo7(bool Dummy)
 	protocol7::CNetMsg_Cl_StartInfo Msg;
 	Msg.m_pName = Dummy ? Client()->DummyName() : Client()->PlayerName();
 	Msg.m_pClan = Dummy ? Config()->m_ClDummyClan : Config()->m_PlayerClan;
-	Msg.m_Country = Dummy ? Config()->m_ClDummyCountry : Config()->m_PlayerCountry;
+	Msg.m_Country = m_TClient.GetCountry(Dummy);
 	for(int p = 0; p < protocol7::NUM_SKINPARTS; p++)
 	{
 		Msg.m_apSkinPartNames[p] = CSkins7::ms_apSkinVariables[(int)Dummy][p];
@@ -3295,7 +3295,7 @@ bool CGameClient::GotWantedSkin7(bool Dummy)
 	// 	return false;
 	// if(str_comp(m_aClients[m_aLocalIds[(int)Dummy]].m_aClan, Dummy ? g_Config.m_ClDummyClan : g_Config.m_PlayerClan))
 	// 	return false;
-	// if(m_aClients[m_aLocalIds[(int)Dummy]].m_Country != (Dummy ? g_Config.m_ClDummyCountry : g_Config.m_PlayerCountry))
+	// if(m_aClients[m_aLocalIds[(int)Dummy]].m_Country != m_TClient.GetCountry(Dummy))
 	// 	return false;
 
 	return true;
@@ -3316,7 +3316,7 @@ void CGameClient::SendInfo(bool Start)
 		CNetMsg_Cl_StartInfo Msg;
 		Msg.m_pName = Client()->PlayerName();
 		Msg.m_pClan = g_Config.m_PlayerClan;
-		Msg.m_Country = g_Config.m_PlayerCountry;
+		Msg.m_Country = m_TClient.GetCountry(0);
 		Msg.m_pSkin = g_Config.m_ClPlayerSkin;
 		Msg.m_UseCustomColor = g_Config.m_ClPlayerUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClPlayerColorBody;
@@ -3331,7 +3331,7 @@ void CGameClient::SendInfo(bool Start)
 		CNetMsg_Cl_ChangeInfo Msg;
 		Msg.m_pName = Client()->PlayerName();
 		Msg.m_pClan = g_Config.m_PlayerClan;
-		Msg.m_Country = g_Config.m_PlayerCountry;
+		Msg.m_Country = m_TClient.GetCountry(0);
 		Msg.m_pSkin = g_Config.m_ClPlayerSkin;
 		Msg.m_UseCustomColor = g_Config.m_ClPlayerUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClPlayerColorBody;
@@ -3358,7 +3358,7 @@ void CGameClient::SendDummyInfo(bool Start)
 		CNetMsg_Cl_StartInfo Msg;
 		Msg.m_pName = Client()->DummyName();
 		Msg.m_pClan = g_Config.m_ClDummyClan;
-		Msg.m_Country = g_Config.m_ClDummyCountry;
+		Msg.m_Country = m_TClient.GetCountry(1);
 		Msg.m_pSkin = g_Config.m_ClDummySkin;
 		Msg.m_UseCustomColor = g_Config.m_ClDummyUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClDummyColorBody;
@@ -3373,7 +3373,7 @@ void CGameClient::SendDummyInfo(bool Start)
 		CNetMsg_Cl_ChangeInfo Msg;
 		Msg.m_pName = Client()->DummyName();
 		Msg.m_pClan = g_Config.m_ClDummyClan;
-		Msg.m_Country = g_Config.m_ClDummyCountry;
+		Msg.m_Country = m_TClient.GetCountry(1);
 		Msg.m_pSkin = g_Config.m_ClDummySkin;
 		Msg.m_UseCustomColor = g_Config.m_ClDummyUseCustomColor;
 		Msg.m_ColorBody = g_Config.m_ClDummyColorBody;
