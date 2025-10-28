@@ -453,10 +453,10 @@ void CTClient::RandomFlag(void *pUserData)
 	int FlagNumber = std::rand() % FlagCount;
 
 	// get the flag name
-	const CCountryFlags::CCountryFlag *pFlag = pThis->GameClient()->m_CountryFlags.GetByIndex(FlagNumber);
+	const CCountryFlags::CCountryFlag &Flag = pThis->GameClient()->m_CountryFlags.GetByIndex(FlagNumber);
 
 	// set the flag code as number
-	g_Config.m_PlayerCountry = pFlag->m_CountryCode;
+	g_Config.m_PlayerCountry = Flag.m_CountryCode;
 }
 
 void CTClient::DoFinishCheck()
