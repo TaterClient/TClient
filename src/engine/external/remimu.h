@@ -839,12 +839,6 @@ REMIMU_FUNC_VISIBILITY int64_t regex_match(const RegexToken * tokens, const char
 {
     (void)text;
 
-#ifdef REGEX_VERBOSE
-    const uint8_t verbose = 1;
-#else
-    const uint8_t verbose = 0;
-#endif
-
 #define IF_VERBOSE(X) { if (verbose) { X } }
 
 #ifdef REGEX_STACK_SMOL
