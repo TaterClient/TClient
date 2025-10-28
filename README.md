@@ -35,7 +35,7 @@ Here is a list of variables which are available:
 | `ifreq` | `s[a] s[b] r[command]` | Comapre 2 values, if a matches the regex b run the command |
 | `ifrneq` | `s[a] s[b] r[command]` | Comapre 2 values, if a doesnt match the regex b run the command |
 
-(Note the regex engine is [RE2](https://github.com/google/re2/))
+(Note the regex engine is [Remimu](https://github.com/wareya/Remimu))
 
 With the commands listed above and the substitutions you can create simple comparisons, here is a few examples.
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14...3.27.4)
+cmake_minimum_required(VERSION 3.12...3.27.4)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15 CACHE INTERNAL "Minimum macOS deployment version")
 if(CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS 10.15)
@@ -24,14 +24,10 @@ endif()
 
 # <TClient>
 
-# data_version.txt
-
 set(DATA_VERSION_FILE "${CMAKE_BINARY_DIR}/data/data_version.txt")
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/data")
 
 file(WRITE "${DATA_VERSION_FILE}" "DDNet ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}\n")
-
-# tclient version
 
 file(STRINGS src/game/version.h TCLIENT_VERSION_LINE
   LIMIT_COUNT 1
@@ -57,50 +53,6 @@ else()
 endif()
 
 file(APPEND "${DATA_VERSION_FILE}" "TClient ${TCLIENT_VERSION_MAJOR}.${TCLIENT_VERSION_MINOR}.${TCLIENT_VERSION_PATCH}\n")
-
-# Try install RE2 for CI
-if(DEFINED ENV{GITHUB_ACTIONS})
-  message(STATUS "Detected GitHub Actions CI, installing re2")
-  message(STATUS "System Name: ${CMAKE_HOST_SYSTEM_NAME}")
-  if(MINGW OR MSYS)
-    execute_process(COMMAND pacman -Sy --noconfirm mingw-w64-x86_64-re2)
-  elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
-    execute_process(COMMAND sudo apt-get install -y libre2-dev)
-  elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
-    execute_process(COMMAND brew install re2)
-  elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-    set(VCPKG_DIR "${CMAKE_BINARY_DIR}/vcpkg")
-    set(ENV{VCPKG_DISABLE_METRICS} "yes")
-    set(ENV{VCPKG_ROOT} "${VCPKG_DIR}")
-    execute_process(COMMAND git clone --depth 1 https://github.com/microsoft/vcpkg.git "${VCPKG_DIR}" RESULT_VARIABLE GIT_CLONE_RESULT)
-    if(NOT GIT_CLONE_RESULT EQUAL 0)
-      message(FATAL_ERROR "Failed to clone vcpkg")
-    endif()
-    execute_process(COMMAND "${VCPKG_DIR}/bootstrap-vcpkg.bat" WORKING_DIRECTORY "${VCPKG_DIR}" RESULT_VARIABLE BOOTSTRAP_RESULT)
-    if(NOT BOOTSTRAP_RESULT EQUAL 0)
-      message(FATAL_ERROR "Failed to bootstrap vcpkg")
-    endif()
-    set(ENV{VCPKG_BUILD_TYPE} "release")
-    execute_process(COMMAND "${VCPKG_DIR}/vcpkg.exe" install re2 WORKING_DIRECTORY "${VCPKG_DIR}" RESULT_VARIABLE VCPKG_INSTALL_RE2_RESULT)
-    if(NOT VCPKG_INSTALL_RE2_RESULT EQUAL 0)
-      message(FATAL_ERROR "Failed to install re2 via vcpkg")
-    endif()
-  else()
-    message(FATAL_ERROR "Couldn't install re2")
-  endif()
-endif()
-# Find package
-find_package(RE2 QUIET)
-if(NOT RE2_FOUND)
-  find_package(RE2 CONFIG QUIET)
-  if(NOT RE2_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(RE2 REQUIRED re2)
-  endif()
-endif()
-message(STATUS "RE2_INCLUDE_DIRS = ${RE2_INCLUDE_DIRS}")
-message(STATUS "RE2_LIBRARY_DIRS = ${RE2_LIBRARY_DIRS}")
-message(STATUS "RE2_LIBRARIES = ${RE2_LIBRARIES}")
 
 # </TClient>
 
@@ -2310,6 +2262,7 @@ set_src(ENGINE_SHARED GLOB_RECURSE src/engine/shared
   websockets.h
 )
 set_src(ENGINE_EXTERNAL GLOB src/engine/external
+  remimu.h
   spt.cpp
   spt.h
   tinyexpr.cpp
@@ -2788,7 +2741,6 @@ if(CLIENT)
 
   # Libraries
   set(LIBS_CLIENT
-    ${RE2_LIBRARIES} # TClient
     ${FREETYPE_LIBRARIES}
     ${GLEW_LIBRARIES}
     ${PNG_LIBRARIES}
@@ -2873,7 +2825,6 @@ if(CLIENT)
   endif()
 
   target_include_directories(game-client SYSTEM PRIVATE
-    ${RE2_INCLUDE_DIRS} # TClient
     ${FREETYPE_INCLUDE_DIRS}
     ${GLEW_INCLUDE_DIRS}
     ${OGG_INCLUDE_DIRS}
