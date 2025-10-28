@@ -18,6 +18,7 @@
 class CTranslateResponse
 {
 public:
+	bool m_Error = false;
 	char m_Text[1024] = "";
 	char m_Language[16] = "";
 };

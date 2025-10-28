@@ -108,6 +108,11 @@ class CTranslateBackendLibretranslate : public ITranslateBackendHttp
 private:
 	bool ParseResponseJson(const json_value *pObj, CTranslateResponse &Out)
 	{
+		if(!pObj) {
+			str_copy(Out.m_Text, "Response is not JSON");
+			return false;
+		}
+
 		if(pObj->type != json_object)
 		{
 			str_copy(Out.m_Text, "Response is not object");
@@ -218,6 +223,11 @@ class CTranslateBackendFtapi : public ITranslateBackendHttp
 private:
 	bool ParseResponseJson(const json_value *pObj, CTranslateResponse &Out)
 	{
+		if(!pObj) {
+			str_copy(Out.m_Text, "Response is not JSON");
+			return false;
+		}
+
 		if(pObj->type != json_object)
 		{
 			str_copy(Out.m_Text, "Response is not object");
@@ -428,10 +438,10 @@ void CTranslate::OnRender()
 		}
 		else
 		{
-			char aBuf[1024];
+			char aBuf[sizeof(Job.m_pTranslateResponse->m_Text)];
 			str_format(aBuf, sizeof(aBuf), TCLocalize("[%s to %s failed: %s]", "translate"), Job.m_pBackend->Name(), g_Config.m_TcTranslateTarget, Job.m_pTranslateResponse->m_Text);
-			GameClient()->m_Chat.Echo(aBuf);
-			Job.m_pTranslateResponse->m_Text[0] = '\0';
+			Job.m_pTranslateResponse->m_Error = true;
+			str_copy(Job.m_pTranslateResponse->m_Text, aBuf);
 		}
 		Job.m_pLine->m_Time = Time;
 		GameClient()->m_Chat.RebuildChat();

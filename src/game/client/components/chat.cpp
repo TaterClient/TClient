@@ -1141,6 +1141,7 @@ void CChat::OnPrepareLines(float y)
 			ColoredParts.m_vParts.emplace_back(pText);
 		}
 
+		const char *pTranslatedError = nullptr;
 		const char *pTranslatedText = nullptr;
 		const char *pTranslatedLanguage = nullptr;
 		if(Line.m_pTranslateResponse != nullptr && Line.m_pTranslateResponse->m_Text[0])
@@ -1148,7 +1149,11 @@ void CChat::OnPrepareLines(float y)
 			// If hidden and there is translated text
 			if(pText != Line.m_aText)
 			{
-				pTranslatedText = TCLocalize("Translated text hidden due to streamer mode");
+				pTranslatedError = TCLocalize("Translated text hidden due to streamer mode");
+			}
+			else if(Line.m_pTranslateResponse->m_Error)
+			{
+				pTranslatedError = Line.m_pTranslateResponse->m_Text;
 			}
 			else
 			{
@@ -1207,6 +1212,14 @@ void CChat::OnPrepareLines(float y)
 				TextRender()->TextEx(&AppendCursor, "\n");
 				AppendCursor.m_FontSize *= 0.8f;
 				TextRender()->TextEx(&AppendCursor, pText);
+				AppendCursor.m_FontSize /= 0.8f;
+			}
+			else if(pTranslatedError)
+			{
+				TextRender()->TextEx(&AppendCursor, pText);
+				TextRender()->TextEx(&AppendCursor, "\n");
+				AppendCursor.m_FontSize *= 0.8f;
+				TextRender()->TextEx(&AppendCursor, pTranslatedError);
 				AppendCursor.m_FontSize /= 0.8f;
 			}
 			else
@@ -1316,23 +1329,37 @@ void CChat::OnPrepareLines(float y)
 			TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, pTranslatedText);
 			if(pTranslatedLanguage)
 			{
-				ColorRGBA Color80 = Color;
-				Color80.r *= 0.8f;
-				Color80.g *= 0.8f;
-				Color80.b *= 0.8f;
-				TextRender()->TextColor(Color80);
+				ColorRGBA ColorLang = Color;
+				ColorLang.r *= 0.8f;
+				ColorLang.g *= 0.8f;
+				ColorLang.b *= 0.8f;
+				TextRender()->TextColor(ColorLang);
 				TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, " [");
 				TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, pTranslatedLanguage);
 				TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, "]");
 			}
-			ColorRGBA Color70 = Color;
-			Color70.r *= 0.7f;
-			Color70.g *= 0.7f;
-			Color70.b *= 0.7f;
-			TextRender()->TextColor(Color70);
+			ColorRGBA ColorSub = Color;
+			ColorSub.r *= 0.7f;
+			ColorSub.g *= 0.7f;
+			ColorSub.b *= 0.7f;
+			TextRender()->TextColor(ColorSub);
 			TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, "\n");
 			AppendCursor.m_FontSize *= 0.8f;
 			TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, pText);
+			AppendCursor.m_FontSize /= 0.8f;
+			TextRender()->TextColor(Color);
+		}
+		else if(pTranslatedError)
+		{
+			TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, pText);
+			ColorRGBA ColorSub = Color;
+			ColorSub.r *= 0.8f;
+			ColorSub.g *= 0.4f;
+			ColorSub.b *= 0.4f;
+			TextRender()->TextColor(ColorSub);
+			TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, "\n");
+			AppendCursor.m_FontSize *= 0.8f;
+			TextRender()->CreateOrAppendTextContainer(Line.m_TextContainerIndex, &AppendCursor, pTranslatedError);
 			AppendCursor.m_FontSize /= 0.8f;
 			TextRender()->TextColor(Color);
 		}
