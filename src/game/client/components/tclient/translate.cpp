@@ -157,7 +157,7 @@ private:
 		if(pConfidence == &json_value_none || ((pConfidence->type == json_double && pConfidence->u.dbl == 0.0f) ||
 							      (pConfidence->type == json_integer && pConfidence->u.integer == 0)))
 		{
-			str_copy(Out.m_Text, "Language unknown, not detected or not installed");
+			str_copy(Out.m_Text, "Unknown language");
 			return false;
 		}
 
