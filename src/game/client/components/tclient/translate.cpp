@@ -208,9 +208,8 @@ public:
 		}
 		Json.EndObject();
 		CreateHttpRequest(Http, g_Config.m_TcTranslateEndpoint[0] == '\0' ? "localhost:5000/translate" : g_Config.m_TcTranslateEndpoint);
-		const char *out = Json.GetOutputString().c_str();
-		log_info("hi", out);
-		m_pHttpRequest->PostJson(out);
+		const char *pJson = Json.GetOutputString().c_str();
+		m_pHttpRequest->PostJson(pJson);
 	}
 };
 
