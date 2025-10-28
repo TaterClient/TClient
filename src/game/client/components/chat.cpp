@@ -952,7 +952,7 @@ void CChat::AddLine(int ClientId, int Team, const char *pLine)
 	}
 
 	// TClient
-	if(g_Config.m_TcTranslateAuto)
+	if(g_Config.m_TcTranslateAuto && CurrentLine.m_ClientId != CLIENT_MSG)
 	{
 		bool AllowAutoTranslate = true;
 		if(str_comp(g_Config.m_TcTranslateBackend, "ftapi") == 0)
