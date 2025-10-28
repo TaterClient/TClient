@@ -885,9 +885,9 @@ Overwrite clan even if empty
 == 即使战队为空也覆盖
 
 [translate]
-[%s translating to %s]
+%s translating to %s
 == %s 翻译为 %s
 
 [translate]
-[%s to %s failed: %s]
+%s to %s failed: %s
 == %s 翻译到 %s 失败: %s

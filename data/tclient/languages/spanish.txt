@@ -870,9 +870,9 @@ Changing name to %s near finish
 == 
 
 [translate]
-[%s translating to %s]
+%s translating to %s
 == 
 
 [translate]
-[%s to %s failed: %s]
+%s to %s failed: %s
 == 

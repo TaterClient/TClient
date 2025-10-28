@@ -879,9 +879,9 @@ Changing name to %s near finish
 == Изменение имени на %s возле финиша
 
 [translate]
-[%s translating to %s]
+%s translating to %s
 == %s переводит на %s
 
 [translate]
-[%s to %s failed: %s]
+%s to %s failed: %s
 == %s на %s не удался: %s
