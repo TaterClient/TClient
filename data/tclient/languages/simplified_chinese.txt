@@ -6,6 +6,7 @@
 # 2025-01-30 潘潘NO.1 & EdEnd
 # 2025-05-25 洛初
 # 2025-08-13 洛初
+# 2025-10-30 潘潘NO.1
 ##### /authors #####
 
 ##### translated strings #####
@@ -891,3 +892,54 @@ Overwrite clan even if empty
 [translate]
 %s to %s failed: %s
 == %s 翻译到 %s 失败: %s
+
+Auto execute
+== 自动执行
+
+Execute before connect
+== 连接前执行（控制台）
+
+Execute on join
+== 在连接时执行（控制台）
+
+Unhook & hook
+== 墙体轮廓
+
+Freeze & deep
+== 冷冻轮廓与深冷轮廓
+
+Unfreeze & undeep
+== 解冻轮廓
+
+Tele
+== 
+
+Run a console command before connect
+== 在连接前运行控制台命令
+
+Run a console command on join
+== 在加入时运行控制台命令
+
+Show ping colored circle in nameplates
+== 在名称前显示延迟彩色圆圈
+
+Show country flags in nameplates
+== 在名称前显示国家国旗
+
+None
+== 无
+
+Own
+== 仅自己
+
+Fake CTF flags
+== 伪造的夺旗比赛旗帜
+
+Red
+== 红
+
+Blue
+== 蓝
+
+The command is ran in console not chat
+== 在此绑定的命令会在控制台运行，而非聊天窗口，绑定发送文字需要在前面添加say
