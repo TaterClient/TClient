@@ -6,7 +6,7 @@
 # 2025-01-30 潘潘NO.1 & EdEnd
 # 2025-05-25 洛初
 # 2025-08-13 洛初
-# 2025-10-30 潘潘NO.1
+# 2025-10-30 潘潘NO.1 & EdEnd
 ##### /authors #####
 
 ##### translated strings #####
@@ -225,7 +225,7 @@ Show only freeze Players
 == 仅显示冻结玩家
 
 Render tiny tees instead of circles
-== 渲染成小Tee而不是圆圈
+== 渲染成迷你Tee而不是圆圈
 
 Use warlist groups for indicator
 == 使用敌对列表作为指示器
@@ -612,7 +612,7 @@ Auto Reply
 == 自动回复
 
 Auto reply to muted players
-== 自动回复已屏蔽的玩家
+== 自动回复已禁言的玩家
 
 Auto reply when tabbed out
 == 切出游戏窗口时自动回复
@@ -868,10 +868,10 @@ Show katan on frozen players
 == 在被冻结的玩家身上显示武士刀
 
 Tiny Tees
-== 更小的Tee
+== 迷你Tee
 
 Tiny Tee Size
-== 更小的Tee大小
+== 迷你Tee大小
 
 Show screen center lines
 == 显示屏幕中心线
@@ -900,7 +900,7 @@ Execute before connect
 == 连接前执行（控制台）
 
 Execute on join
-== 在连接时执行（控制台）
+== 在加入时执行（控制台）
 
 Unhook & hook
 == 墙体轮廓
@@ -912,7 +912,7 @@ Unfreeze & undeep
 == 解冻轮廓
 
 Tele
-== 
+== 传送轮廓
 
 Run a console command before connect
 == 在连接前运行控制台命令
@@ -921,10 +921,10 @@ Run a console command on join
 == 在加入时运行控制台命令
 
 Show ping colored circle in nameplates
-== 在名称前显示延迟彩色圆圈
+== 在名称前根据延迟显示彩色圆圈
 
 Show country flags in nameplates
-== 在名称前显示国家国旗
+== 在名称前显示国旗
 
 None
 == 无
@@ -933,7 +933,7 @@ Own
 == 仅自己
 
 Fake CTF flags
-== 伪造的夺旗比赛旗帜
+== 伪CTF旗帜
 
 Red
 == 红
