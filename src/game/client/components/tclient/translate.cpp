@@ -449,3 +449,22 @@ void CTranslate::OnRender()
 	};
 	m_vJobs.erase(std::remove_if(m_vJobs.begin(), m_vJobs.end(), ForEach), m_vJobs.end());
 }
+
+void CTranslate::AutoTranslate(CChat::CLine &Line)
+{
+	if(!g_Config.m_TcTranslateAuto)
+		return;
+	if(Line.m_ClientId == CChat::CLIENT_MSG)
+		return;
+	for(const int Id : GameClient()->m_aLocalIds) {
+		if(Id >= 0 && Id == Line.m_ClientId)
+			return;
+	}
+	if(str_comp(g_Config.m_TcTranslateBackend, "ftapi") == 0)
+	{
+		// FTAPI quickly gets overloaded, please do not disable this
+		// It may shut down if we spam it too hard
+		return;
+	}
+	Translate(Line, false);
+}

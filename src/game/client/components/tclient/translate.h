@@ -44,6 +44,8 @@ public:
 	void Translate(int Id, bool ShowProgress = true);
 	void Translate(const char *pName, bool ShowProgress = true);
 	void Translate(CChat::CLine &Line, bool ShowProgress = true);
+
+	void AutoTranslate(CChat::CLine &Line);
 };
 
 #endif

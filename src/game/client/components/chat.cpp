@@ -952,18 +952,7 @@ void CChat::AddLine(int ClientId, int Team, const char *pLine)
 	}
 
 	// TClient
-	if(g_Config.m_TcTranslateAuto && CurrentLine.m_ClientId != CLIENT_MSG)
-	{
-		bool AllowAutoTranslate = true;
-		if(str_comp(g_Config.m_TcTranslateBackend, "ftapi") == 0)
-		{
-			// FTAPI quickly gets overloaded, please do not disable this
-			// It may shut down if we spam it too hard
-			AllowAutoTranslate = false;
-		}
-		if(AllowAutoTranslate)
-			GameClient()->m_Translate.Translate(CurrentLine, false);
-	}
+	GameClient()->m_Translate.AutoTranslate(CurrentLine);
 }
 
 void CChat::OnPrepareLines(float y)
