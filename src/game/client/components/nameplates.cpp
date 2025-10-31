@@ -467,12 +467,14 @@ public:
 	friend class CGameClient;
 	void Update(CGameClient &This, const CNamePlateData &Data) override
 	{
-		m_Visible = g_Config.m_TcNameplateCountry;
+		m_CountryCode = This.m_aClients[Data.m_ClientId].m_Country;
+		m_Visible = g_Config.m_TcNameplateCountry // The config
+			&& !Data.m_Local // Not local player
+			&& m_CountryCode != 0 && m_CountryCode != -1 && m_CountryCode != -2; // No default flags
 		if(!m_Visible)
 			return;
 		m_Alpha = Data.m_Color.a;
 		m_Size = vec2(Data.m_FontSize / FLAG_RATIO, Data.m_FontSize);
-		m_CountryCode = This.m_aClients[Data.m_ClientId].m_Country;
 	}
 	void Render(CGameClient &This, vec2 Pos) const override
 	{
@@ -511,8 +513,8 @@ public:
 						    (Data.m_ShowName && g_Config.m_TcNameplatePingCircle > 0));
 		if(!m_Visible)
 			return;
-		int ping = Data.m_InGame ? This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Latency : (1 + Data.m_ClientId) * 25;
-		m_Color = color_cast<ColorRGBA>(ColorHSLA((float)(300 - std::clamp(ping, 0, 300)) / 1000.0f, 1.0f, 0.5f, Data.m_Color.a));
+		int Ping = Data.m_InGame ? This.m_Snap.m_apPlayerInfos[Data.m_ClientId]->m_Latency : (1 + Data.m_ClientId) * 25;
+		m_Color = color_cast<ColorRGBA>(ColorHSLA((float)(300 - std::clamp(Ping, 0, 300)) / 1000.0f, 1.0f, 0.5f, Data.m_Color.a));
 	}
 	void Render(CGameClient &This, vec2 Pos) const override
 	{
@@ -917,6 +919,7 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 	// TClient
 	if(g_Config.m_TcWarList && g_Config.m_TcWarListShowClan && GameClient()->m_WarList.GetWarData(pPlayerInfo->m_ClientId).m_WarClan)
 		Data.m_ShowClan = true;
+	Data.m_Local = pPlayerInfo->m_Local;
 
 	// Check if the nameplate is actually on screen
 	CNamePlate &NamePlate = m_pData->m_aNamePlates[pPlayerInfo->m_ClientId];
@@ -972,6 +975,9 @@ void CNamePlates::RenderNamePlatePreview(vec2 Position, int Dummy)
 		Data.m_HookStrongWeakState = Data.m_HookStrongWeakId == 2 ? EHookStrongWeakState::STRONG : EHookStrongWeakState::WEAK;
 		Data.m_ShowHookStrongWeak = g_Config.m_ClNamePlatesStrong > 0;
 	}
+
+	// TClient
+	Data.m_Local = false;
 
 	CTeeRenderInfo TeeRenderInfo;
 	if(Dummy == 0)
