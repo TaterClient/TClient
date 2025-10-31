@@ -20,7 +20,7 @@ extern const char *GIT_SHORTREV_HASH;
 
 // TClient
 #ifndef TCLIENT_VERSION
-#define TCLIENT_VERSION "10.6.0"
+#define TCLIENT_VERSION "10.7.0"
 #endif
 
 // custom
