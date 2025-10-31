@@ -469,8 +469,8 @@ public:
 	{
 		m_CountryCode = This.m_aClients[Data.m_ClientId].m_Country;
 		m_Visible = g_Config.m_TcNameplateCountry // The config
-			&& !Data.m_Local // Not local player
-			&& m_CountryCode != 0 && m_CountryCode != -1 && m_CountryCode != -2; // No default flags
+			    && !Data.m_Local // Not local player
+			    && m_CountryCode != 0 && m_CountryCode != -1 && m_CountryCode != -2; // No default flags
 		if(!m_Visible)
 			return;
 		m_Alpha = Data.m_Color.a;

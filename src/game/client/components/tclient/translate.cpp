@@ -1,4 +1,5 @@
 #include "translate.h"
+
 #include <base/log.h>
 
 #include <engine/shared/json.h>
@@ -108,7 +109,8 @@ class CTranslateBackendLibretranslate : public ITranslateBackendHttp
 private:
 	bool ParseResponseJson(const json_value *pObj, CTranslateResponse &Out)
 	{
-		if(!pObj) {
+		if(!pObj)
+		{
 			str_copy(Out.m_Text, "Response is not JSON");
 			return false;
 		}
@@ -223,7 +225,8 @@ class CTranslateBackendFtapi : public ITranslateBackendHttp
 private:
 	bool ParseResponseJson(const json_value *pObj, CTranslateResponse &Out)
 	{
-		if(!pObj) {
+		if(!pObj)
+		{
 			str_copy(Out.m_Text, "Response is not JSON");
 			return false;
 		}
@@ -456,7 +459,8 @@ void CTranslate::AutoTranslate(CChat::CLine &Line)
 		return;
 	if(Line.m_ClientId == CChat::CLIENT_MSG)
 		return;
-	for(const int Id : GameClient()->m_aLocalIds) {
+	for(const int Id : GameClient()->m_aLocalIds)
+	{
 		if(Id >= 0 && Id == Line.m_ClientId)
 			return;
 	}
