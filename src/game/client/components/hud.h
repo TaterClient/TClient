@@ -65,6 +65,14 @@ class CHud : public CComponent
 	STextContainerIndex m_aPlayerPositionContainers[2];
 	float m_aPlayerPrevPosition[2];
 
+	// Dummy hud
+	STextContainerIndex m_DummyAngleTextContainerIndex;
+	float m_DummyPrevAngle;
+	STextContainerIndex m_aDummySpeedTextContainers[2];
+	float m_aDummyPrevSpeed[2];
+	STextContainerIndex m_aDummyPositionContainers[2];
+	float m_aDummyPrevPosition[2];
+
 	void RenderCursor();
 
 	void RenderTextInfo();

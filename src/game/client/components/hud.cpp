@@ -39,6 +39,17 @@ CHud::CHud()
 		m_aPlayerPositionContainers[i].Reset();
 		m_aPlayerPrevPosition[i] = -INFINITY;
 	}
+
+	//Dummy hud
+	m_DummyAngleTextContainerIndex.Reset();
+	m_DummyPrevAngle = -INFINITY;
+	for(int i = 0; i < 2; i++)
+	{
+		m_aDummySpeedTextContainers[i].Reset();
+		m_aDummyPrevSpeed[i] = -INFINITY;
+		m_aDummyPositionContainers[i].Reset();
+		m_aDummyPrevPosition[i] = -INFINITY;
+	}
 }
 
 void CHud::ResetHudContainers()
@@ -63,6 +74,17 @@ void CHud::ResetHudContainers()
 		m_aPlayerPrevSpeed[i] = -INFINITY;
 		TextRender()->DeleteTextContainer(m_aPlayerPositionContainers[i]);
 		m_aPlayerPrevPosition[i] = -INFINITY;
+	}
+
+	//Dummy hud
+	TextRender()->DeleteTextContainer(m_DummyAngleTextContainerIndex);
+	m_DummyPrevAngle = -INFINITY;
+	for(int i = 0; i < 2; i++)
+	{
+		TextRender()->DeleteTextContainer(m_aDummySpeedTextContainers[i]);
+		m_aDummyPrevSpeed[i] = -INFINITY;
+		TextRender()->DeleteTextContainer(m_aDummyPositionContainers[i]);
+		m_aDummyPrevPosition[i] = -INFINITY;
 	}
 }
 
@@ -1577,8 +1599,8 @@ inline int CHud::GetDigitsIndex(int Value, int Max)
 inline float CHud::GetMovementInformationBoxHeight()
 {
 	if(GameClient()->m_Snap.m_SpecInfo.m_Active && (GameClient()->m_Snap.m_SpecInfo.m_SpectatorId == SPEC_FREEVIEW || GameClient()->m_aClients[GameClient()->m_Snap.m_SpecInfo.m_SpectatorId].m_SpecCharPresent))
-		return g_Config.m_ClShowhudPlayerPosition ? 3.0f * MOVEMENT_INFORMATION_LINE_HEIGHT + 2.0f : 0.0f;
-	float BoxHeight = 3.0f * MOVEMENT_INFORMATION_LINE_HEIGHT * (g_Config.m_ClShowhudPlayerPosition + g_Config.m_ClShowhudPlayerSpeed) + 2.0f * MOVEMENT_INFORMATION_LINE_HEIGHT * g_Config.m_ClShowhudPlayerAngle;
+		return g_Config.m_ClShowhudPlayerPosition ? 3.0f * MOVEMENT_INFORMATION_LINE_HEIGHT + 2.0f + (g_Config.m_TcShowhudDummyPosition && Client()->DummyConnected() ? 2.0f * MOVEMENT_INFORMATION_LINE_HEIGHT : 0.0f) : 0.0f;
+	float BoxHeight = 3.0f * MOVEMENT_INFORMATION_LINE_HEIGHT * (g_Config.m_ClShowhudPlayerPosition + g_Config.m_ClShowhudPlayerSpeed) + 2.0f * MOVEMENT_INFORMATION_LINE_HEIGHT * g_Config.m_ClShowhudPlayerAngle + (Client()->DummyConnected() ? 2.0f * MOVEMENT_INFORMATION_LINE_HEIGHT * (g_Config.m_TcShowhudDummyPosition * g_Config.m_ClShowhudPlayerPosition + g_Config.m_TcShowhudDummySpeed * g_Config.m_ClShowhudPlayerSpeed) + MOVEMENT_INFORMATION_LINE_HEIGHT * g_Config.m_TcShowhudDummyAngle * g_Config.m_ClShowhudPlayerAngle : 0.0f);
 	if(g_Config.m_ClShowhudPlayerPosition || g_Config.m_ClShowhudPlayerSpeed || g_Config.m_ClShowhudPlayerAngle)
 	{
 		BoxHeight += 2.0f;
@@ -1666,7 +1688,7 @@ void CHud::RenderMovementInformation()
 	const bool PosOnly = ClientId == SPEC_FREEVIEW || (GameClient()->m_aClients[ClientId].m_SpecCharPresent);
 	// Draw the information depending on settings: Position, speed and target angle
 	// This display is only to present the available information from the last snapshot, not to interpolate or predict
-	if(!g_Config.m_ClShowhudPlayerPosition && (PosOnly || (!g_Config.m_ClShowhudPlayerSpeed && !g_Config.m_ClShowhudPlayerAngle)))
+	if(!g_Config.m_ClShowhudPlayerPosition && (PosOnly || (!g_Config.m_ClShowhudPlayerSpeed && !g_Config.m_ClShowhudPlayerAngle)) && (!Client()->DummyConnected() || (!g_Config.m_TcShowhudDummyPosition && (PosOnly || (!g_Config.m_TcShowhudDummySpeed && !g_Config.m_TcShowhudDummyAngle)))))
 	{
 		return;
 	}
@@ -1685,6 +1707,14 @@ void CHud::RenderMovementInformation()
 
 	Graphics()->DrawRect(StartX, StartY, BoxWidth, BoxHeight, ColorRGBA(0.0f, 0.0f, 0.0f, 0.4f), IGraphics::CORNER_L, 5.0f);
 
+	CMovementInformation DummyInfo{};
+	bool HasDummyInfo = false;
+	if((g_Config.m_TcShowhudDummyPosition || g_Config.m_TcShowhudDummySpeed || g_Config.m_TcShowhudDummyAngle) && Client()->DummyConnected())
+	{
+		DummyInfo = GetMovementInformation(GameClient()->m_aLocalIds[!g_Config.m_ClDummy], g_Config.m_ClDummy);
+		HasDummyInfo = DummyInfo.m_Pos != vec2(0.0f, 0.0f) || DummyInfo.m_Angle != 0.0f || DummyInfo.m_Speed != vec2(0.0f, 0.0f); //Yes bad test but idk another way, server gives that if u don't see dummy
+	}
+
 	const CMovementInformation Info = GetMovementInformation(ClientId, g_Config.m_ClDummy);
 
 	float y = StartY + LineSpacer * 2.0f;
@@ -1698,13 +1728,36 @@ void CHud::RenderMovementInformation()
 
 		TextRender()->Text(LeftX, y, Fontsize, "X:", -1.0f);
 		UpdateMovementInformationTextContainer(m_aPlayerPositionContainers[0], Fontsize, Info.m_Pos.x, m_aPlayerPrevPosition[0]);
-		RenderMovementInformationTextContainer(m_aPlayerPositionContainers[0], TextRender()->DefaultTextColor(), RightX, y);
+		RenderMovementInformationTextContainer(m_aPlayerPositionContainers[0], g_Config.m_TcShowhudDummyPosition && Client()->DummyConnected() && Info.m_Pos.x == DummyInfo.m_Pos.x ? ColorRGBA(0.0f, 1.0f, 0.0f, 1.0f) : TextRender()->DefaultTextColor(), RightX, y);
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
 
 		TextRender()->Text(LeftX, y, Fontsize, "Y:", -1.0f);
 		UpdateMovementInformationTextContainer(m_aPlayerPositionContainers[1], Fontsize, Info.m_Pos.y, m_aPlayerPrevPosition[1]);
 		RenderMovementInformationTextContainer(m_aPlayerPositionContainers[1], TextRender()->DefaultTextColor(), RightX, y);
 		y += MOVEMENT_INFORMATION_LINE_HEIGHT;
+
+		if(g_Config.m_TcShowhudDummyPosition && Client()->DummyConnected())
+		{
+			TextRender()->Text(LeftX, y, Fontsize, "DX:", -1.0f);
+			if(HasDummyInfo)
+			{
+				UpdateMovementInformationTextContainer(m_aDummyPositionContainers[0], Fontsize, DummyInfo.m_Pos.x, m_aDummyPrevPosition[0]);
+				RenderMovementInformationTextContainer(m_aDummyPositionContainers[0], Info.m_Pos.x == DummyInfo.m_Pos.x ? ColorRGBA(0.0f, 1.0f, 0.0f, 1.0f) : TextRender()->DefaultTextColor(), RightX, y);
+			}
+			else
+				TextRender()->Text(RightX - TextRender()->TextWidth(Fontsize, "No Info", -1, -1.0f), y, Fontsize, "No Info", -1.0f);
+			y += MOVEMENT_INFORMATION_LINE_HEIGHT;
+
+			TextRender()->Text(LeftX, y, Fontsize, "DY:", -1.0f);
+			if(HasDummyInfo)
+			{
+				UpdateMovementInformationTextContainer(m_aDummyPositionContainers[1], Fontsize, DummyInfo.m_Pos.y, m_aDummyPrevPosition[1]);
+				RenderMovementInformationTextContainer(m_aDummyPositionContainers[1], TextRender()->DefaultTextColor(), RightX, y);
+			}
+			else
+				TextRender()->Text(RightX - TextRender()->TextWidth(Fontsize, "No Info", -1, -1.0f), y, Fontsize, "No Info", -1.0f);
+			y += MOVEMENT_INFORMATION_LINE_HEIGHT;
+		}
 	}
 
 	if(PosOnly)
@@ -1730,6 +1783,29 @@ void CHud::RenderMovementInformation()
 		}
 
 		TextRender()->TextColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+		if(g_Config.m_TcShowhudDummySpeed && Client()->DummyConnected())
+		{
+			TextRender()->Text(LeftX, y, Fontsize, "DX:", -1.0f);
+			if(HasDummyInfo)
+			{
+				UpdateMovementInformationTextContainer(m_aDummySpeedTextContainers[0], Fontsize, DummyInfo.m_Speed.x, m_aDummyPrevSpeed[0]);
+				RenderMovementInformationTextContainer(m_aDummySpeedTextContainers[0], TextRender()->DefaultTextColor(), RightX, y);
+			}
+			else
+				TextRender()->Text(RightX - TextRender()->TextWidth(Fontsize, "No Info", -1, -1.0f), y, Fontsize, "No Info", -1.0f);
+			y += MOVEMENT_INFORMATION_LINE_HEIGHT;
+
+			TextRender()->Text(LeftX, y, Fontsize, "DY:", -1.0f);
+			if(HasDummyInfo)
+			{
+				UpdateMovementInformationTextContainer(m_aDummySpeedTextContainers[1], Fontsize, DummyInfo.m_Speed.y, m_aDummyPrevSpeed[1]);
+				RenderMovementInformationTextContainer(m_aDummySpeedTextContainers[1], TextRender()->DefaultTextColor(), RightX, y);
+			}
+			else
+				TextRender()->Text(RightX - TextRender()->TextWidth(Fontsize, "No Info", -1, -1.0f), y, Fontsize, "No Info", -1.0f);
+			y += MOVEMENT_INFORMATION_LINE_HEIGHT;
+		}
 	}
 
 	if(g_Config.m_ClShowhudPlayerAngle)
@@ -1739,6 +1815,19 @@ void CHud::RenderMovementInformation()
 
 		UpdateMovementInformationTextContainer(m_PlayerAngleTextContainerIndex, Fontsize, Info.m_Angle, m_PlayerPrevAngle);
 		RenderMovementInformationTextContainer(m_PlayerAngleTextContainerIndex, TextRender()->DefaultTextColor(), RightX, y);
+
+		if(g_Config.m_TcShowhudDummyAngle && Client()->DummyConnected())
+		{
+			y += MOVEMENT_INFORMATION_LINE_HEIGHT;
+			TextRender()->Text(LeftX, y, Fontsize, "DA:", -1.0f);
+			if(HasDummyInfo)
+			{
+				UpdateMovementInformationTextContainer(m_DummyAngleTextContainerIndex, Fontsize, DummyInfo.m_Angle, m_DummyPrevAngle);
+				RenderMovementInformationTextContainer(m_DummyAngleTextContainerIndex, TextRender()->DefaultTextColor(), RightX, y);
+			}
+			else
+				TextRender()->Text(RightX - TextRender()->TextWidth(Fontsize, "No Info", -1, -1.0f), y, Fontsize, "No Info", -1.0f);
+		}
 	}
 }
 
