@@ -2259,6 +2259,7 @@ void CGraphics_Threaded::SetForcedAspect(bool Force)
 
 void CGraphics_Threaded::AdjustViewport(bool SendViewportChangeToBackend)
 {
+#ifdef CONF_FAMILY_WINDOWS
 	// adjust the viewport to only allow certain aspect ratios
 	// keep this in sync with backend_vulkan GetSwapImageSize's check
 	if(m_ScreenHeight > 4 * m_ScreenWidth / 5 && g_GraphicsForcedAspect)
@@ -2275,6 +2276,24 @@ void CGraphics_Threaded::AdjustViewport(bool SendViewportChangeToBackend)
 	{
 		m_IsForcedViewport = false;
 	}
+
+#else
+	if(m_ScreenHeight > 3 * m_ScreenWidth / 4)
+	{
+		m_IsForcedViewport = true;
+		m_ScreenHeight = 3 * m_ScreenWidth / 4;
+
+		if(SendViewportChangeToBackend)
+		{
+			UpdateViewport(0, 0, m_ScreenWidth, m_ScreenHeight, true);
+		}
+	}
+	else
+	{
+		m_IsForcedViewport = false;
+	}
+#endif
+
 }
 
 void CGraphics_Threaded::UpdateViewport(int X, int Y, int W, int H, bool ByResize)

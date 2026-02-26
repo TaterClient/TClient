@@ -4055,12 +4055,21 @@ public:
 
 		VkExtent2D AutoViewportExtent = RetSize;
 		bool UsesForcedViewport = false;
+#ifdef CONF_FAMILY_WINDOWS
 		// keep this in sync with graphics_threaded AdjustViewport's check
 		if(AutoViewportExtent.height > 4 * AutoViewportExtent.width / 5 && g_GraphicsForcedAspect)
 		{
 			AutoViewportExtent.height = 4 * AutoViewportExtent.width / 5;
 			UsesForcedViewport = true;
 		}
+
+#else
+		if(AutoViewportExtent.height > 3 * AutoViewportExtent.width / 4)
+		{
+			AutoViewportExtent.height = 3 * AutoViewportExtent.width / 4;
+			UsesForcedViewport = true;
+		}
+#endif
 
 		SSwapImgViewportExtent Ext;
 		Ext.m_SwapImageViewport = RetSize;
