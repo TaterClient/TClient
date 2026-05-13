@@ -5,6 +5,7 @@
 
 #include "kernel.h"
 
+#include <base/color.h>
 #include <base/hash.h>
 #include <base/str.h>
 
@@ -114,6 +115,7 @@ public:
 	int m_Latency; // in ms
 	ERankState m_HasRank;
 	char m_aGameType[16];
+	ColorRGBA m_GametypeColor;
 	char m_aName[64];
 	char m_aMap[MAX_MAP_LENGTH];
 	int m_MapCrc;
@@ -126,6 +128,7 @@ public:
 
 	static int EstimateLatency(int Loc1, int Loc2);
 	static bool ParseLocation(int *pResult, const char *pString);
+	static ColorRGBA GametypeColor(const char *pGametype);
 };
 
 class CCommunityCountryServer
@@ -275,10 +278,11 @@ public:
 	/* Constants: Server Browser Sorting
 		SORT_NAME - Sort by name.
 		SORT_PING - Sort by ping.
-		SORT_MAP - Sort by map
+		SORT_MAP - Sort by map.
 		SORT_GAMETYPE - Sort by game type. DM, TDM etc.
 		SORT_NUMPLAYERS - Sort after how many players there are on the server.
 		SORT_NUMFRIENDS - Sort after how many friends there are on the server.
+		SORT_FAVORITES - Sort by favorite status, number of players and then ping.
 	*/
 	enum
 	{
@@ -288,6 +292,7 @@ public:
 		SORT_GAMETYPE,
 		SORT_NUMPLAYERS,
 		SORT_NUMFRIENDS,
+		SORT_FAVORITES,
 	};
 
 	enum

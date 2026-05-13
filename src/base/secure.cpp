@@ -15,7 +15,7 @@
 // Need to include wtypes.h before wincrypt.h because the latter is missing the former include
 #include <wincrypt.h>
 #else
-#include "system.h" // io_open etc.
+#include "io.h"
 #endif
 
 struct SECURE_RANDOM_DATA
@@ -101,7 +101,7 @@ static unsigned int find_next_power_of_two_minus_one(unsigned int n)
 	n |= n >> 1;
 	n |= n >> 2;
 	n |= n >> 4;
-	n |= n >> 4;
+	n |= n >> 8;
 	n |= n >> 16;
 	return n;
 }

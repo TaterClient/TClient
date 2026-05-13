@@ -1,7 +1,10 @@
 #include "uuid_manager.h"
 
+#include <base/dbg.h>
 #include <base/hash_ctxt.h>
-#include <base/system.h>
+#include <base/mem.h>
+#include <base/secure.h>
+#include <base/str.h>
 
 #include <engine/shared/packer.h>
 
@@ -192,4 +195,14 @@ void CUuidManager::DebugDump() const
 		FormatUuid(Name.m_Uuid, aBuf, sizeof(aBuf));
 		dbg_msg("uuid", "%s %s", aBuf, Name.m_pName);
 	}
+}
+
+std::unique_ptr<CUuidManager> CUuidManager_New()
+{
+	return std::make_unique<CUuidManager>();
+}
+
+const CUuidManager &CUuidManager_Global()
+{
+	return g_UuidManager;
 }

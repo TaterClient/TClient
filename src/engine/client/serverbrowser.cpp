@@ -5,9 +5,13 @@
 #include "serverbrowser_http.h"
 #include "serverbrowser_ping_cache.h"
 
+#include <base/dbg.h>
 #include <base/hash_ctxt.h>
 #include <base/log.h>
-#include <base/system.h>
+#include <base/mem.h>
+#include <base/secure.h>
+#include <base/str.h>
+#include <base/time.h>
 
 #include <engine/console.h>
 #include <engine/engine.h>
@@ -417,6 +421,17 @@ bool CServerBrowser::SortCompareNumPlayersAndPing(int Index1, int Index2) const
 		return pIndex1->m_Info.m_Latency > pIndex2->m_Info.m_Latency;
 }
 
+bool CServerBrowser::SortCompareFavoritesNumPlayersAndPing(int Index1, int Index2) const
+{
+	const CServerEntry *pIndex1 = m_vpServerlist[Index1];
+	const CServerEntry *pIndex2 = m_vpServerlist[Index2];
+	const bool IsFavorite1 = pIndex1->m_Info.m_Favorite != TRISTATE::NONE;
+	const bool IsFavorite2 = pIndex2->m_Info.m_Favorite != TRISTATE::NONE;
+	if(IsFavorite1 == IsFavorite2)
+		return SortCompareNumPlayersAndPing(Index1, Index2);
+	return IsFavorite1 && !IsFavorite2;
+}
+
 void CServerBrowser::Filter()
 {
 	m_NumSortedPlayers = 0;
@@ -656,6 +671,8 @@ void CServerBrowser::Sort()
 		std::stable_sort(m_vSortedServerlist.begin(), m_vSortedServerlist.end(), CSortWrap(this, &CServerBrowser::SortCompareNumPlayers));
 	else if(g_Config.m_BrSort == IServerBrowser::SORT_GAMETYPE)
 		std::stable_sort(m_vSortedServerlist.begin(), m_vSortedServerlist.end(), CSortWrap(this, &CServerBrowser::SortCompareGametype));
+	else if(g_Config.m_BrSort == IServerBrowser::SORT_FAVORITES)
+		std::stable_sort(m_vSortedServerlist.begin(), m_vSortedServerlist.end(), CSortWrap(this, &CServerBrowser::SortCompareFavoritesNumPlayersAndPing));
 
 	m_Sorthash = SortHash();
 }
@@ -736,6 +753,7 @@ void CServerBrowser::SetInfo(CServerEntry *pEntry, const CServerInfo &Info) cons
 	str_copy(pEntry->m_Info.m_aCommunityCountry, TmpInfo.m_aCommunityCountry);
 	str_copy(pEntry->m_Info.m_aCommunityType, TmpInfo.m_aCommunityType);
 	UpdateServerRank(&pEntry->m_Info);
+	pEntry->m_Info.m_GametypeColor = CServerInfo::GametypeColor(pEntry->m_Info.m_aGameType);
 
 	if(pEntry->m_Info.m_ClientScoreKind == CServerInfo::CLIENT_SCORE_KIND_UNSPECIFIED)
 	{
@@ -837,7 +855,7 @@ CServerBrowser::CServerEntry *CServerBrowser::Add(const NETADDR *pAddrs, int Num
 {
 	// create new pEntry
 	CServerEntry *pEntry = m_ServerlistHeap.Allocate<CServerEntry>();
-	mem_zero(pEntry, sizeof(CServerEntry));
+	*pEntry = {};
 
 	// set the info
 	mem_copy(pEntry->m_Info.m_aAddresses, pAddrs, NumAddrs * sizeof(pAddrs[0]));
@@ -1395,7 +1413,7 @@ void CServerBrowser::LoadDDNetInfoJson()
 	json_value_free(m_pDDNetInfo);
 	json_settings JsonSettings{};
 	char aError[256];
-	m_pDDNetInfo = json_parse_ex(&JsonSettings, static_cast<json_char *>(pBuf), Length, aError);
+	m_pDDNetInfo = JsonParseEx(&JsonSettings, static_cast<json_char *>(pBuf), Length, aError);
 	free(pBuf);
 
 	if(m_pDDNetInfo == nullptr)
@@ -1446,6 +1464,11 @@ bool CServerBrowser::ParseCommunityServers(CCommunity *pCommunity, const json_va
 		if(Types.u.object.length == 0)
 			continue;
 
+		if(str_has_cc(Name.u.string.ptr))
+		{
+			log_error("serverbrowser", "invalid community country name (ServerIndex=%u)", ServerIndex);
+			return false;
+		}
 		pCommunity->m_vCountries.emplace_back(Name.u.string.ptr, FlagId.u.integer);
 		CCommunityCountry *pCountry = &pCommunity->m_vCountries.back();
 
@@ -2411,6 +2434,41 @@ int CServerInfo::EstimateLatency(int Loc1, int Loc2)
 		return 199;
 	}
 	return 99;
+}
+
+ColorRGBA CServerInfo::GametypeColor(const char *pGametype)
+{
+	ColorHSLA HslaColor;
+	if(str_comp(pGametype, "DM") == 0 || str_comp(pGametype, "TDM") == 0 || str_comp(pGametype, "CTF") == 0 || str_comp(pGametype, "LMS") == 0 || str_comp(pGametype, "LTS") == 0)
+		HslaColor = ColorHSLA(0.33f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "catch"))
+		HslaColor = ColorHSLA(0.17f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "dm") || str_find_nocase(pGametype, "tdm") || str_find_nocase(pGametype, "ctf") || str_find_nocase(pGametype, "lms") || str_find_nocase(pGametype, "lts"))
+	{
+		if(pGametype[0] == 'i' || pGametype[0] == 'g')
+			HslaColor = ColorHSLA(0.0f, 1.0f, 0.75f);
+		else
+			HslaColor = ColorHSLA(0.40f, 1.0f, 0.75f);
+	}
+	else if(str_find_nocase(pGametype, "s-ddracex"))
+		HslaColor = ColorHSLA(1.0f, 1.0f, 0.7f);
+	else if(str_find_nocase(pGametype, "f-ddrace") || str_find_nocase(pGametype, "freeze"))
+		HslaColor = ColorHSLA(0.0f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "fng"))
+		HslaColor = ColorHSLA(0.83f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "gores"))
+		HslaColor = ColorHSLA(0.525f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "BW"))
+		HslaColor = ColorHSLA(0.05f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "ddracenet") || str_find_nocase(pGametype, "ddnet") || str_find_nocase(pGametype, "0xf"))
+		HslaColor = ColorHSLA(0.58f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "ddrace") || str_find_nocase(pGametype, "mkrace"))
+		HslaColor = ColorHSLA(0.75f, 1.0f, 0.75f);
+	else if(str_find_nocase(pGametype, "race") || str_find_nocase(pGametype, "fastcap"))
+		HslaColor = ColorHSLA(0.46f, 1.0f, 0.75f);
+	else
+		HslaColor = ColorHSLA(1.0f, 1.0f, 1.0f);
+	return color_cast<ColorRGBA>(HslaColor);
 }
 
 bool CServerInfo::ParseLocation(int *pResult, const char *pString)

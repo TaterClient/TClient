@@ -3,7 +3,8 @@
 #include "editor.h"
 
 #include <base/color.h>
-#include <base/system.h>
+#include <base/dbg.h>
+#include <base/str.h>
 
 #include <engine/font_icons.h>
 #include <engine/keys.h>
@@ -590,13 +591,11 @@ void CEditor::RenderMapSettingsErrorDialog()
 		View.Draw(ColorRGBA(1, 1, 1, 0.25f), IGraphics::CORNER_ALL, 3.0f);
 
 		const float RowHeight = 18.0f;
+		const float EndY = List.y + List.h;
 		static CScrollRegion s_ScrollRegion;
-		vec2 ScrollOffset(0.0f, 0.0f);
 		CScrollRegionParams ScrollParams;
 		ScrollParams.m_ScrollUnit = 120.0f;
-		s_ScrollRegion.Begin(&List, &ScrollOffset, &ScrollParams);
-		const float EndY = List.y + List.h;
-		List.y += ScrollOffset.y;
+		s_ScrollRegion.Begin(&List, &ScrollParams);
 
 		List.HSplitTop(20.0f, nullptr, &List);
 
@@ -1230,18 +1229,25 @@ void CMapSettingsBackend::CContext::UpdateFromString(const char *pStr)
 
 	// Check for comment
 	const char *pEnd = pStr;
-	int InString = 0;
+	bool InString = false;
+	bool IsEscaping = false;
 
 	while(*pEnd)
 	{
-		if(*pEnd == '"')
-			InString ^= 1;
-		else if(*pEnd == '\\') // Escape sequences
+		if(IsEscaping)
 		{
-			if(pEnd[1] == '"')
-				pEnd++;
+			IsEscaping = false;
 		}
-		else if(!InString)
+		else if(*pEnd == '"')
+		{
+			InString = !InString;
+		}
+		else if(InString && *pEnd == '\\') // escape sequences
+		{
+			IsEscaping = true;
+		}
+
+		if(!InString)
 		{
 			if(*pEnd == '#') // Found comment
 			{

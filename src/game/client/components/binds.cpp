@@ -2,8 +2,10 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "binds.h"
 
+#include <base/dbg.h>
 #include <base/log.h>
-#include <base/system.h>
+#include <base/mem.h>
+#include <base/str.h>
 
 #include <engine/config.h>
 #include <engine/console.h>
@@ -427,7 +429,13 @@ CBindSlot CBinds::GetBindSlot(const char *pBindString) const
 		else
 			break;
 	}
-	return {Input()->FindKeyByName(ModifierMask == KeyModifier::NONE ? aMod : pKey + 1), ModifierMask};
+	int Key = Input()->FindKeyByName(ModifierMask == KeyModifier::NONE ? aMod : pKey + 1);
+	if(Key == KEY_ESCAPE)
+	{
+		// Binding to Escape key is not supported
+		Key = KEY_UNKNOWN;
+	}
+	return {Key, ModifierMask};
 }
 
 const char *CBinds::GetModifierName(int Modifier)

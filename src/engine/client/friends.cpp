@@ -2,8 +2,10 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "friends.h"
 
+#include <base/dbg.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/mem.h>
+#include <base/str.h>
 
 #include <engine/config.h>
 #include <engine/console.h>
@@ -62,7 +64,8 @@ void CFriends::Init(bool Foes)
 
 const CFriendInfo *CFriends::GetFriend(int Index) const
 {
-	return &m_aFriends[maximum(0, Index % m_NumFriends)];
+	dbg_assert(Index >= 0 && Index < m_NumFriends, "Invalid Index: %d", Index);
+	return &m_aFriends[Index];
 }
 
 int CFriends::GetFriendState(const char *pName, const char *pClan) const
@@ -137,11 +140,9 @@ void CFriends::RemoveFriend(const char *pName, const char *pClan)
 
 void CFriends::RemoveFriend(int Index)
 {
-	if(Index >= 0 && Index < m_NumFriends)
-	{
-		mem_move(&m_aFriends[Index], &m_aFriends[Index + 1], sizeof(CFriendInfo) * (m_NumFriends - (Index + 1)));
-		--m_NumFriends;
-	}
+	dbg_assert(Index >= 0 && Index < m_NumFriends, "Invalid Index: %d", Index);
+	mem_move(&m_aFriends[Index], &m_aFriends[Index + 1], sizeof(CFriendInfo) * (m_NumFriends - (Index + 1)));
+	--m_NumFriends;
 }
 
 void CFriends::Friends()

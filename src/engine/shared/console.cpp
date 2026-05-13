@@ -7,9 +7,12 @@
 #include "linereader.h"
 
 #include <base/color.h>
+#include <base/dbg.h>
+#include <base/io.h>
 #include <base/log.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/mem.h>
+#include <base/str.h>
 
 #include <engine/client/checksum.h>
 #include <engine/console.h>
@@ -419,18 +422,25 @@ bool CConsole::LineIsValid(const char *pStr)
 		CResult Result(IConsole::CLIENT_ID_UNSPECIFIED);
 		const char *pEnd = pStr;
 		const char *pNextPart = nullptr;
-		int InString = 0;
+		bool InString = false;
+		bool IsEscaping = false;
 
 		while(*pEnd)
 		{
-			if(*pEnd == '"')
-				InString ^= 1;
-			else if(*pEnd == '\\') // escape sequences
+			if(IsEscaping)
 			{
-				if(pEnd[1] == '"')
-					pEnd++;
+				IsEscaping = false;
 			}
-			else if(!InString)
+			else if(*pEnd == '"')
+			{
+				InString = !InString;
+			}
+			else if(InString && *pEnd == '\\') // escape sequences
+			{
+				IsEscaping = true;
+			}
+
+			if(!InString)
 			{
 				if(*pEnd == ';') // command separator
 				{
@@ -470,18 +480,25 @@ void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientId, bo
 		CResult Result(ClientId);
 		const char *pEnd = pStr;
 		const char *pNextPart = nullptr;
-		int InString = 0;
+		bool InString = false;
+		bool IsEscaping = false;
 
 		while(*pEnd)
 		{
-			if(*pEnd == '"')
-				InString ^= 1;
-			else if(*pEnd == '\\') // escape sequences
+			if(IsEscaping)
 			{
-				if(pEnd[1] == '"')
-					pEnd++;
+				IsEscaping = false;
 			}
-			else if(!InString && InterpretSemicolons)
+			else if(*pEnd == '"')
+			{
+				InString = !InString;
+			}
+			else if(InString && *pEnd == '\\') // escape sequences
+			{
+				IsEscaping = true;
+			}
+
+			if(!InString && InterpretSemicolons)
 			{
 				if(*pEnd == ';') // command separator
 				{

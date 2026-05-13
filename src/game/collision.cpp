@@ -2,8 +2,9 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <antibot/antibot_data.h>
 
+#include <base/dbg.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/mem.h>
 #include <base/vmath.h>
 
 #include <engine/map.h>
@@ -518,6 +519,16 @@ bool CCollision::TestBox(vec2 Pos, vec2 Size) const
 	return false;
 }
 
+bool CCollision::IsOnGround(vec2 Pos, float Size) const
+{
+	if(CheckPoint(Pos.x + Size / 2, Pos.y + Size / 2 + 5))
+		return true;
+	if(CheckPoint(Pos.x - Size / 2, Pos.y + Size / 2 + 5))
+		return true;
+
+	return false;
+}
+
 void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, vec2 Elasticity, bool *pGrounded) const
 {
 	// do the move
@@ -719,15 +730,10 @@ int CCollision::IsTeleportHook(int Index) const
 	return 0;
 }
 
-int CCollision::IsSpeedup(int Index) const
+bool CCollision::IsSpeedup(int Index) const
 {
-	if(Index < 0 || !m_pSpeedup)
-		return 0;
-
-	if(m_pSpeedup[Index].m_Force > 0)
-		return Index;
-
-	return 0;
+	dbg_assert(Index >= 0, "Invalid speedup index %d", Index);
+	return m_pSpeedup && m_pSpeedup[Index].m_Force > 0;
 }
 
 int CCollision::IsTune(int Index) const

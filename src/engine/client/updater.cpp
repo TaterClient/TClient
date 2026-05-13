@@ -1,6 +1,7 @@
 #include "updater.h"
 
-#include <base/system.h>
+#include <base/dbg.h>
+#include <base/str.h>
 
 #include <engine/client.h>
 #include <engine/engine.h>
@@ -129,12 +130,12 @@ CUpdater::CUpdater()
 	IStorage::FormatTmpPath(m_aServerExecTmp, sizeof(m_aServerExecTmp), SERVER_EXEC);
 }
 
-void CUpdater::Init(CHttp *pHttp)
+void CUpdater::Init()
 {
 	m_pClient = Kernel()->RequestInterface<IClient>();
 	m_pStorage = Kernel()->RequestInterface<IStorage>();
 	m_pEngine = Kernel()->RequestInterface<IEngine>();
-	m_pHttp = pHttp;
+	m_pHttp = Kernel()->RequestInterface<IHttp>();
 }
 
 void CUpdater::SetCurrentState(EUpdaterState NewState)
@@ -282,7 +283,7 @@ void CUpdater::ParseUpdate()
 	if(!m_pStorage->ReadFile(m_pStorage->GetBinaryPath("update/update.json", aPath, sizeof(aPath)), IStorage::TYPE_ABSOLUTE, &pBuf, &Length))
 		return;
 
-	json_value *pVersions = json_parse((json_char *)pBuf, Length);
+	json_value *pVersions = JsonParse((json_char *)pBuf, Length);
 	free(pBuf);
 
 	if(!pVersions || pVersions->type != json_array)

@@ -307,8 +307,7 @@ void EscapeUrl(char (&aBuf)[N], const char *pStr)
 
 bool HttpHasIpresolveBug();
 
-// In an ideal world this would be a kernel interface
-class CHttp : public IHttp
+class CHttp : public IEngineHttp
 {
 	enum EState
 	{
@@ -335,13 +334,13 @@ class CHttp : public IHttp
 	void RunLoop();
 
 public:
-	// Startup
-	bool Init(std::chrono::milliseconds ShutdownDelay);
+	// Lifecycle
+	bool Init(std::chrono::milliseconds ShutdownDelay) override;
+	void Shutdown() override;
+	~CHttp() override;
 
 	// User
 	void Run(std::shared_ptr<IHttpRequest> pRequest) override;
-	void Shutdown() override;
-	~CHttp() override;
 };
 
 #endif // ENGINE_SHARED_HTTP_H

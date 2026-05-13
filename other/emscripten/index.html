@@ -79,6 +79,9 @@
 					Module['canvas'].style.display = "none";
 					// Make sure to reset cursor because it sometimes does not become visible.
 					Module['canvas'].style.cursor = "default";
+					// Also reset cursor of body because the cursor sometimes does not become
+					// visible until being moved.
+					document.body.style.cursor = "default";
 					appendOutput("Client closed. Reload the page to restart.", true);
 					const restartButton = document.createElement("button");
 					restartButton.textContent = "Reload page";
@@ -90,9 +93,42 @@
 				},
 				canvas: document.getElementById('canvas')
 			};
-			window.onerror = function(text) {
-				appendOutput(text, true, "red");
+			window.onerror = function(message, url, line, column, error) {
+				appendOutput(message, true, "red");
+				if (error) {
+					for (const line of error.stack.split("\n")) {
+						appendOutput(line, false, "red");
+					}
+				}
+				// Force stop audio processing because the client does not do so when force quit on
+				// assertion errors and segmentation faults. This would otherwise cause many error
+				// messages to be emitted when audio processing continues after the runtime exited.
+				var SDL2 = Module['SDL2'];
+				if (SDL2.audio !== undefined) {
+					if (SDL2.audio.scriptProcessorNode !== undefined) {
+						SDL2.audio.scriptProcessorNode.disconnect();
+					}
+					if (SDL2.audio.silenceTimer !== undefined) {
+						clearInterval(SDL2.audio.silenceTimer);
+					}
+					SDL2.audio = undefined;
+				}
+				if (SDL2.audioContext !== undefined) {
+					SDL2.audioContext.close();
+					SDL2.audioContext = undefined;
+				}
+				// Force quit the client on errors, because the runtime does not exit otherwise, which
+				// would cause tests using `emrun` to time out and prevent `onExit` from being invoked.
+				if (!ABORT) {
+					Module.ccall('EmscriptenCallbackQuitForce', null, [], []);
+				}
 			};
+			document.addEventListener('keydown', e => {
+				// Always use default browser actions for Ctrl+F5 (refresh), F11 (fullscreen), F12 (developer console).
+				if ((e.ctrlKey && e.key === 'F5') || e.key === 'F11' || e.key == 'F12') {
+					e.stopPropagation();
+				}
+			}, true);
 			Module['canvas'].addEventListener('contextmenu', e => e.preventDefault());
 			Module['canvas'].addEventListener('webglcontextcreationerror', e => {
 				appendOutput(`Failed to create WebGL context: ${e.statusMessage || "Unknown error"}`, true, "red");

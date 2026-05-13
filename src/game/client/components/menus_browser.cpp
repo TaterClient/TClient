@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "menus.h"
 
+#include <base/dbg.h>
 #include <base/log.h>
 #include <base/time.h>
 
@@ -66,41 +67,6 @@ static ColorRGBA GetPingTextColor(int Latency)
 	return color_cast<ColorRGBA>(ColorHSLA((300.0f - std::clamp(Latency, 0, 300)) / 1000.0f, 1.0f, 0.5f));
 }
 
-static ColorRGBA GetGametypeTextColor(const char *pGametype)
-{
-	ColorHSLA HslaColor;
-	if(str_comp(pGametype, "DM") == 0 || str_comp(pGametype, "TDM") == 0 || str_comp(pGametype, "CTF") == 0 || str_comp(pGametype, "LMS") == 0 || str_comp(pGametype, "LTS") == 0)
-		HslaColor = ColorHSLA(0.33f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "catch"))
-		HslaColor = ColorHSLA(0.17f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "dm") || str_find_nocase(pGametype, "tdm") || str_find_nocase(pGametype, "ctf") || str_find_nocase(pGametype, "lms") || str_find_nocase(pGametype, "lts"))
-	{
-		if(pGametype[0] == 'i' || pGametype[0] == 'g')
-			HslaColor = ColorHSLA(0.0f, 1.0f, 0.75f);
-		else
-			HslaColor = ColorHSLA(0.40f, 1.0f, 0.75f);
-	}
-	else if(str_find_nocase(pGametype, "f-ddrace") || str_find_nocase(pGametype, "freeze"))
-		HslaColor = ColorHSLA(0.0f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "fng"))
-		HslaColor = ColorHSLA(0.83f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "gores"))
-		HslaColor = ColorHSLA(0.525f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "BW"))
-		HslaColor = ColorHSLA(0.05f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "ddracenet") || str_find_nocase(pGametype, "ddnet") || str_find_nocase(pGametype, "0xf"))
-		HslaColor = ColorHSLA(0.58f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "ddrace") || str_find_nocase(pGametype, "mkrace"))
-		HslaColor = ColorHSLA(0.75f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "race") || str_find_nocase(pGametype, "fastcap"))
-		HslaColor = ColorHSLA(0.46f, 1.0f, 0.75f);
-	else if(str_find_nocase(pGametype, "s-ddr"))
-		HslaColor = ColorHSLA(1.0f, 1.0f, 0.7f);
-	else
-		HslaColor = ColorHSLA(1.0f, 1.0f, 1.0f);
-	return color_cast<ColorRGBA>(HslaColor);
-}
-
 void CMenus::RenderServerbrowserServerList(CUIRect View, bool &WasListboxItemActivated)
 {
 	static CListBox s_ListBox;
@@ -153,15 +119,17 @@ void CMenus::RenderServerbrowserServerList(CUIRect View, bool &WasListboxItemAct
 		NUM_UI_ELEMS,
 	};
 
+	constexpr float ClickableIconSpace = 20.0f;
+
 	static SColumn s_aCols[] = {
 		{-1, -1, "", -1, 2.0f, {0}},
 		{COL_FLAG_LOCK, -1, "", -1, 14.0f, {0}},
-		{COL_FLAG_FAV, -1, "", -1, 14.0f, {0}},
+		{COL_FLAG_FAV, IServerBrowser::SORT_FAVORITES, "", -1, ClickableIconSpace, {0}},
 		{COL_COMMUNITY, -1, "", -1, 28.0f, {0}},
 		{COL_NAME, IServerBrowser::SORT_NAME, Localizable("Name"), 0, 50.0f, {0}},
 		{COL_GAMETYPE, IServerBrowser::SORT_GAMETYPE, Localizable("Type"), 1, 50.0f, {0}},
 		{COL_MAP, IServerBrowser::SORT_MAP, Localizable("Map"), 1, 120.0f + (Headers.w - 480) / 8, {0}},
-		{COL_FRIENDS, IServerBrowser::SORT_NUMFRIENDS, "", 1, 20.0f, {0}},
+		{COL_FRIENDS, IServerBrowser::SORT_NUMFRIENDS, "", 1, ClickableIconSpace, {0}},
 		{COL_PLAYERS, IServerBrowser::SORT_NUMPLAYERS, Localizable("Players"), 1, 60.0f, {0}},
 		{-1, -1, "", 1, 4.0f, {0}},
 		{COL_PING, IServerBrowser::SORT_PING, Localizable("Ping"), 1, 40.0f, {0}},
@@ -224,6 +192,14 @@ void CMenus::RenderServerbrowserServerList(CUIRect View, bool &WasListboxItemAct
 			TextRender()->SetFontPreset(EFontPreset::ICON_FONT);
 			TextRender()->SetRenderFlags(ETextRenderFlags::TEXT_RENDER_FLAG_ONLY_ADVANCE_WIDTH | ETextRenderFlags::TEXT_RENDER_FLAG_NO_X_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_Y_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_PIXEL_ALIGNMENT | ETextRenderFlags::TEXT_RENDER_FLAG_NO_OVERSIZE);
 			Ui()->DoLabel(&Col.m_Rect, FontIcon::HEART, 14.0f, TEXTALIGN_MC);
+			TextRender()->SetRenderFlags(0);
+			TextRender()->SetFontPreset(EFontPreset::DEFAULT_FONT);
+		}
+		else if(Col.m_Id == COL_FLAG_FAV)
+		{
+			TextRender()->SetFontPreset(EFontPreset::ICON_FONT);
+			TextRender()->SetRenderFlags(ETextRenderFlags::TEXT_RENDER_FLAG_ONLY_ADVANCE_WIDTH | ETextRenderFlags::TEXT_RENDER_FLAG_NO_X_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_Y_BEARING | ETextRenderFlags::TEXT_RENDER_FLAG_NO_PIXEL_ALIGNMENT | ETextRenderFlags::TEXT_RENDER_FLAG_NO_OVERSIZE);
+			Ui()->DoLabel(&Col.m_Rect, FontIcon::STAR, 14.0f, TEXTALIGN_MC);
 			TextRender()->SetRenderFlags(0);
 			TextRender()->SetFontPreset(EFontPreset::DEFAULT_FONT);
 		}
@@ -411,7 +387,7 @@ void CMenus::RenderServerbrowserServerList(CUIRect View, bool &WasListboxItemAct
 				Props.m_EnableWidthCheck = false;
 				if(g_Config.m_UiColorizeGametype)
 				{
-					TextRender()->TextColor(GetGametypeTextColor(pItem->m_aGameType));
+					TextRender()->TextColor(pItem->m_GametypeColor);
 				}
 				Ui()->DoLabelStreamed(*pUiElement->Rect(UI_ELEM_GAMETYPE), &Button, pItem->m_aGameType, FontSize, TEXTALIGN_ML, Props);
 				TextRender()->TextColor(TextRender()->DefaultTextColor());
@@ -919,13 +895,11 @@ void CMenus::RenderServerbrowserDDNetFilter(CUIRect View,
 {
 	vItemIds.resize(MaxItems);
 
-	vec2 ScrollOffset(0.0f, 0.0f);
 	CScrollRegionParams ScrollParams;
 	ScrollParams.m_ScrollbarWidth = 10.0f;
 	ScrollParams.m_ScrollbarMargin = 3.0f;
 	ScrollParams.m_ScrollUnit = 2.0f * ItemHeight;
-	ScrollRegion.Begin(&View, &ScrollOffset, &ScrollParams);
-	View.y += ScrollOffset.y;
+	ScrollRegion.Begin(&View, &ScrollParams);
 
 	CUIRect Row;
 	int ColumnIndex = 0;
@@ -1287,20 +1261,26 @@ void CMenus::RenderServerbrowserInfo(CUIRect View)
 		LeftColumn.HSplitTop(15.0f, &Row, &LeftColumn);
 		Ui()->DoLabel(&Row, Localize("Game type"), FontSize, TEXTALIGN_ML);
 
+		SLabelProperties GameTypeLabelProps;
+		if(g_Config.m_UiColorizeGametype)
+		{
+			GameTypeLabelProps.SetColor(pSelectedServer->m_GametypeColor);
+		}
 		RightColumn.HSplitTop(15.0f, &Row, &RightColumn);
-		Ui()->DoLabel(&Row, pSelectedServer->m_aGameType, FontSize, TEXTALIGN_ML);
+		Ui()->DoLabel(&Row, pSelectedServer->m_aGameType, FontSize, TEXTALIGN_ML, GameTypeLabelProps);
 
 		LeftColumn.HSplitTop(15.0f, &Row, &LeftColumn);
 		Ui()->DoLabel(&Row, Localize("Ping"), FontSize, TEXTALIGN_ML);
 
+		SLabelProperties PingLabelProps;
 		if(g_Config.m_UiColorizePing)
-			TextRender()->TextColor(GetPingTextColor(pSelectedServer->m_Latency));
-		char aTemp[16];
-		FormatServerbrowserPing(aTemp, pSelectedServer);
+		{
+			PingLabelProps.SetColor(GetPingTextColor(pSelectedServer->m_Latency));
+		}
+		char aPingLabel[8];
+		FormatServerbrowserPing(aPingLabel, pSelectedServer);
 		RightColumn.HSplitTop(15.0f, &Row, &RightColumn);
-		Ui()->DoLabel(&Row, aTemp, FontSize, TEXTALIGN_ML);
-		if(g_Config.m_UiColorizePing)
-			TextRender()->TextColor(TextRender()->DefaultTextColor());
+		Ui()->DoLabel(&Row, aPingLabel, FontSize, TEXTALIGN_ML, PingLabelProps);
 
 		RenderServerbrowserInfoScoreboard(Scoreboard, pSelectedServer);
 	}
@@ -1515,14 +1495,12 @@ void CMenus::RenderServerbrowserFriends(CUIRect View)
 
 	// friends list
 	static CScrollRegion s_ScrollRegion;
-	vec2 ScrollOffset(0.0f, 0.0f);
 	CScrollRegionParams ScrollParams;
 	ScrollParams.m_ScrollbarWidth = 16.0f;
 	ScrollParams.m_ScrollbarMargin = 5.0f;
 	ScrollParams.m_ScrollUnit = 80.0f;
 	ScrollParams.m_Flags = CScrollRegionParams::FLAG_CONTENT_STATIC_WIDTH;
-	s_ScrollRegion.Begin(&List, &ScrollOffset, &ScrollParams);
-	List.y += ScrollOffset.y;
+	s_ScrollRegion.Begin(&List, &ScrollParams);
 
 	char aBuf[256];
 	for(size_t FriendType = 0; FriendType < NUM_FRIEND_TYPES; ++FriendType)

@@ -5,8 +5,9 @@
 #include <engine/shared/demo.h>
 #include <engine/storage.h>
 
-CDemoEdit::CDemoEdit(const char *pNetVersion, class CSnapshotDelta *pSnapshotDelta, IStorage *pStorage, const char *pDemo, const char *pDst, int StartTick, int EndTick) :
-	m_SnapshotDelta(*pSnapshotDelta),
+CDemoEdit::CDemoEdit(const char *pNetVersion, CSnapshotDelta *pSnapshotDelta, CSnapshotDelta *pSnapshotDeltaSixup, IStorage *pStorage, const char *pDemo, const char *pDst, int StartTick, int EndTick) :
+	m_pSnapshotDelta(pSnapshotDelta->Clone()),
+	m_pSnapshotDeltaSixup(pSnapshotDeltaSixup->Clone()),
 	m_pStorage(pStorage)
 {
 	str_copy(m_aDemo, pDemo);
@@ -16,7 +17,7 @@ CDemoEdit::CDemoEdit(const char *pNetVersion, class CSnapshotDelta *pSnapshotDel
 	m_EndTick = EndTick;
 
 	// Init the demoeditor
-	m_DemoEditor.Init(&m_SnapshotDelta, nullptr, pStorage);
+	m_DemoEditor.Init(&*m_pSnapshotDelta, &*m_pSnapshotDeltaSixup, nullptr, pStorage);
 }
 
 void CDemoEdit::Run()

@@ -52,6 +52,7 @@ public:
 	void MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces) const;
 	void MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, vec2 Elasticity, bool *pGrounded = nullptr) const;
 	bool TestBox(vec2 Pos, vec2 Size) const;
+	bool IsOnGround(vec2 Pos, float Size) const;
 
 	// DDRace
 	void SetCollisionAt(float x, float y, int Index);
@@ -92,7 +93,7 @@ public:
 	int IsTeleportWeapon(int Index) const;
 	int IsTeleportHook(int Index) const;
 	int IsTeleCheckpoint(int Index) const;
-	int IsSpeedup(int Index) const;
+	bool IsSpeedup(int Index) const;
 	int IsTune(int Index) const;
 	void GetSpeedup(int Index, vec2 *pDir, int *pForce, int *pMaxSpeed, int *pType) const;
 	int GetSwitchType(int Index) const;

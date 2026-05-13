@@ -730,6 +730,7 @@ public:
 	// be aware that this function should only be called from the graphics thread, and even then you should really know what you are doing
 	virtual TGLBackendReadPresentedImageData &GetReadPresentedImageDataFuncUnsafe() = 0;
 
+	virtual const char *GetFatalError() const = 0;
 	virtual bool GetWarning(std::vector<std::string> &WarningStrings) = 0;
 
 	/**
@@ -1264,11 +1265,13 @@ public:
 	bool IsTextBufferingEnabled() override { return m_GLTextBufferingEnabled; }
 	bool IsQuadContainerBufferingEnabled() override { return m_GLQuadContainerBufferingEnabled; }
 	bool Uses2DTextureArrays() override { return m_GLUses2DTextureArrays; }
+	int TextureLoadFlags() override { return Uses2DTextureArrays() ? IGraphics::TEXLOAD_TO_2D_ARRAY_TEXTURE : IGraphics::TEXLOAD_TO_3D_TEXTURE; }
 	bool HasTextureArraysSupport() override { return m_GLHasTextureArraysSupport; }
 
 	const char *GetVendorString() override;
 	const char *GetVersionString() override;
 	const char *GetRendererString() override;
+	const char *GetFatalError() const override;
 
 	TGLBackendReadPresentedImageData &GetReadPresentedImageDataFuncUnsafe() override;
 

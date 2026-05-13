@@ -17,6 +17,19 @@ REGISTER_QUICK_ACTION(
 	DEFAULT_BTN,
 	"[F1] Open the DDNet Wiki page for the map editor in a web browser.")
 REGISTER_QUICK_ACTION(
+	BrushPicker,
+	"Brush picker",
+	[&]() { m_ShowPickerToggle = !m_ShowPickerToggle; },
+	[&]() -> bool {
+		return m_Mode != MODE_LAYERS ||
+		       Map()->m_vSelectedLayers.size() != 1 ||
+		       Map()->SelectedLayer(0) == nullptr ||
+		       (Map()->SelectedLayer(0)->m_Type != LAYERTYPE_TILES && Map()->SelectedLayer(0)->m_Type != LAYERTYPE_QUADS);
+	},
+	[&]() -> bool { return m_ShowPickerToggle; },
+	DEFAULT_BTN,
+	"[Ctrl+Space, Hold Space] Toggle brush picker.")
+REGISTER_QUICK_ACTION(
 	ToggleGrid,
 	"Toggle grid",
 	[&]() { MapView()->MapGrid()->Toggle(); },
@@ -147,7 +160,7 @@ REGISTER_QUICK_ACTION(
 REGISTER_QUICK_ACTION(
 	ZoomOut,
 	"Zoom out",
-	[&]() { MapView()->Zoom()->ChangeValue(50.0f); },
+	[&]() { MapView()->Zoom()->ScaleValue(1.331f); },
 	ALWAYS_FALSE,
 	ALWAYS_FALSE,
 	DEFAULT_BTN,
@@ -155,7 +168,7 @@ REGISTER_QUICK_ACTION(
 REGISTER_QUICK_ACTION(
 	ZoomIn,
 	"Zoom in",
-	[&]() { MapView()->Zoom()->ChangeValue(-50.0f); },
+	[&]() { MapView()->Zoom()->ScaleValue(1.0f / 1.331f); },
 	ALWAYS_FALSE,
 	ALWAYS_FALSE,
 	DEFAULT_BTN,

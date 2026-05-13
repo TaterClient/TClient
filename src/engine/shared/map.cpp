@@ -2,8 +2,8 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "map.h"
 
+#include <base/fs.h>
 #include <base/log.h>
-#include <base/system.h>
 
 #include <engine/storage.h>
 
@@ -51,9 +51,9 @@ int CMap::GetItemSize(int Index)
 	return m_DataFile.GetItemSize(Index);
 }
 
-void *CMap::GetItem(int Index, int *pType, int *pId)
+void *CMap::GetItem(int Index, int *pType, int *pId, CUuid *pUuid)
 {
-	return m_DataFile.GetItem(Index, pType, pId);
+	return m_DataFile.GetItem(Index, pType, pId, pUuid);
 }
 
 void CMap::GetType(int Type, int *pStart, int *pNum)

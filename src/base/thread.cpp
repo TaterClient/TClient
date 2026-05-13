@@ -100,7 +100,21 @@ void *thread_init(void (*threadfunc)(void *), void *u, const char *name)
 
 void thread_wait(void *thread)
 {
-#if defined(CONF_FAMILY_UNIX)
+#if defined(CONF_PLATFORM_EMSCRIPTEN)
+	// TODO: Remove this workaround when https://github.com/emscripten-core/emscripten/issues/9910 is fixed.
+	while(true)
+	{
+		const int join_result = pthread_tryjoin_np((pthread_t)thread, nullptr);
+		if(join_result == 0)
+		{
+			break;
+		}
+		dbg_assert(join_result == EBUSY, "pthread_tryjoin_np failure");
+		// Busy waiting so we can periodically yield control to browser's
+		// main thread because blocking on the main thread is very bad.
+		emscripten_sleep(10);
+	}
+#elif defined(CONF_FAMILY_UNIX)
 	dbg_assert(pthread_join((pthread_t)thread, nullptr) == 0, "pthread_join failure");
 #elif defined(CONF_FAMILY_WINDOWS)
 	dbg_assert(WaitForSingleObject((HANDLE)thread, INFINITE) == WAIT_OBJECT_0, "WaitForSingleObject failure");

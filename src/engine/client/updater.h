@@ -48,7 +48,7 @@ class CUpdater : public IUpdater
 	class IClient *m_pClient;
 	class IStorage *m_pStorage;
 	class IEngine *m_pEngine;
-	class CHttp *m_pHttp;
+	class IHttp *m_pHttp;
 
 	CLock m_Lock;
 
@@ -90,7 +90,7 @@ public:
 	int GetCurrentPercent() override REQUIRES(!m_Lock);
 
 	void InitiateUpdate() REQUIRES(!m_Lock) override;
-	void Init(CHttp *pHttp);
+	void Init();
 	void Update() REQUIRES(!m_Lock) override;
 };
 

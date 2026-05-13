@@ -1267,11 +1267,11 @@ void CEditorActionAppendMap::Redo()
 
 // ---------------------------
 
-CEditorActionTileArt::CEditorActionTileArt(CEditorMap *pMap, int PreviousImageCount, const char *pTileArtFile, std::vector<int> &vImageIndexMap) :
+CEditorActionTileArt::CEditorActionTileArt(CEditorMap *pMap, int PreviousImageCount, const char *pFilename, std::vector<int> &vImageIndexMap) :
 	IEditorAction(pMap), m_PreviousImageCount(PreviousImageCount), m_vImageIndexMap(vImageIndexMap)
 {
-	str_copy(m_aTileArtFile, pTileArtFile);
-	str_copy(m_aDisplayText, "Tile art");
+	str_copy(m_aFilename, pFilename);
+	str_copy(m_aDisplayText, "Add tile art");
 }
 
 void CEditorActionTileArt::Undo()
@@ -1314,41 +1314,37 @@ void CEditorActionTileArt::Undo()
 
 void CEditorActionTileArt::Redo()
 {
-	if(!Graphics()->LoadPng(Editor()->m_TileArtImageInfo, m_aTileArtFile, IStorage::TYPE_ALL))
+	CImageInfo Image;
+	if(!Graphics()->LoadPng(Image, m_aFilename, IStorage::TYPE_ALL))
 	{
-		Editor()->ShowFileDialogError("Failed to load image from file '%s'.", m_aTileArtFile);
+		Editor()->ShowFileDialogError("Failed to load image from file '%s'.", m_aFilename);
 		return;
 	}
-
-	IStorage::StripPathAndExtension(m_aTileArtFile, Editor()->m_aTileArtFilename, sizeof(Editor()->m_aTileArtFilename));
-	Editor()->AddTileArt(true);
+	Map()->AddTileArt(std::move(Image), m_aFilename, true);
 }
 
 // ---------------------------
 
-CEditorActionQuadArt::CEditorActionQuadArt(CEditorMap *pMap, CQuadArtParameters Parameters) :
-	IEditorAction(pMap), m_Parameters(Parameters)
+CEditorActionQuadArt::CEditorActionQuadArt(CEditorMap *pMap, const std::shared_ptr<CLayerGroup> &pGroup) :
+	IEditorAction(pMap), m_pGroup(pGroup)
 {
-	str_copy(m_aDisplayText, "Create quad art");
+	str_copy(m_aDisplayText, "Add quad art");
 }
 
 void CEditorActionQuadArt::Undo()
 {
-	// Delete added group
-	Map()->m_vpGroups.pop_back();
+	// Delete added group (keep pointer for redo)
+	auto &vGroups = Map()->m_vpGroups;
+	auto It = std::find(vGroups.begin(), vGroups.end(), m_pGroup);
+	if(It != vGroups.end())
+		vGroups.erase(It);
 }
 
 void CEditorActionQuadArt::Redo()
 {
-	Editor()->m_QuadArtParameters = m_Parameters;
-	str_copy(Editor()->m_QuadArtParameters.m_aFilename, m_Parameters.m_aFilename, sizeof(Editor()->m_QuadArtParameters.m_aFilename));
-
-	if(!Graphics()->LoadPng(Editor()->m_QuadArtImageInfo, Editor()->m_QuadArtParameters.m_aFilename, IStorage::TYPE_ALL))
-	{
-		Editor()->ShowFileDialogError("Failed to load image from file '%s'.", Editor()->m_QuadArtParameters.m_aFilename);
-		return;
-	}
-	Editor()->AddQuadArt(true);
+	auto &vGroups = Map()->m_vpGroups;
+	if(std::find(vGroups.begin(), vGroups.end(), m_pGroup) == vGroups.end())
+		vGroups.push_back(m_pGroup);
 }
 
 // ---------------------------------

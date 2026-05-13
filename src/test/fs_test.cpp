@@ -1,20 +1,31 @@
 #include "test.h"
 
-#include <base/system.h>
+#include <base/fs.h>
+#include <base/io.h>
+#include <base/str.h>
 
 #include <gtest/gtest.h>
 
 TEST(Filesystem, Filename)
 {
 	EXPECT_STREQ(fs_filename(""), "");
+	EXPECT_STREQ(fs_filename("/"), "");
+	EXPECT_STREQ(fs_filename("\\"), "");
 	EXPECT_STREQ(fs_filename("a"), "a");
 	EXPECT_STREQ(fs_filename("abc"), "abc");
 	EXPECT_STREQ(fs_filename("a/b"), "b");
 	EXPECT_STREQ(fs_filename("a/b/c"), "c");
+	EXPECT_STREQ(fs_filename("/a/b/c"), "c");
 	EXPECT_STREQ(fs_filename("aaaaa/bbbb/ccc"), "ccc");
 	EXPECT_STREQ(fs_filename("aaaaa\\bbbb\\ccc"), "ccc");
 	EXPECT_STREQ(fs_filename("aaaaa/bbbb\\ccc"), "ccc");
 	EXPECT_STREQ(fs_filename("aaaaa\\bbbb/ccc"), "ccc");
+	EXPECT_STREQ(fs_filename("aa.aaa/bbbb/ccc"), "ccc");
+	EXPECT_STREQ(fs_filename("aaaaa/bb.bb/ccc"), "ccc");
+	EXPECT_STREQ(fs_filename("aa.aaa/bb.bb/ccc"), "ccc");
+	EXPECT_STREQ(fs_filename("aa.aaa\\bbbb\\ccc"), "ccc");
+	EXPECT_STREQ(fs_filename("aaaaa\\bb.bb\\ccc"), "ccc");
+	EXPECT_STREQ(fs_filename("aa.aaa\\bb.bb\\ccc"), "ccc");
 }
 
 TEST(Filesystem, SplitFileExtension)
@@ -63,7 +74,7 @@ TEST(Filesystem, SplitFileExtension)
 
 static void TestNormalizePath(const char *pInput, const char *pExpectedOutput)
 {
-	char aNormalized[256];
+	char aNormalized[IO_MAX_PATH_LENGTH];
 	str_copy(aNormalized, pInput);
 	fs_normalize_path(aNormalized);
 	EXPECT_STREQ(aNormalized, pExpectedOutput);

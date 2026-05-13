@@ -3,7 +3,7 @@
 #include "menus_settings_controls.h"
 
 #include <base/math.h>
-#include <base/system.h>
+#include <base/str.h>
 
 #include <engine/font_icons.h>
 #include <engine/graphics.h>
@@ -171,12 +171,10 @@ void CMenusSettingsControls::Render(CUIRect MainView)
 			Localize("Reset"), Localize("Cancel"), &CMenus::ResetSettingsControls);
 	}
 
-	vec2 ScrollOffset(0.0f, 0.0f);
 	CScrollRegionParams ScrollParams;
 	ScrollParams.m_ScrollUnit = 6.0f * BUTTON_HEIGHT;
 	ScrollParams.m_Flags = CScrollRegionParams::FLAG_CONTENT_STATIC_WIDTH;
-	m_SettingsScrollRegion.Begin(&MainView, &ScrollOffset, &ScrollParams);
-	MainView.y += ScrollOffset.y;
+	m_SettingsScrollRegion.Begin(&MainView, &ScrollParams);
 
 	CUIRect LeftColumn, RightColumn;
 	MainView.VSplitMid(&LeftColumn, &RightColumn, MARGIN);

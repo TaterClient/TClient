@@ -4,9 +4,11 @@
 #include "menus.h"
 #include "skins.h"
 
+#include <base/dbg.h>
+#include <base/fs.h>
 #include <base/log.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/str.h>
 
 #include <engine/font_icons.h>
 #include <engine/graphics.h>
@@ -1261,16 +1263,15 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 
 void CMenus::RenderSettingsSound(CUIRect MainView)
 {
-	static int s_SndEnable = g_Config.m_SndEnable;
-
 	CUIRect Button;
 	MainView.HSplitTop(20.0f, &Button, &MainView);
 	if(DoButton_CheckBox(&g_Config.m_SndEnable, Localize("Use sounds"), g_Config.m_SndEnable, &Button))
 	{
 		g_Config.m_SndEnable ^= 1;
 		UpdateMusicState();
-		m_NeedRestartSound = g_Config.m_SndEnable && !s_SndEnable;
 	}
+
+	m_NeedRestartSound = g_Config.m_SndEnable && !Sound()->IsSoundEnabled();
 
 	if(!g_Config.m_SndEnable)
 		return;
@@ -1364,11 +1365,9 @@ void CMenus::RenderLanguageSettings(CUIRect MainView)
 	CreditsScroll.Draw(ColorRGBA(0.0f, 0.0f, 0.0f, 0.25f), IGraphics::CORNER_ALL, 5.0f);
 
 	static CScrollRegion s_CreditsScrollRegion;
-	vec2 ScrollOffset(0.0f, 0.0f);
 	CScrollRegionParams ScrollParams;
 	ScrollParams.m_ScrollUnit = CreditsFontSize;
-	s_CreditsScrollRegion.Begin(&CreditsScroll, &ScrollOffset, &ScrollParams);
-	CreditsScroll.y += ScrollOffset.y;
+	s_CreditsScrollRegion.Begin(&CreditsScroll, &ScrollParams);
 
 	CTextCursor Cursor;
 	Cursor.m_FontSize = CreditsFontSize;
@@ -2575,7 +2574,6 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		// Render unhookable tile
 		Graphics()->TextureClear();
 		Graphics()->TextureSet(GameClient()->m_MapImages.GetEntities(MAP_IMAGE_ENTITY_LAYER_TYPE_ALL_EXCEPT_SWITCH));
-		Graphics()->BlendNormal();
 		Graphics()->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 		RenderMap()->RenderTile(NoHookTileRect.x, NoHookTileRect.y, TILE_NOHOOK, TileScale, ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f));
 
@@ -2594,7 +2592,6 @@ void CMenus::RenderSettingsAppearance(CUIRect MainView)
 		// Render hookable tile
 		Graphics()->TextureClear();
 		Graphics()->TextureSet(GameClient()->m_MapImages.GetEntities(MAP_IMAGE_ENTITY_LAYER_TYPE_ALL_EXCEPT_SWITCH));
-		Graphics()->BlendNormal();
 		Graphics()->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
 		RenderMap()->RenderTile(HookTileRect.x, HookTileRect.y, TILE_SOLID, TileScale, ColorRGBA(1.0f, 1.0f, 1.0f, 1.0f));
 

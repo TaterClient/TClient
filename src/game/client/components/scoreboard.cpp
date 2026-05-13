@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "scoreboard.h"
 
+#include <base/dbg.h>
 #include <base/time.h>
 
 #include <engine/console.h>
@@ -702,7 +703,6 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 			if(pGameInfoObj && (pGameInfoObj->m_GameFlags & GAMEFLAG_FLAGS) &&
 				pGameDataObj && (pGameDataObj->m_FlagCarrierRed == pInfo->m_ClientId || pGameDataObj->m_FlagCarrierBlue == pInfo->m_ClientId))
 			{
-				Graphics()->BlendNormal();
 				Graphics()->TextureSet(pGameDataObj->m_FlagCarrierBlue == pInfo->m_ClientId ? GameClient()->m_GameSkin.m_SpriteFlagBlue : GameClient()->m_GameSkin.m_SpriteFlagRed);
 				Graphics()->QuadsBegin();
 				Graphics()->QuadsSetSubset(1.0f, 0.0f, 0.0f, 1.0f);
@@ -714,7 +714,6 @@ void CScoreboard::RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart,
 			// skin
 			if(RenderDead)
 			{
-				Graphics()->BlendNormal();
 				Graphics()->TextureSet(m_DeadTeeTexture);
 				Graphics()->QuadsBegin();
 				if(GameClient()->IsTeamPlay())

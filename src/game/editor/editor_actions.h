@@ -18,6 +18,7 @@
 
 class CEditorMap;
 class IEditorEnvelopeReference;
+class CLayerGroup;
 
 class CEditorActionLayerBase : public IEditorAction
 {
@@ -351,14 +352,14 @@ private:
 class CEditorActionTileArt : public IEditorAction
 {
 public:
-	CEditorActionTileArt(CEditorMap *pMap, int PreviousImageCount, const char *pTileArtFile, std::vector<int> &vImageIndexMap);
+	CEditorActionTileArt(CEditorMap *pMap, int PreviousImageCount, const char *pFilename, std::vector<int> &vImageIndexMap);
 
 	void Undo() override;
 	void Redo() override;
 
 private:
 	int m_PreviousImageCount;
-	char m_aTileArtFile[IO_MAX_PATH_LENGTH];
+	char m_aFilename[IO_MAX_PATH_LENGTH];
 	std::vector<int> m_vImageIndexMap;
 };
 
@@ -367,13 +368,13 @@ private:
 class CEditorActionQuadArt : public IEditorAction
 {
 public:
-	CEditorActionQuadArt(CEditorMap *pMap, CQuadArtParameters Parameters);
+	CEditorActionQuadArt(CEditorMap *pMap, const std::shared_ptr<CLayerGroup> &pGroup);
 
 	void Undo() override;
 	void Redo() override;
 
 private:
-	CQuadArtParameters m_Parameters;
+	std::shared_ptr<CLayerGroup> m_pGroup;
 };
 
 // ----------------------

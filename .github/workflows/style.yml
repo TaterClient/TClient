@@ -4,7 +4,6 @@ on:
   push:
     branches-ignore:
       - gh-readonly-queue/**
-      - master
   pull_request:
   merge_group:
 
@@ -85,7 +84,7 @@ jobs:
     - name: Check Python code style (ruff format)
       run: |
         ruff --version
-        ruff format
+        ruff format --check
 
     - name: Check Python code style (ruff check)
       run: |
@@ -100,6 +99,9 @@ jobs:
 
     - name: Check standard header includes
       run: scripts/check_standard_headers.py
+
+    - name: Check alphabetical ordering
+      run: scripts/tidy_alphabetical.py --dry-run
 
     - name: Check absolute includes
       run: "! grep --exclude-dir rust-bridge -rE '^#include \"(antibot|base|engine|game|steam|test)/' src/"

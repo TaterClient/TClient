@@ -5,7 +5,7 @@
 #include "entity.h"
 #include "gamecontext.h"
 
-#include <base/system.h>
+#include <base/mem.h>
 #include <base/vmath.h>
 
 //////////////////////////////////////////////////
@@ -60,9 +60,7 @@ void CEventHandler::Snap(int SnappingClient)
 				if(GameServer()->Server()->IsSixup(SnappingClient))
 					EventToSixup(&Type, &Size, &pData);
 
-				void *pItem = GameServer()->Server()->SnapNewItem(Type, i, Size);
-				if(pItem)
-					mem_copy(pItem, pData, Size);
+				GameServer()->Server()->SnapNewItem(Type, i, rust::Slice((const int32_t *)pData, Size / sizeof(int32_t)));
 			}
 		}
 	}

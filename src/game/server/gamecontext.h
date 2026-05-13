@@ -21,6 +21,7 @@
 
 #include <map>
 #include <memory>
+#include <optional>
 #include <string>
 
 /*
@@ -233,6 +234,10 @@ public:
 	// helper functions
 	CCharacter *GetPlayerChar(int ClientId);
 	const CCharacter *GetPlayerChar(int ClientId) const;
+	const CPlayer *FindPlayerByName(const char *pName) const;
+	// Returns `nullptr` if no player is found.
+	CPlayer *FindPlayerByName(const char *pName);
+	std::optional<int> FindClientIdByName(const char *pName) const;
 	bool EmulateBug(int Bug) const;
 	std::vector<SSwitchers> &Switchers() { return m_World.m_Core.m_vSwitchers; }
 
@@ -289,8 +294,8 @@ public:
 	void CreateSoundGlobal(int Sound, int Target = -1) const;
 
 	void SnapSwitchers(int SnappingClient);
-	bool SnapLaserObject(const CSnapContext &Context, int SnapId, const vec2 &To, const vec2 &From, int StartTick, int Owner = -1, int LaserType = -1, int Subtype = -1, int SwitchNumber = -1) const;
-	bool SnapPickup(const CSnapContext &Context, int SnapId, const vec2 &Pos, int Type, int SubType, int SwitchNumber, int Flags) const;
+	void SnapLaserObject(const CSnapContext &Context, int SnapId, const vec2 &To, const vec2 &From, int StartTick, int Owner = -1, int LaserType = -1, int Subtype = -1, int SwitchNumber = -1) const;
+	void SnapPickup(const CSnapContext &Context, int SnapId, const vec2 &Pos, int Type, int SubType, int SwitchNumber, int Flags) const;
 
 	enum
 	{

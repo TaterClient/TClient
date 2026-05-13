@@ -4,6 +4,7 @@
 #include "players.h"
 
 #include <base/color.h>
+#include <base/dbg.h>
 #include <base/math.h>
 
 #include <engine/client/enums.h>
@@ -230,8 +231,12 @@ void CPlayers::RenderHookCollLine(
 	vec2 Position = GameClient()->m_aClients[ClientId].m_RenderPos;
 
 	static constexpr float HOOK_START_DISTANCE = CCharacterCore::PhysicalSize() * 1.5f;
-	float HookLength = (float)GameClient()->m_aClients[ClientId].m_Predicted.m_Tuning.m_HookLength;
-	float HookFireSpeed = (float)GameClient()->m_aClients[ClientId].m_Predicted.m_Tuning.m_HookFireSpeed;
+
+	// When the other player isn't predicted, we don't know their tunes.
+	// Use our own tunes instead. This is wrong, but a good heuristic.
+	const CCharacterCore &PlayerCore = GameClient()->m_aClients[ClientId].m_IsPredicted ? GameClient()->m_aClients[ClientId].m_Predicted : GameClient()->m_aClients[GameClient()->m_aLocalIds[g_Config.m_ClDummy]].m_Predicted;
+	float HookLength = PlayerCore.m_Tuning.m_HookLength;
+	float HookFireSpeed = PlayerCore.m_Tuning.m_HookFireSpeed;
 
 	// janky physics
 	if(HookLength < HOOK_START_DISTANCE || HookFireSpeed <= 0.0f)
@@ -468,7 +473,7 @@ void CPlayers::RenderHook(
 	int ClientId,
 	float Intra)
 {
-	if(pPrevChar->m_HookState <= 0 || pPlayerChar->m_HookState <= 0)
+	if(pPlayerChar->m_HookState <= 0)
 		return;
 
 	CNetObj_Character Prev;
@@ -572,6 +577,7 @@ void CPlayers::RenderPlayer(
 
 	CTeeRenderInfo RenderInfo = *pRenderInfo;
 
+	const bool Paused = GameClient()->IsWorldPaused() || GameClient()->IsDemoPlaybackPaused();
 	bool Local = GameClient()->m_Snap.m_LocalClientId == ClientId;
 	bool OtherTeam = GameClient()->IsOtherTeam(ClientId);
 	// float Alpha = (OtherTeam || ClientId < 0) ? g_Config.m_ClShowOthersAlpha / 100.0f : 1.0f;
@@ -601,7 +607,7 @@ void CPlayers::RenderPlayer(
 
 	static float s_LastGameTickTime = Client()->GameTickTime(g_Config.m_ClDummy);
 	static float s_LastPredIntraTick = Client()->PredIntraGameTick(g_Config.m_ClDummy);
-	if(GameClient()->m_Snap.m_pGameInfoObj && !(GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED))
+	if(!Paused)
 	{
 		s_LastGameTickTime = Client()->GameTickTime(g_Config.m_ClDummy);
 		s_LastPredIntraTick = Client()->PredIntraGameTick(g_Config.m_ClDummy);
@@ -857,20 +863,13 @@ void CPlayers::RenderPlayer(
 				{
 					int IteX = rand() % g_pData->m_Weapons.m_aId[CurrentWeapon].m_NumSpriteMuzzles;
 					static int s_LastIteX = IteX;
-					if(Client()->State() == IClient::STATE_DEMOPLAYBACK)
+					if(Paused)
 					{
-						const IDemoPlayer::CInfo *pInfo = DemoPlayer()->BaseInfo();
-						if(pInfo->m_Paused)
-							IteX = s_LastIteX;
-						else
-							s_LastIteX = IteX;
+						IteX = s_LastIteX;
 					}
 					else
 					{
-						if(GameClient()->m_Snap.m_pGameInfoObj && GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED)
-							IteX = s_LastIteX;
-						else
-							s_LastIteX = IteX;
+						s_LastIteX = IteX;
 					}
 					if(g_pData->m_Weapons.m_aId[CurrentWeapon].m_aSpriteMuzzles[IteX])
 					{
@@ -930,20 +929,13 @@ void CPlayers::RenderPlayer(
 
 					int IteX = rand() % g_pData->m_Weapons.m_aId[CurrentWeapon].m_NumSpriteMuzzles;
 					static int s_LastIteX = IteX;
-					if(Client()->State() == IClient::STATE_DEMOPLAYBACK)
+					if(Paused)
 					{
-						const IDemoPlayer::CInfo *pInfo = DemoPlayer()->BaseInfo();
-						if(pInfo->m_Paused)
-							IteX = s_LastIteX;
-						else
-							s_LastIteX = IteX;
+						IteX = s_LastIteX;
 					}
 					else
 					{
-						if(GameClient()->m_Snap.m_pGameInfoObj && GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED)
-							IteX = s_LastIteX;
-						else
-							s_LastIteX = IteX;
+						s_LastIteX = IteX;
 					}
 					if(AlphaMuzzle > 0.0f && g_pData->m_Weapons.m_aId[CurrentWeapon].m_aSpriteMuzzles[IteX])
 					{

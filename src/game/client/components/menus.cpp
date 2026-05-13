@@ -4,9 +4,12 @@
 #include "menus.h"
 
 #include <base/color.h>
+#include <base/dbg.h>
+#include <base/fs.h>
 #include <base/log.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/str.h>
+#include <base/time.h>
 #include <base/vmath.h>
 
 #include <engine/client.h>
@@ -775,7 +778,6 @@ void CMenus::RenderLoading(const char *pCaption, const char *pContent, int Incre
 	CUIRect Box;
 	Ui()->Screen()->Margin(160.0f, &Box);
 
-	Graphics()->BlendNormal();
 	Graphics()->TextureClear();
 	Box.Draw(ColorRGBA(0.0f, 0.0f, 0.0f, 0.5f), IGraphics::CORNER_ALL, 15.0f);
 	Box.Margin(20.0f, &Box);
@@ -2567,8 +2569,6 @@ void CMenus::UpdateColors()
 
 void CMenus::RenderBackground()
 {
-	Graphics()->BlendNormal();
-
 	const float ScreenHeight = 300.0f;
 	const float ScreenWidth = ScreenHeight * Graphics()->ScreenAspect();
 	Graphics()->MapScreen(0.0f, 0.0f, ScreenWidth, ScreenHeight);

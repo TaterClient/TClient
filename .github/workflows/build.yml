@@ -194,7 +194,7 @@ jobs:
       run: |
         mkdir headless
         cd headless
-        ${{ matrix.cmake-path }}cmake -E env CXXFLAGS="--coverage -Werror" ${{ matrix.cmake-path }}cmake -E env LDFLAGS="--coverage -Werror" ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DHEADLESS_CLIENT=ON -DCMAKE_BUILD_TYPE=Debug -Werror=dev -DDOWNLOAD_GTEST=ON -DDEV=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG=. ..
+        ${{ matrix.cmake-path }}cmake -E env CXXFLAGS="--coverage -Werror" ${{ matrix.cmake-path }}cmake -E env LDFLAGS="--coverage -Werror" ${{ matrix.cmake-path }}cmake ${{ matrix.cmake-args }} -DHEADLESS_CLIENT=ON -DWEBSOCKETS=ON -DCMAKE_BUILD_TYPE=Debug -Werror=dev -DDOWNLOAD_GTEST=ON -DDEV=ON -DCMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG=. ..
         ${{ matrix.workaround-issue10203-run-after-configure }}
         ${{ matrix.cmake-path }}cmake -E env RUSTFLAGS="-Clink-arg=--coverage" ${{ matrix.cmake-path }}cmake --build . --config Debug
 
@@ -253,7 +253,7 @@ jobs:
         # Remove old coverage data:
         find headless -name '*.gcno' -o -name '*.gcda' -delete
         cp src/mastersrv/target/debug/mastersrv${{ matrix.executable-suffix }} headless
-        python scripts/integration_test.py --show-full-output --test-mastersrv --valgrind-memcheck headless
+        python scripts/integration_test.py --show-full-output --test-mastersrv --test-websockets --valgrind-memcheck headless
 
     - name: Upload integration test results
       id: integration_test_artifact_upload
@@ -406,7 +406,7 @@ jobs:
       run: |
         export MOZ_HEADLESS=1
         source emsdk/emsdk_env.sh
-        emrun --browser firefox build-emscripten-headless/DDNet.html -- "quit"
+        emrun --browser firefox build-emscripten-headless/index.html -- "quit"
 
     - name: Build Emscripten client in release mode
       run: |

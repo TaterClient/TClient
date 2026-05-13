@@ -3,25 +3,23 @@
 #ifndef ENGINE_SHARED_SNAPSHOT_H
 #define ENGINE_SHARED_SNAPSHOT_H
 
-#include <generated/protocol.h>
-#include <generated/protocol7.h>
+#include <base/cxx.h>
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 
 // CSnapshot
 
 class CSnapshotItem
 {
-	friend class CSnapshotBuilder;
-
 	int *Data() { return (int *)(this + 1); }
 
 public:
 	int m_TypeAndId;
 
 	const int *Data() const { return (int *)(this + 1); }
-	int Type() const { return m_TypeAndId >> 16; }
+	int InternalType() const { return m_TypeAndId >> 16; }
 	int Id() const { return m_TypeAndId & 0xffff; }
 	int Key() const { return m_TypeAndId; }
 	void Invalidate() { m_TypeAndId = -1; }
@@ -29,7 +27,6 @@ public:
 
 class CSnapshot
 {
-	friend class CSnapshotBuilder;
 	int m_DataSize = 0;
 	int m_NumItems = 0;
 
@@ -62,6 +59,8 @@ public:
 	int GetExternalItemType(int InternalType) const;
 	const void *FindItem(int Type, int Id) const;
 
+	rust::Slice<const int32_t> AsSlice() const;
+
 	unsigned Crc() const;
 	// Prints the raw snapshot data showing item and int boundaries.
 	// See also `CNetObjHandler::DebugDumpSnapshot(const CSnapshot *pSnap)`
@@ -72,46 +71,17 @@ public:
 	static const CSnapshot *EmptySnapshot() { return &ms_EmptySnapshot; }
 };
 
-// CSnapshotDelta
-
-class CSnapshotDelta
+class alignas(int32_t) CSnapshotBuffer
 {
 public:
-	class CData
-	{
-	public:
-		int m_NumDeletedItems;
-		int m_NumUpdateItems;
-		int m_NumTempItems; // needed?
-		int m_aData[1];
-	};
+	unsigned char m_aData[CSnapshot::MAX_SIZE];
 
-private:
-	enum
-	{
-		MAX_NETOBJSIZES = 64
-	};
-	short m_aItemSizes[MAX_NETOBJSIZES];
-	short m_aItemSizes7[MAX_NETOBJSIZES];
-	uint64_t m_aSnapshotDataRate[CSnapshot::MAX_TYPE + 1];
-	uint64_t m_aSnapshotDataUpdates[CSnapshot::MAX_TYPE + 1];
-	CData m_Empty;
-
-	static void UndiffItem(const int *pPast, const int *pDiff, int *pOut, int Size, uint64_t *pDataRate);
-
-public:
-	static int DiffItem(const int *pPast, const int *pCurrent, int *pOut, int Size);
-	CSnapshotDelta();
-	CSnapshotDelta(const CSnapshotDelta &Old);
-	uint64_t GetDataRate(int Index) const { return m_aSnapshotDataRate[Index]; }
-	uint64_t GetDataUpdates(int Index) const { return m_aSnapshotDataUpdates[Index]; }
-	void SetStaticsize(int ItemType, size_t Size);
-	void SetStaticsize7(int ItemType, size_t Size);
-	const CData *EmptyDelta() const;
-	int CreateDelta(const CSnapshot *pFrom, const CSnapshot *pTo, void *pDstData);
-	int UnpackDelta(const CSnapshot *pFrom, CSnapshot *pTo, const void *pSrcData, int DataSize, bool Sixup);
-	int DebugDumpDelta(const void *pSrcData, int DataSize);
+	CSnapshot *AsSnapshot() { return (CSnapshot *)m_aData; }
+	const CSnapshot *AsSnapshot() const { return (const CSnapshot *)m_aData; }
+	rust::Slice<int32_t> AsMutSlice() { return rust::Slice((int32_t *)m_aData, sizeof(m_aData) / sizeof(int32_t)); }
 };
+
+std::unique_ptr<CSnapshotBuffer> CSnapshotBuffer_New();
 
 // CSnapshotStorage
 
@@ -146,39 +116,7 @@ public:
 	int Get(int Tick, int64_t *pTagtime, const CSnapshot **ppData, const CSnapshot **ppAltData) const;
 };
 
-class CSnapshotBuilder
-{
-	enum
-	{
-		MAX_EXTENDED_ITEM_TYPES = 64,
-	};
-
-	char m_aData[CSnapshot::MAX_SIZE];
-	int m_DataSize;
-
-	int m_aOffsets[CSnapshot::MAX_ITEMS];
-	int m_NumItems;
-
-	int m_aExtendedItemTypes[MAX_EXTENDED_ITEM_TYPES];
-	int m_NumExtendedItemTypes = 0;
-
-	bool AddExtendedItemType(int Index);
-	int GetExtendedItemTypeIndex(int TypeId);
-	int GetTypeFromIndex(int Index) const;
-
-	bool m_Building = false;
-	bool m_Sixup = false;
-
-public:
-	void Init(bool Sixup = false);
-	void Init7(const CSnapshot *pSnapshot);
-
-	void *NewItem(int Type, int Id, int Size);
-
-	CSnapshotItem *GetItem(int Index);
-	int *GetItemData(int Key);
-
-	int Finish(void *pSnapdata);
-};
+#include <engine/shared/snapshot/builder.h> // NOLINT(misc-header-include-cycle)
+#include <engine/shared/snapshot/delta.h> // NOLINT(misc-header-include-cycle)
 
 #endif // ENGINE_SHARED_SNAPSHOT_H

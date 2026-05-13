@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "particles.h"
 
+#include <base/dbg.h>
 #include <base/math.h>
 #include <base/time.h>
 
@@ -41,16 +42,9 @@ void CParticles::OnReset()
 
 void CParticles::Add(int Group, CParticle *pPart, float TimePassed)
 {
-	if(Client()->State() == IClient::STATE_DEMOPLAYBACK)
+	if(GameClient()->IsWorldPaused() || GameClient()->IsDemoPlaybackPaused())
 	{
-		const IDemoPlayer::CInfo *pInfo = DemoPlayer()->BaseInfo();
-		if(pInfo->m_Paused)
-			return;
-	}
-	else
-	{
-		if(GameClient()->m_Snap.m_pGameInfoObj && GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED)
-			return;
+		return;
 	}
 
 	if(m_FirstFree == -1)
@@ -150,21 +144,9 @@ void CParticles::OnRender()
 		return;
 
 	set_new_tick();
-	int64_t t = time();
-
-	if(Client()->State() == IClient::STATE_DEMOPLAYBACK)
-	{
-		const IDemoPlayer::CInfo *pInfo = DemoPlayer()->BaseInfo();
-		if(!pInfo->m_Paused)
-			Update((float)((t - m_LastRenderTime) / (double)time_freq()) * pInfo->m_Speed);
-	}
-	else
-	{
-		if(GameClient()->m_Snap.m_pGameInfoObj && !(GameClient()->m_Snap.m_pGameInfoObj->m_GameStateFlags & GAMESTATEFLAG_PAUSED))
-			Update((float)((t - m_LastRenderTime) / (double)time_freq()));
-	}
-
-	m_LastRenderTime = t;
+	const int64_t Now = time();
+	Update((float)((Now - m_LastRenderTime) / (double)time_freq()) * GameClient()->GetAnimationPlaybackSpeed());
+	m_LastRenderTime = Now;
 }
 
 void CParticles::OnInit()
@@ -311,7 +293,6 @@ void CParticles::RenderGroup(int Group)
 	{
 		int i = m_aFirstPart[Group];
 
-		Graphics()->BlendNormal();
 		Graphics()->WrapClamp();
 
 		while(i != -1)
@@ -347,6 +328,5 @@ void CParticles::RenderGroup(int Group)
 			i = m_aParticles[i].m_NextPart;
 		}
 		Graphics()->WrapNormal();
-		Graphics()->BlendNormal();
 	}
 }

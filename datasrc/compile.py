@@ -21,7 +21,7 @@ def create_flags_table(names):
 	lines = []
 	lines += ["enum", "{"]
 	for i, name in enumerate(names):
-		lines += [f"\t{name} = 1<<{int(i)},"]
+		lines += [f"\t{name} = 1U<<{int(i)},"]
 	lines += ["};"]
 	return lines
 
@@ -48,6 +48,7 @@ def gen_network_header():
 	print("#ifndef GENERATED_PROTOCOL_H")
 	print("#define GENERATED_PROTOCOL_H")
 	print("class CUnpacker;")
+	print("#include <base/cxx.h>")
 	print("#include <engine/message.h>")
 	print(network.RawHeader)
 
@@ -144,7 +145,10 @@ def gen_network_source():
 	print("""\
 #include "protocol.h"
 
-#include <base/system.h>
+#include <base/dbg.h>
+#include <base/mem.h>
+#include <base/str.h>
+
 #include <engine/uuid.h>
 #include <engine/shared/packer.h>
 #include <engine/shared/protocol.h>
@@ -271,10 +275,8 @@ void CNetObjHandler::DebugDumpSnapshot(const CSnapshot *pSnap) const
 		const CSnapshotItem *pItem = pSnap->GetItem(i);
 		int Size = pSnap->GetItemSize(i);
 		int Type = pSnap->GetItemType(i);
-		const char *pName = GetObjName(pItem->Type());
-		if(Type > OFFSET_UUID && Type < g_UuidManager.NumUuids() + OFFSET_UUID)
-			pName = g_UuidManager.GetName(Type);
-		dbg_msg("snapshot", "\\t%s type=%d id=%d size=%d", pName, pItem->Type(), pItem->Id(), Size);
+		const char *pName = GetObjName(Type);
+		dbg_msg("snapshot", "\\t%s type=%d id=%d size=%d", pName, pItem->InternalType(), pItem->Id(), Size);
 		if(!DumpObj(Type, pItem->Data(), Size))
 			continue;
 

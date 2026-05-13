@@ -1,8 +1,11 @@
 #if defined(CONF_BACKEND_VULKAN)
 
+#include <base/dbg.h>
 #include <base/log.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/mem.h>
+#include <base/str.h>
+#include <base/time.h>
 
 #include <engine/client/backend/backend_base.h>
 #include <engine/client/backend/vulkan/backend_vulkan.h>
@@ -6805,19 +6808,22 @@ public:
 		uint32_t Width;
 		uint32_t Height;
 		CImageInfo::EImageFormat Format;
+
 		if(GetPresentedImageDataImpl(Width, Height, Format, m_vScreenshotHelper, true, {}))
 		{
-			const size_t ImgSize = (size_t)Width * (size_t)Height * CImageInfo::PixelSize(Format);
-			pCommand->m_pImage->m_pData = static_cast<uint8_t *>(malloc(ImgSize));
-			mem_copy(pCommand->m_pImage->m_pData, m_vScreenshotHelper.data(), ImgSize);
+			pCommand->m_pImage->m_Width = (int)Width;
+			pCommand->m_pImage->m_Height = (int)Height;
+			pCommand->m_pImage->m_Format = Format;
+			pCommand->m_pImage->Allocate();
+			mem_copy(pCommand->m_pImage->m_pData, m_vScreenshotHelper.data(), pCommand->m_pImage->DataSize());
 		}
 		else
 		{
+			pCommand->m_pImage->m_Width = 0;
+			pCommand->m_pImage->m_Height = 0;
+			pCommand->m_pImage->m_Format = CImageInfo::FORMAT_UNDEFINED;
 			pCommand->m_pImage->m_pData = nullptr;
 		}
-		pCommand->m_pImage->m_Width = (int)Width;
-		pCommand->m_pImage->m_Height = (int)Height;
-		pCommand->m_pImage->m_Format = Format;
 
 		return true;
 	}

@@ -4,8 +4,10 @@
 
 #include "ui_scrollregion.h"
 
+#include <base/dbg.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/str.h>
+#include <base/time.h>
 
 #include <engine/client.h>
 #include <engine/font_icons.h>
@@ -1909,14 +1911,12 @@ CUi::EPopupMenuFunctionResult CUi::PopupSelection(void *pContext, CUIRect View, 
 	CUi *pUI = pSelectionPopup->m_pUI;
 	CScrollRegion *pScrollRegion = pSelectionPopup->m_pScrollRegion;
 
-	vec2 ScrollOffset(0.0f, 0.0f);
 	CScrollRegionParams ScrollParams;
 	ScrollParams.m_ScrollbarWidth = 10.0f;
 	ScrollParams.m_ScrollbarMargin = SPopupMenu::POPUP_MARGIN;
 	ScrollParams.m_ScrollbarNoMarginRight = true;
 	ScrollParams.m_ScrollUnit = 3 * (pSelectionPopup->m_EntryHeight + pSelectionPopup->m_EntrySpacing);
-	pScrollRegion->Begin(&View, &ScrollOffset, &ScrollParams);
-	View.y += ScrollOffset.y;
+	pScrollRegion->Begin(&View, &ScrollParams);
 
 	CUIRect Slot;
 	if(pSelectionPopup->m_aMessage[0] != '\0')

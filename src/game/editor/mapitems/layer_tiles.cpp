@@ -270,13 +270,10 @@ bool CLayerTiles::IsEmpty() const
 
 void CLayerTiles::BrushSelecting(CUIRect Rect)
 {
-	Graphics()->TextureClear();
-	Graphics()->QuadsBegin();
-	Graphics()->SetColor(1.0f, 1.0f, 1.0f, 0.4f);
 	Snap(&Rect);
-	IGraphics::CQuadItem QuadItem(Rect.x, Rect.y, Rect.w, Rect.h);
-	Graphics()->QuadsDrawTL(&QuadItem, 1);
-	Graphics()->QuadsEnd();
+
+	Rect.Draw(ColorRGBA(1.0f, 1.0f, 1.0f, 0.4f), IGraphics::CORNER_NONE, 0.0f);
+
 	char aBuf[16];
 	str_format(aBuf, sizeof(aBuf), "%d⨯%d", ConvertX(Rect.w), ConvertY(Rect.h));
 	TextRender()->Text(Rect.x + 3.0f, Rect.y + 3.0f, Editor()->m_ShowPicker ? 15.0f : Editor()->MapView()->ScaleLength(15.0f), aBuf, -1.0f);
@@ -1358,6 +1355,16 @@ void CLayerTiles::FlagModified(int x, int y, int w, int h)
 	{
 		Map()->m_vpImages[m_Image]->m_AutoMapper.ProceedLocalized(this, Map()->m_pGameLayer.get(), m_AutoMapperReference, m_AutoMapperConfig, m_Seed, x, y, w, h);
 	}
+}
+
+bool CLayerTiles::IsEnvelopeUsed(int EnvelopeIndex) const
+{
+	return m_ColorEnv == EnvelopeIndex;
+}
+
+bool CLayerTiles::IsImageUsed(int ImageIndex) const
+{
+	return m_Image == ImageIndex;
 }
 
 void CLayerTiles::ModifyImageIndex(const FIndexModifyFunction &IndexModifyFunction)

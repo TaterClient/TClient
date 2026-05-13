@@ -2,6 +2,7 @@
 name = "ddnet-base"
 version = "0.0.1"
 edition = "2021"
+rust-version = "1.63"
 publish = false
 license = "Zlib"
 
@@ -9,7 +10,8 @@ license = "Zlib"
 path = "lib.rs"
 
 [dependencies]
-cxx = "1.0"
+cxx = "=1.0.71"
+libc = "0.2"
 
 [dev-dependencies]
 ddnet-test = { path = "../rust-bridge/test", features = ["link-test-libraries"] }

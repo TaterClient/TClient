@@ -221,8 +221,6 @@ void CEmoticon::OnRender()
 
 	Ui()->MapScreen();
 
-	Graphics()->BlendNormal();
-
 	Graphics()->TextureClear();
 	Graphics()->QuadsBegin();
 	Graphics()->SetColor(0.0f, 0.0f, 0.0f, 0.3f * aAnimationPhase[0]);

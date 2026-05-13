@@ -1,7 +1,9 @@
 #include "image_loader.h"
 
+#include <base/dbg.h>
+#include <base/io.h>
 #include <base/log.h>
-#include <base/system.h>
+#include <base/mem.h>
 
 #include <png.h>
 
@@ -258,7 +260,7 @@ bool CImageLoader::LoadPng(CByteBufferReader &Reader, const char *pContextName, 
 		Image.m_Width = Width;
 		Image.m_Height = Height;
 		Image.m_Format = ImageFormatFromChannelCount(ColorChannelCount);
-		Image.m_pData = static_cast<uint8_t *>(malloc(Image.DataSize()));
+		Image.Allocate();
 		for(int y = 0; y < Height; ++y)
 		{
 			mem_copy(&Image.m_pData[y * BytesInRow], pRowPointers[y], BytesInRow);

@@ -1,10 +1,10 @@
 #include "test.h"
 
 #include <base/logger.h>
-#include <base/system.h>
 #include <base/types.h>
 
 #include <engine/engine.h>
+#include <engine/http.h>
 #include <engine/kernel.h>
 #include <engine/server/databases/connection.h>
 #include <engine/server/databases/connection_pool.h>
@@ -75,6 +75,10 @@ public:
 		IConfigManager *pConfigManager = CreateConfigManager();
 		m_pKernel->RegisterInterface(pConfigManager);
 
+		IEngineHttp *pEngineHttp = CreateEngineHttp();
+		m_pKernel->RegisterInterface(pEngineHttp); // IEngineHttp
+		m_pKernel->RegisterInterface(static_cast<IHttp *>(pEngineHttp), false);
+
 		IEngineAntibot *pEngineAntibot = CreateEngineAntibot();
 		m_pKernel->RegisterInterface(pEngineAntibot);
 		m_pKernel->RegisterInterface(static_cast<IAntibot *>(pEngineAntibot), false);
@@ -105,10 +109,7 @@ public:
 		m_pServer->m_pPersistentData = malloc(GameServer()->PersistentDataSize());
 		EXPECT_NE(m_pServer->LoadMap("coverage"), 0);
 
-		if(!pServer->m_Http.Init(std::chrono::seconds{2}))
-		{
-			log_error("server", "Failed to initialize the HTTP client.");
-		}
+		EXPECT_TRUE(pEngineHttp->Init(std::chrono::seconds{2})) << "Failed to initialize the HTTP client";
 
 		pServer->m_NetServer.SetCallbacks(
 			CServer::NewClientCallback,

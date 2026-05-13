@@ -1,6 +1,9 @@
+#include <base/dbg.h>
 #include <base/logger.h>
+#include <base/mem.h>
 #include <base/os.h>
-#include <base/system.h>
+#include <base/str.h>
+#include <base/time.h>
 
 #include <engine/client.h>
 #include <engine/shared/demo.h>
@@ -23,25 +26,25 @@ public:
 	};
 	CClientData m_aClients[MAX_CLIENTS];
 
-	char m_aaDemoSnapshotData[IClient::NUM_SNAPSHOT_TYPES][CSnapshot::MAX_SIZE];
+	CSnapshotBuffer m_aDemoSnapshotData[IClient::NUM_SNAPSHOT_TYPES];
 	CSnapshot *m_apAltSnapshots[IClient::NUM_SNAPSHOT_TYPES];
 
 	CClientSnapshotHandler() :
 		m_aClients()
 	{
-		mem_zero(m_aaDemoSnapshotData, sizeof(m_aaDemoSnapshotData));
+		mem_zero(m_aDemoSnapshotData, sizeof(m_aDemoSnapshotData));
 
 		for(int SnapshotType = 0; SnapshotType < IClient::NUM_SNAPSHOT_TYPES; SnapshotType++)
 		{
-			m_apAltSnapshots[SnapshotType] = (CSnapshot *)&m_aaDemoSnapshotData[SnapshotType];
+			m_apAltSnapshots[SnapshotType] = m_aDemoSnapshotData[SnapshotType].AsSnapshot();
 		}
 	}
 
-	int UnpackAndValidateSnapshot(CSnapshot *pFrom, CSnapshot *pTo)
+	int UnpackAndValidateSnapshot(CSnapshot *pFrom, CSnapshotBuffer *pTo)
 	{
 		CUnpacker Unpacker;
-		CSnapshotBuilder Builder;
-		Builder.Init();
+		rust::Box<CSnapshotBuilder> pBuilder = CSnapshotBuilder_New();
+		pBuilder->Init(false);
 		CNetObjHandler NetObjHandler;
 
 		int Num = pFrom->NumItems();
@@ -51,21 +54,32 @@ public:
 			const int FromItemSize = pFrom->GetItemSize(Index);
 			const int ItemType = pFrom->GetItemType(Index);
 			const void *pData = pFromItem->Data();
+
+			if(ItemType <= 0)
+			{
+				// Don't add extended item type descriptions, they get
+				// added implicitly (== 0).
+				//
+				// Don't add items of unknown item types either (< 0).
+				continue;
+			}
+
 			Unpacker.Reset(pData, FromItemSize);
 
-			void *pRawObj = NetObjHandler.SecureUnpackObj(ItemType, &Unpacker);
-			if(!pRawObj)
+			const void *pSecuredData = NetObjHandler.SecureUnpackObj(ItemType, &Unpacker);
+			if(!pSecuredData)
+			{
 				continue;
+			}
 
 			const int ItemSize = NetObjHandler.GetUnpackedObjSize(ItemType);
-			void *pObj = Builder.NewItem(pFromItem->Type(), pFromItem->Id(), ItemSize);
-			if(!pObj)
+			if(!pBuilder->NewItem(ItemType, pFromItem->Id(), rust::Slice((const int32_t *)pSecuredData, ItemSize / sizeof(int32_t))))
+			{
 				return -4;
-
-			mem_copy(pObj, pRawObj, ItemSize);
+			}
 		}
 
-		return Builder.Finish(pTo);
+		return pBuilder->Finish(*pTo);
 	}
 
 	int SnapNumItems(int SnapId)
@@ -109,14 +123,13 @@ public:
 
 	void OnDemoPlayerSnapshot(void *pData, int Size)
 	{
-		unsigned char aAltSnapBuffer[CSnapshot::MAX_SIZE];
-		CSnapshot *pAltSnapBuffer = (CSnapshot *)aAltSnapBuffer;
-		const int AltSnapSize = UnpackAndValidateSnapshot((CSnapshot *)pData, pAltSnapBuffer);
+		CSnapshotBuffer AltSnapBuffer;
+		const int AltSnapSize = UnpackAndValidateSnapshot((CSnapshot *)pData, &AltSnapBuffer);
 		if(AltSnapSize < 0)
 			return;
 
 		std::swap(m_apAltSnapshots[IClient::SNAP_PREV], m_apAltSnapshots[IClient::SNAP_CURRENT]);
-		mem_copy(m_apAltSnapshots[IClient::SNAP_CURRENT], pAltSnapBuffer, AltSnapSize);
+		mem_copy(m_apAltSnapshots[IClient::SNAP_CURRENT], AltSnapBuffer.AsSnapshot(), AltSnapSize);
 
 		OnNewSnapshot();
 	}
@@ -196,10 +209,9 @@ public:
 	}
 };
 
-static int ExtractDemoChat(const char *pDemoFilePath, IStorage *pStorage)
+static int ExtractDemoChat(const char *pDemoFilePath, CSnapshotDelta *pSnapshotDelta, CSnapshotDelta *pSnapshotDeltaSixup, IStorage *pStorage)
 {
-	std::unique_ptr<CSnapshotDelta> pDemoSnapshotDelta = std::make_unique<CSnapshotDelta>();
-	CDemoPlayer DemoPlayer(pDemoSnapshotDelta.get(), false);
+	CDemoPlayer DemoPlayer(pSnapshotDelta, pSnapshotDeltaSixup, false);
 
 	if(DemoPlayer.Load(pStorage, nullptr, pDemoFilePath, IStorage::TYPE_ALL_OR_ABSOLUTE) == -1)
 	{
@@ -229,6 +241,31 @@ static int ExtractDemoChat(const char *pDemoFilePath, IStorage *pStorage)
 	return 0;
 }
 
+static rust::Box<CSnapshotDelta> CreateSnapshotDelta()
+{
+	rust::Box<CSnapshotDelta> pResult = CSnapshotDelta_New();
+	CNetObjHandler NetObjHandler;
+	for(int i = 0; i < NUM_NETOBJTYPES; i++)
+	{
+		pResult->SetStaticsize(i, NetObjHandler.GetObjSize(i));
+	}
+	return pResult;
+}
+
+static rust::Box<CSnapshotDelta> CreateSnapshotDeltaSixup()
+{
+	rust::Box<CSnapshotDelta> pResult = CSnapshotDelta_New();
+	protocol7::CNetObjHandler NetObjHandler7;
+	// HACK: only set static size for items, which were available in the first 0.7 release
+	// so new items don't break the snapshot delta
+	static const int OLD_NUM_NETOBJTYPES = 23;
+	for(int i = 0; i < OLD_NUM_NETOBJTYPES; i++)
+	{
+		pResult->SetStaticsize(i, NetObjHandler7.GetObjSize(i));
+	}
+	return pResult;
+}
+
 int main(int argc, const char *argv[])
 {
 	// Create storage before setting logger to avoid log messages from storage creation
@@ -249,5 +286,8 @@ int main(int argc, const char *argv[])
 		return -1;
 	}
 
-	return ExtractDemoChat(argv[1], pStorage.get());
+	rust::Box<CSnapshotDelta> pSnapshotDelta = CreateSnapshotDelta();
+	rust::Box<CSnapshotDelta> pSnapshotDeltaSixup = CreateSnapshotDeltaSixup();
+
+	return ExtractDemoChat(argv[1], &*pSnapshotDelta, &*pSnapshotDeltaSixup, pStorage.get());
 }

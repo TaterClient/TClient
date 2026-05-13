@@ -1,10 +1,14 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 
+#include <base/dbg.h>
 #include <base/detect.h>
+#include <base/io.h>
 #include <base/log.h>
 #include <base/math.h>
-#include <base/system.h>
+#include <base/mem.h>
+#include <base/str.h>
+#include <base/time.h>
 
 #include <engine/engine.h>
 #include <engine/gfx/image_loader.h>
@@ -110,7 +114,7 @@ CGraphics_Threaded::CGraphics_Threaded()
 	m_State.m_ClipW = 0;
 	m_State.m_ClipH = 0;
 	m_State.m_Texture = -1;
-	m_State.m_BlendMode = EBlendMode::NONE;
+	m_State.m_BlendMode = EBlendMode::ALPHA;
 	m_State.m_WrapMode = EWrapMode::REPEAT;
 
 	m_CurrentCommandBuffer = 0;
@@ -342,7 +346,7 @@ IGraphics::CTextureHandle CGraphics_Threaded::LoadSpriteTexture(const CImageInfo
 	SpriteInfo.m_Width = w;
 	SpriteInfo.m_Height = h;
 	SpriteInfo.m_Format = FromImageInfo.m_Format;
-	SpriteInfo.m_pData = static_cast<uint8_t *>(malloc(SpriteInfo.DataSize()));
+	SpriteInfo.Allocate();
 	SpriteInfo.CopyRectFrom(FromImageInfo, x, y, w, h, 0, 0);
 	return LoadTextureRawMove(SpriteInfo, 0, pSprite->m_pName);
 }
@@ -2491,9 +2495,8 @@ int CGraphics_Threaded::Init()
 		NullTextureInfo.m_Height = NullTextureDimension;
 		NullTextureInfo.m_Format = CImageInfo::FORMAT_RGBA;
 		NullTextureInfo.m_pData = aNullTextureData;
-		const int TextureLoadFlags = Uses2DTextureArrays() ? IGraphics::TEXLOAD_TO_2D_ARRAY_TEXTURE : IGraphics::TEXLOAD_TO_3D_TEXTURE;
 		m_NullTexture.Invalidate();
-		m_NullTexture = LoadTextureRaw(NullTextureInfo, TextureLoadFlags, "null-texture");
+		m_NullTexture = LoadTextureRaw(NullTextureInfo, TextureLoadFlags(), "null-texture");
 		dbg_assert(m_NullTexture.IsNullTexture(), "Null texture invalid");
 	}
 
@@ -2941,6 +2944,11 @@ const char *CGraphics_Threaded::GetVersionString()
 const char *CGraphics_Threaded::GetRendererString()
 {
 	return m_pBackend->GetRendererString();
+}
+
+const char *CGraphics_Threaded::GetFatalError() const
+{
+	return m_pBackend == nullptr ? "" : m_pBackend->GetFatalError();
 }
 
 TGLBackendReadPresentedImageData &CGraphics_Threaded::GetReadPresentedImageDataFuncUnsafe()

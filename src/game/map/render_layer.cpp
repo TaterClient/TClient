@@ -347,14 +347,6 @@ void CRenderLayerTile::RenderTileLayer(const ColorRGBA &Color, const CRenderLaye
 	{
 		RenderTileBorder(Color, ScreenRectX0, ScreenRectY0, ScreenRectX1, ScreenRectY1, &Visuals);
 	}
-
-	if(Params.m_DebugRenderTileClips && m_LayerClip.has_value())
-	{
-		const CClipRegion &Clip = m_LayerClip.value();
-		char aDebugText[32];
-		str_format(aDebugText, sizeof(aDebugText), "Group %d LayerId %d", m_GroupId, m_LayerId);
-		RenderMap()->RenderDebugClip(Clip.m_X, Clip.m_Y, Clip.m_Width, Clip.m_Height, ColorRGBA(1.0f, 0.5f, 0.0f, 1.0f), Params.m_Zoom, aDebugText);
-	}
 }
 
 void CRenderLayerTile::RenderTileBorder(const ColorRGBA &Color, int BorderX0, int BorderY0, int BorderX1, int BorderY1, CTileLayerVisuals *pTileLayerVisuals)
@@ -542,6 +534,14 @@ void CRenderLayerTile::Render(const CRenderLayerParams &Params)
 	{
 		RenderTileLayerNoTileBuffer(Color, Params);
 	}
+
+	if(Params.m_DebugRenderTileClips && m_LayerClip.has_value())
+	{
+		const CClipRegion &Clip = m_LayerClip.value();
+		char aDebugText[32];
+		str_format(aDebugText, sizeof(aDebugText), "Group %d LayerId %d", m_GroupId, m_LayerId);
+		RenderMap()->RenderDebugClip(Clip.m_X, Clip.m_Y, Clip.m_Width, Clip.m_Height, ColorRGBA(1.0f, 0.5f, 0.0f, 1.0f), Params.m_Zoom, aDebugText);
+	}
 }
 
 bool CRenderLayerTile::DoRender(const CRenderLayerParams &Params)
@@ -562,7 +562,6 @@ bool CRenderLayerTile::DoRender(const CRenderLayerParams &Params)
 
 void CRenderLayerTile::RenderTileLayerWithTileBuffer(const ColorRGBA &Color, const CRenderLayerParams &Params)
 {
-	Graphics()->BlendNormal();
 	RenderTileLayer(Color, Params);
 }
 
@@ -1037,7 +1036,22 @@ void CRenderLayerQuads::Init()
 		m_TextureHandle.Invalidate();
 
 	if(!Graphics()->IsQuadBufferingEnabled())
+	{
+		// create clip region for unbuffered backends
+		CQuadCluster QuadCluster;
+		QuadCluster.m_Grouped = false;
+		QuadCluster.m_StartIndex = 0;
+		QuadCluster.m_NumQuads = m_pLayerQuads->m_NumQuads;
+
+		// unused, because cluster is not grouped
+		QuadCluster.m_PosEnv = -1;
+		QuadCluster.m_PosEnvOffset = 0;
+		QuadCluster.m_ColorEnv = -1;
+		QuadCluster.m_ColorEnvOffset = 0;
+
+		CalculateClipping(QuadCluster);
 		return;
+	}
 
 	std::vector<CTmpQuad> vTmpQuads;
 	std::vector<CTmpQuadTextured> vTmpQuadsTextured;
@@ -1353,7 +1367,6 @@ void CRenderLayerQuads::Render(const CRenderLayerParams &Params)
 	float Alpha = Force ? 1.f : (100 - Params.m_EntityOverlayVal) / 100.0f;
 	if(!Graphics()->IsQuadBufferingEnabled() || !Params.m_TileAndQuadBuffering)
 	{
-		Graphics()->BlendNormal();
 		RenderMap()->ForceRenderQuads(m_pQuads, m_pLayerQuads->m_NumQuads, LAYERRENDERFLAG_TRANSPARENT, m_pEnvelopeManager->EnvelopeEval(), Alpha);
 	}
 	else
@@ -1425,7 +1438,6 @@ void CRenderLayerEntityGame::Init()
 
 void CRenderLayerEntityGame::RenderTileLayerWithTileBuffer(const ColorRGBA &Color, const CRenderLayerParams &Params)
 {
-	Graphics()->BlendNormal();
 	if(Params.m_RenderTileBorder)
 		RenderKillTileBorder(Color.Multiply(GetDeathBorderColor()));
 	RenderTileLayer(Color, Params);
@@ -1499,7 +1511,6 @@ void CRenderLayerEntityTele::Unload()
 
 void CRenderLayerEntityTele::RenderTileLayerWithTileBuffer(const ColorRGBA &Color, const CRenderLayerParams &Params)
 {
-	Graphics()->BlendNormal();
 	RenderTileLayer(Color, Params);
 	if(Params.m_RenderText)
 	{
@@ -1671,7 +1682,6 @@ void CRenderLayerEntitySwitch::GetTileData(unsigned char *pIndex, unsigned char 
 
 void CRenderLayerEntitySwitch::RenderTileLayerWithTileBuffer(const ColorRGBA &Color, const CRenderLayerParams &Params)
 {
-	Graphics()->BlendNormal();
 	RenderTileLayer(Color, Params);
 	if(Params.m_RenderText)
 	{

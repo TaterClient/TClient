@@ -340,11 +340,13 @@ public:
 	virtual bool IsTextBufferingEnabled() = 0;
 	virtual bool IsQuadContainerBufferingEnabled() = 0;
 	virtual bool Uses2DTextureArrays() = 0;
+	virtual int TextureLoadFlags() = 0;
 	virtual bool HasTextureArraysSupport() = 0;
 
 	virtual const char *GetVendorString() = 0;
 	virtual const char *GetVersionString() = 0;
 	virtual const char *GetRendererString() = 0;
+	virtual const char *GetFatalError() const = 0;
 
 	class CLineItem
 	{

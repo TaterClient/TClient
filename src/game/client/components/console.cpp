@@ -3,11 +3,14 @@
 
 #include "console.h"
 
+#include <base/dbg.h>
+#include <base/io.h>
 #include <base/lock.h>
 #include <base/logger.h>
 #include <base/math.h>
+#include <base/mem.h>
 #include <base/str.h>
-#include <base/system.h>
+#include <base/time.h>
 
 #include <engine/console.h>
 #include <engine/engine.h>
@@ -167,6 +170,11 @@ static int PossibleKeys(const char *pStr, IInput *pInput, IConsole::FPossibleCal
 	int Index = 0;
 	for(int Key = KEY_A; Key < KEY_JOY_AXIS_11_RIGHT; Key++)
 	{
+		if(Key == KEY_ESCAPE)
+		{
+			// Binding to Escape key is not supported
+			continue;
+		}
 		// Ignore unnamed keys starting with '&'
 		const char *pKeyName = pInput->KeyName(Key);
 		if(pKeyName[0] != '&' && str_find_nocase(pKeyName, pStr))
@@ -1260,6 +1268,8 @@ void CGameConsole::OnRender()
 		if(pConsole->m_MouseIsPress && !m_TouchState.m_PrimaryPressed && !Input()->NativeMousePressed(1))
 		{
 			pConsole->m_MouseIsPress = false;
+			if(m_ConsoleState == CONSOLE_OPEN && pConsole->m_MousePress.y > ConsoleHeight + 1.0f && pConsole->m_MouseRelease.y > ConsoleHeight + 1.0f) // for border
+				Toggle(m_ConsoleType);
 		}
 		if(pConsole->m_MouseIsPress)
 		{
