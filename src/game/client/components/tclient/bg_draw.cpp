@@ -1,7 +1,6 @@
 #include "bg_draw.h"
 
 #include <base/io.h>
-#include <base/system.h>
 
 #include <engine/client.h>
 #include <engine/external/spt.h>
@@ -382,12 +381,21 @@ bool CBgDraw::Save(const char *pFilename, bool Verbose)
 	IOHANDLE Handle = BgDrawOpenFile(*GameClient(), pFilename, IOFLAG_WRITE);
 	if(!Handle)
 		return false;
+
+	auto WriteLine = [&Handle](const char *pLine) -> bool {
+		if (!io_write(Handle, pLine, str_length(pLine)))
+			return false;
+		if (!io_write_newline(Handle))
+			return false;
+		return true;
+	};
+
 	int Written = 0;
 	bool Success = true;
 	char aMsg[256];
 	for(const CBgDrawItem &Item : *m_pvItems)
 	{
-		if(!BgDrawFile::Write(Handle, Item.Data()))
+		if(!BgDrawFile::Write(WriteLine, Item.Data()))
 		{
 			str_format(aMsg, sizeof(aMsg), TCLocalize("Writing item %d failed", "bgdraw"), Written);
 			GameClient()->Echo(aMsg);
@@ -412,12 +420,22 @@ bool CBgDraw::Load(const char *pFilename, bool Verbose)
 	IOHANDLE Handle = BgDrawOpenFile(*GameClient(), pFilename, IOFLAG_READ);
 	if(!Handle)
 		return false;
+
+	auto ReadLine = [Handle](char *pBuf, int Length) -> bool {
+		if(!io_read(Handle, pBuf, Length))
+			return false;
+		size_t Len = str_length(pBuf);
+		while(Len > 0 && (pBuf[Len - 1] == '\n' || pBuf[Len - 1] == '\r'))
+			pBuf[--Len] = '\0';
+		return true;
+	};
+
 	std::deque<CBgDrawItemData> Queue;
 	int ItemsLoaded = 0;
 	int ItemsDiscarded = 0;
 	{
 		CBgDrawItemData Data;
-		while(BgDrawFile::Read(Handle, Data) && (ItemsLoaded++) < MAX_ITEMS_TO_LOAD)
+		while(BgDrawFile::Read(ReadLine, Data) && (ItemsLoaded++) < MAX_ITEMS_TO_LOAD)
 		{
 			if((int)Queue.size() > g_Config.m_TcBgDrawMaxItems)
 			{

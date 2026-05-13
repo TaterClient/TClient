@@ -1,7 +1,5 @@
 #include "mod.h"
 
-#include <base/system.h>
-
 #include <engine/shared/config.h>
 
 #include <game/client/gameclient.h>

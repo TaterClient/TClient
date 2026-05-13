@@ -1,8 +1,6 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_SKINPROFILES_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_SKINPROFILES_H
 
-#include <base/system.h>
-
 #include <engine/console.h>
 #include <engine/keys.h>
 #include <engine/shared/protocol.h>

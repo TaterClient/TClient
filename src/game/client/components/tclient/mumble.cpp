@@ -2,7 +2,6 @@
 
 #include <base/log.h>
 #include <base/str.h>
-#include <base/system.h>
 
 #include <engine/client.h>
 #include <engine/external/mumble.h>

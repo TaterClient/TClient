@@ -41,26 +41,3 @@ bool BgDrawFile::Read(const std::function<bool(char *pBuf, int Length)> &ReadLin
 	}
 	return true;
 }
-bool BgDrawFile::Write(FILE *pFile, const CBgDrawItemData &Data)
-{
-	auto WriteLine = [pFile](const char *pLine) -> bool {
-		if(fputs(pLine, pFile) == EOF)
-			return false;
-		if(fputc('\n', pFile) == EOF)
-			return false;
-		return true;
-	};
-	return Write(WriteLine, Data);
-}
-bool BgDrawFile::Read(FILE *pFile, CBgDrawItemData &Data)
-{
-	auto ReadLine = [pFile](char *pBuf, int Length) -> bool {
-		if(!std::fgets(pBuf, Length, pFile))
-			return false;
-		size_t Len = std::strlen(pBuf);
-		while(Len > 0 && (pBuf[Len - 1] == '\n' || pBuf[Len - 1] == '\r'))
-			pBuf[--Len] = '\0';
-		return true;
-	};
-	return Read(ReadLine, Data);
-}

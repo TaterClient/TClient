@@ -41,16 +41,6 @@ namespace BgDrawFile
 	[[nodiscard]] bool Read(const std::function<bool(char *pBuf, int Length)> &ReadLine, CBgDrawItemData &Data);
 	[[nodiscard]] bool Write(FILE *pFile, const CBgDrawItemData &Data);
 	[[nodiscard]] bool Read(FILE *pFile, CBgDrawItemData &Data);
-#ifdef BASE_SYSTEM_H
-	[[nodiscard]] inline bool Write(IOHANDLE File, const CBgDrawItemData &Data)
-	{
-		return Write((FILE *)File, Data);
-	}
-	[[nodiscard]] inline bool Read(IOHANDLE File, CBgDrawItemData &Data)
-	{
-		return Read((FILE *)File, Data);
-	}
-#endif
 }; // namespace BgDrawFile
 
 #endif
