@@ -1,4 +1,5 @@
 #include "statusbar.h"
+
 #include <base/time.h>
 
 #include <engine/graphics.h>

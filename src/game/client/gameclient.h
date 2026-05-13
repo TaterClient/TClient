@@ -232,8 +232,8 @@ public:
 	CScripting m_Scripting;
 	CMod m_Mod;
 	CCustomCommunities m_CustomCommunities;
-	CMovingTiles m_MovingTilesBackground = CMovingTiles{ false };
-	CMovingTiles m_MovingTilesForeground = CMovingTiles{ true };
+	CMovingTiles m_MovingTilesBackground = CMovingTiles{false};
+	CMovingTiles m_MovingTilesForeground = CMovingTiles{true};
 
 private:
 	std::vector<class CComponent *> m_vpAll;

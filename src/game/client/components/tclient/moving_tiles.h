@@ -32,16 +32,15 @@ enum class EQType
 	NUM
 };
 
-static constexpr char ValidQuadNames[][30] = 
-{
-	"QFr",
-	"QUnFr",
-	"QDeath",
-	"QStopa",
-	"QCfrm",
-	"QHook",
-	"QUnHook"
-};
+static constexpr char ValidQuadNames[][30] =
+	{
+		"QFr",
+		"QUnFr",
+		"QDeath",
+		"QStopa",
+		"QCfrm",
+		"QHook",
+		"QUnHook"};
 
 class CQuadData : CMapItemLayerQuads
 {

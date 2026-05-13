@@ -383,9 +383,9 @@ bool CBgDraw::Save(const char *pFilename, bool Verbose)
 		return false;
 
 	auto WriteLine = [&Handle](const char *pLine) -> bool {
-		if (!io_write(Handle, pLine, str_length(pLine)))
+		if(!io_write(Handle, pLine, str_length(pLine)))
 			return false;
-		if (!io_write_newline(Handle))
+		if(!io_write_newline(Handle))
 			return false;
 		return true;
 	};

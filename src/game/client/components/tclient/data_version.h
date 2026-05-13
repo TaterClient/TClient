@@ -12,7 +12,6 @@
 // #include <format>
 // #include <string>
 
-
 #include <engine/shared/linereader.h>
 
 #include <game/localization.h>
