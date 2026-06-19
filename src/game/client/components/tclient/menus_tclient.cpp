@@ -2561,6 +2561,7 @@ void CMenus::RenderSettingsTClientConfigs(CUIRect MainView)
 		const bool ApplyClicked = DoButton_Menu(&s_ApplyBtn, Localize("Apply Changes"), DisabledStyle, &ApplyBtn);
 		if(ChangesCount > 0 && ApplyClicked)
 		{
+			// NOLINTBEGIN(bugprone-nondeterministic-pointer-iteration-order)
 			for(const auto &It : s_StagedInts)
 			{
 				const SConfigVariable *pVar = It.first;
@@ -2586,6 +2587,7 @@ void CMenus::RenderSettingsTClientConfigs(CUIRect MainView)
 				str_format(aCmd, sizeof(aCmd), "%s %u", pVar->m_pScriptName, It.second.m_Value);
 				Console()->ExecuteLine(aCmd, IConsole::CLIENT_ID_UNSPECIFIED);
 			}
+			// NOLINTEND(bugprone-nondeterministic-pointer-iteration-order)
 			ClearStagedAndCaches();
 		}
 		const bool ClearClicked = DoButton_Menu(&s_ClearBtn, Localize("Clear Changes"), DisabledStyle, &ClearBtn);
