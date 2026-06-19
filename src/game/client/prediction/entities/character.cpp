@@ -1353,6 +1353,11 @@ void CCharacter::ResetPrediction()
 	}
 	m_LastWeaponSwitchTick = 0;
 	m_LastTuneZoneTick = 0;
+
+	// TClient
+	// TODO: https://github.com/TaterClient/TClient/issues/201
+	m_TuneZone = 0;
+	m_TuneZoneOverride = TuneZone::OVERRIDE_NONE;
 }
 
 void CCharacter::Read(CNetObj_Character *pChar, CNetObj_DDNetCharacter *pExtended, bool IsLocal)
