@@ -561,10 +561,6 @@ void CChat::OnMessage(int MsgType, void *pRawMsg)
 	{
 		CNetMsg_Sv_Chat *pMsg = (CNetMsg_Sv_Chat *)pRawMsg;
 
-		auto &Re = GameClient()->m_TClient.m_RegexChatIgnore;
-		if(Re.error().empty() && Re.test(pMsg->m_pMessage))
-			return;
-
 		/*
 		if(g_Config.m_ClCensorChat)
 		{
@@ -682,6 +678,17 @@ void CChat::AddLine(int ClientId, int Team, const char *pLine)
 	// TClient
 	if(ClientId == CLIENT_MSG && !g_Config.m_TcShowChatClient)
 		return;
+
+	// TClient
+	if (([&]() {
+		if(ClientId == CLIENT_MSG || ClientId == SERVER_MSG)
+			return false;
+		for(const auto LocalClientId : GameClient()->m_aLocalIds)
+			if(LocalClientId == ClientId)
+				return false;
+		auto &Re = GameClient()->m_TClient.m_RegexChatIgnore;
+		return Re.error().empty() && Re.test(pLine);
+	})()) return;
 
 	// trim right and set maximum length to 256 utf8-characters
 	int Length = 0;
