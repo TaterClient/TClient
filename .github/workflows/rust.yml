@@ -17,6 +17,12 @@ jobs:
       uses: actions/checkout@v4
     - name: Cache Rust dependencies
       uses: Swatinem/rust-cache@v2
+      with:
+          cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
+          workspaces: |
+              src/mastersrv
+              src/masterping
+              ./
     - name: Run Rustdoc
       run: |
         RUSTDOCFLAGS=-Dwarnings DDNET_TEST_NO_LINK=1 cargo doc
@@ -31,13 +37,14 @@ jobs:
     - name: Cache Rust dependencies
       uses: Swatinem/rust-cache@v2
       with:
-           workspaces: |
-               src/mastersrv
-               src/masterping
-               ./
+          cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
+          workspaces: |
+              src/mastersrv
+              src/masterping
+              ./
     - name: Run cxxbridge
       run: |
-        cargo install cxxbridge-cmd@1.0.71
+        cargo install cxxbridge-cmd@1.0.194
         python scripts/generate_rust_bridge.py
         git diff --exit-code
 
@@ -51,10 +58,11 @@ jobs:
     - name: Cache Rust dependencies
       uses: Swatinem/rust-cache@v2
       with:
-           workspaces: |
-               src/mastersrv
-               src/masterping
-               ./
+          cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
+          workspaces: |
+              src/mastersrv
+              src/masterping
+              ./
     - name: Run Rustfmt
       run:
         cargo fmt -- --check
@@ -75,6 +83,7 @@ jobs:
     - name: Cache Rust dependencies
       uses: Swatinem/rust-cache@v2
       with:
+          cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces:  |
               src/mastersrv
               src/masterping

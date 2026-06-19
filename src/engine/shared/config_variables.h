@@ -31,6 +31,9 @@ MACRO_CONFIG_INT(ClTouchControls, cl_touch_controls, 1, 0, 1, CFGFLAG_CLIENT | C
 #else
 MACRO_CONFIG_INT(ClTouchControls, cl_touch_controls, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable ingame touch controls")
 #endif
+MACRO_CONFIG_INT(ClBackButton, cl_back_button, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show draggable virtual back button")
+MACRO_CONFIG_INT(ClBackButtonX, cl_back_button_x, 5000, 0, 1000000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Relative X position of the draggable back button")
+MACRO_CONFIG_INT(ClBackButtonY, cl_back_button_y, 5000, 0, 1000000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Relative Y position of the draggable back button")
 
 MACRO_CONFIG_INT(ClNamePlates, cl_nameplates, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show name plates")
 MACRO_CONFIG_INT(ClNamePlatesAlways, cl_nameplates_always, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Always show name plates regardless of distance")
@@ -410,8 +413,6 @@ MACRO_CONFIG_INT(GfxScreenWidth, gfx_screen_width, 0, 0, 0, CFGFLAG_SAVE | CFGFL
 MACRO_CONFIG_INT(GfxScreenHeight, gfx_screen_height, 0, 0, 0, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Screen resolution height (only in pure fullscreen mode)")
 MACRO_CONFIG_INT(GfxScreenRefreshRate, gfx_screen_refresh_rate, 0, 0, 0, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Refresh rate for the screen (in Hz; only in pure fullscreen mode)")
 
-MACRO_CONFIG_INT(GfxDesktopWidth, gfx_desktop_width, 0, 0, 0, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Desktop resolution width for detecting display changes (not recommended to change manually)")
-MACRO_CONFIG_INT(GfxDesktopHeight, gfx_desktop_height, 0, 0, 0, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Desktop resolution height for detecting display changes (not recommended to change manually)")
 #if !defined(CONF_PLATFORM_MACOS)
 MACRO_CONFIG_INT(GfxBorderless, gfx_borderless, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Borderless window (not to be used with fullscreen)")
 #if !defined(CONF_PLATFORM_EMSCRIPTEN)
@@ -423,7 +424,6 @@ MACRO_CONFIG_INT(GfxFullscreen, gfx_fullscreen, 0, 0, 3, CFGFLAG_SAVE | CFGFLAG_
 MACRO_CONFIG_INT(GfxBorderless, gfx_borderless, 1, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Borderless window (not to be used with fullscreen)")
 MACRO_CONFIG_INT(GfxFullscreen, gfx_fullscreen, 0, 0, 3, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Set fullscreen mode: 0=no fullscreen, 1=pure fullscreen, 2=desktop fullscreen, 3=windowed fullscreen")
 #endif
-MACRO_CONFIG_INT(GfxColorDepth, gfx_color_depth, 24, 16, 24, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Colors bits for framebuffer (fullscreen only)")
 MACRO_CONFIG_INT(GfxVsync, gfx_vsync, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Vertical sync (may cause delay)")
 MACRO_CONFIG_INT(GfxDisplayAllVideoModes, gfx_display_all_video_modes, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Show all video modes")
 MACRO_CONFIG_INT(GfxHighDetail, gfx_high_detail, 1, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "High detail")
@@ -559,7 +559,7 @@ MACRO_CONFIG_INT(SvVoteMaxTotal, sv_vote_max_total, 0, 0, SERVER_MAX_CLIENTS, CF
 MACRO_CONFIG_INT(SvVoteVetoTime, sv_vote_veto_time, 20, 0, 1000, CFGFLAG_SERVER, "Minutes of time on a server until a player can veto map change votes (0 = disabled)")
 MACRO_CONFIG_INT(SvKillDelay, sv_kill_delay, 1, 0, 9999, CFGFLAG_SERVER, "The minimum time in seconds between kills")
 
-MACRO_CONFIG_INT(SvMapWindow, sv_map_window, 15, 0, 100, CFGFLAG_SERVER, "Map downloading send-ahead window")
+MACRO_CONFIG_INT(SvMapWindow, sv_map_window, 15, 1, 100, CFGFLAG_SERVER, "Map downloading send-ahead window")
 MACRO_CONFIG_INT(SvFastDownload, sv_fast_download, 1, 0, 1, CFGFLAG_SERVER, "Enables fast download of maps")
 
 MACRO_CONFIG_INT(SvShotgunBulletSound, sv_shotgun_bullet_sound, 0, 0, 1, CFGFLAG_SERVER, "Crazy shotgun bullet sound on/off")
@@ -735,8 +735,6 @@ MACRO_CONFIG_INT(ClDirectionSize, cl_direction_size, 30, -50, 100, CFGFLAG_SAVE 
 MACRO_CONFIG_INT(ClOldGunPosition, cl_old_gun_position, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Tees hold gun a bit higher like in TW 0.6.1 and older")
 MACRO_CONFIG_INT(ClConfirmDisconnectTime, cl_confirm_disconnect_time, 20, -1, 1440, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Confirmation popup before disconnecting after game time (in minutes, -1 to turn off, 0 to always turn on)")
 MACRO_CONFIG_INT(ClConfirmQuitTime, cl_confirm_quit_time, 20, -1, 1440, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Confirmation popup before quitting after game time (in minutes, -1 to turn off, 0 to always turn on)")
-MACRO_CONFIG_STR(ClTimeoutCode, cl_timeout_code, 64, "", CFGFLAG_SAVE | CFGFLAG_CLIENT, "Timeout code to use")
-MACRO_CONFIG_STR(ClDummyTimeoutCode, cl_dummy_timeout_code, 64, "", CFGFLAG_SAVE | CFGFLAG_CLIENT, "Dummy Timeout code to use")
 MACRO_CONFIG_STR(ClTimeoutSeed, cl_timeout_seed, 64, "", CFGFLAG_SAVE | CFGFLAG_CLIENT, "Timeout seed")
 MACRO_CONFIG_STR(ClInputFifo, cl_input_fifo, 128, "", CFGFLAG_SAVE | CFGFLAG_CLIENT, "Fifo file (non-Windows) or Named Pipe (Windows) to use as input for client console")
 MACRO_CONFIG_INT(ClConfigVersion, cl_config_version, 0, 0, 0, CFGFLAG_CLIENT | CFGFLAG_SAVE, "The config version. Helps newer clients fix bugs with older configs.")

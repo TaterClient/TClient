@@ -231,9 +231,9 @@ public:
 		m_ShowTileInfo = SHOW_TILE_OFF;
 		m_ShowDetail = true;
 		m_Animate = false;
-		m_AnimateStart = 0;
-		m_AnimateTime = 0;
-		m_AnimateSpeed = 1;
+		m_AnimateStart = 0.0f;
+		m_AnimateTime = 0.0f;
+		m_AnimateSpeed = 1.0f;
 		m_AnimateUpdatePopup = false;
 
 		for(size_t i = 0; i < std::size(m_aSavedColors); ++i)
@@ -267,27 +267,6 @@ public:
 		m_BrushDrawDestructive = true;
 	}
 
-	class CHoverTile
-	{
-	public:
-		CHoverTile(int Group, int Layer, int x, int y, const CTile Tile) :
-			m_Group(Group),
-			m_Layer(Layer),
-			m_X(x),
-			m_Y(y),
-			m_Tile(Tile)
-		{
-		}
-
-		int m_Group;
-		int m_Layer;
-		int m_X;
-		int m_Y;
-		const CTile m_Tile;
-	};
-	std::vector<CHoverTile> m_vHoverTiles;
-	const std::vector<CHoverTile> &HoverTiles() const { return m_vHoverTiles; }
-
 	void Init() override;
 	void OnUpdate() override;
 	void OnRender() override;
@@ -302,7 +281,7 @@ public:
 	void ResetIngameMoved() override { m_IngameMoved = false; }
 
 	void HandleCursorMovement();
-	void OnMouseMove(vec2 MousePos);
+	void OnInput(const IInput::CEvent &Event);
 	void MouseAxisLock(vec2 &CursorRel);
 	vec2 m_MouseAxisInitialPos = vec2(0.0f, 0.0f);
 	enum class EAxisLock
@@ -427,13 +406,8 @@ public:
 	bool m_GuiActive;
 
 	bool m_PreviewZoom;
-	float m_MouseWorldScale = 1.0f; // Mouse (i.e. UI) scale relative to the World (selected Group)
-	vec2 m_MouseWorldPos = vec2(0.0f, 0.0f);
-	vec2 m_MouseWorldNoParaPos = vec2(0.0f, 0.0f);
-	vec2 m_MouseDeltaWorld = vec2(0.0f, 0.0f);
 	const void *m_pContainerPanned;
 	const void *m_pContainerPannedLast;
-	char m_MapEditorId; // UI element ID for the main map editor
 
 	enum EShowTile
 	{
@@ -445,7 +419,7 @@ public:
 	bool m_ShowDetail;
 
 	bool m_Animate;
-	int64_t m_AnimateStart;
+	float m_AnimateStart;
 	float m_AnimateTime;
 	float m_AnimateSpeed;
 	bool m_AnimateUpdatePopup;
@@ -652,7 +626,6 @@ public:
 		};
 		CPoint m_aPoints[NUM_POINTS];
 	};
-	void DoMapEditor(CUIRect View);
 	void DoToolbarLayers(CUIRect Toolbar);
 	void DoToolbarImages(CUIRect Toolbar);
 	void DoToolbarSounds(CUIRect Toolbar);
@@ -752,7 +725,7 @@ public:
 	};
 	void DoEditorDragBar(CUIRect View, CUIRect *pDragBar, EDragSide Side, float *pValue, float MinValue = 100.0f, float MaxValue = 400.0f);
 
-	void UpdateHotEnvelopePoint(const CUIRect &View, const CEnvelope *pEnvelope, int ActiveChannels);
+	void UpdateHotEnvelopeObject(const CUIRect &View, const CEnvelope *pEnvelope, int ActiveChannels);
 
 	void RenderMenubar(CUIRect Menubar);
 	void ShowHelp();
@@ -798,8 +771,8 @@ public:
 	unsigned char m_SwitchDelay;
 	unsigned char m_ViewSwitch;
 
-	// Adjust must be -1, 0 or 1
-	void AdjustBrushSpecialTiles(bool UseNextFree, int Adjust = 0);
+	// AdjustValue must be -1, 0 or 1
+	void AdjustBrushSpecialTiles(bool UseNextFree, int AdjustModifiers, int AdjustValue);
 
 private:
 	CEditorMap m_Map;

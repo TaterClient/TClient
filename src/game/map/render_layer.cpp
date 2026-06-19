@@ -15,7 +15,7 @@
 #include <game/mapitems.h>
 
 #include <array>
-#include <chrono>
+#include <cmath>
 
 /************************
  * Render Buffer Helper *
@@ -903,7 +903,48 @@ void CRenderLayerTile::OnInit(IGraphics *pGraphics, ITextRender *pTextRender, CR
 {
 	CRenderLayer::OnInit(pGraphics, pTextRender, pRenderMap, pEnvelopeManager, pMap, pMapImages, FRenderUploadCallbackOptional);
 	InitTileData();
-	m_LayerClip = CClipRegion(0.0f, 0.0f, m_pLayerTilemap->m_Width * 32.0f, m_pLayerTilemap->m_Height * 32.0f);
+
+	// set clip region
+	if(!Graphics()->IsTileBufferingEnabled())
+	{
+		// shrink clip region, this is done in `UploadTileData` for buffered backends
+		int MinX = m_pLayerTilemap->m_Width;
+		int MaxX = 0;
+		int MinY = m_pLayerTilemap->m_Height;
+		int MaxY = 0;
+		for(int TileY = 0; TileY < m_pLayerTilemap->m_Height; ++TileY)
+		{
+			for(int TileX = 0; TileX < m_pLayerTilemap->m_Width; ++TileX)
+			{
+				unsigned char Index = 0;
+				unsigned char Flags = 0;
+				int Angle = 0;
+				GetTileData(&Index, &Flags, &Angle, static_cast<unsigned int>(TileX), static_cast<unsigned int>(TileY), 0);
+
+				if(Index > 0)
+				{
+					MinX = std::min(TileX, MinX);
+					MaxX = std::max(TileX, MaxX);
+					MinY = std::min(TileY, MinY);
+					MaxY = std::max(TileY, MaxY);
+				}
+			}
+		}
+
+		if(MinX > MaxX || MinY > MaxY)
+		{
+			// layer is empty
+			m_LayerClip = CClipRegion(0.0f, 0.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			m_LayerClip = CClipRegion(MinX * 32.0f, MinY * 32.0f, (MaxX - MinX + 1) * 32.0f, (MaxY - MinY + 1) * 32.0f);
+		}
+	}
+	else
+	{
+		m_LayerClip = CClipRegion(0.0f, 0.0f, m_pLayerTilemap->m_Width * 32.0f, m_pLayerTilemap->m_Height * 32.0f);
+	}
 }
 
 void CRenderLayerTile::InitTileData()
@@ -1706,10 +1747,30 @@ void CRenderLayerEntitySwitch::RenderTileLayerNoTileBuffer(const ColorRGBA &Colo
 CRenderLayerEntityTune::CRenderLayerEntityTune(int GroupId, int LayerId, int Flags, CMapItemLayerTilemap *pLayerTilemap) :
 	CRenderLayerEntityBase(GroupId, LayerId, Flags, pLayerTilemap) {}
 
+IGraphics::CTextureHandle CRenderLayerEntityTune::GetTexture() const
+{
+	return m_pMapImages->GetTuneColors();
+}
+
 void CRenderLayerEntityTune::GetTileData(unsigned char *pIndex, unsigned char *pFlags, int *pAngleRotate, unsigned int x, unsigned int y, int CurOverlay) const
 {
-	*pIndex = m_pTuneTiles[y * m_pLayerTilemap->m_Width + x].m_Type;
+	const unsigned char Number = m_pTuneTiles[y * m_pLayerTilemap->m_Width + x].m_Number;
+	unsigned char Index = 0;
+
+	if(Number != 0)
+	{
+		// assign color index instead of tune number for higher color distance
+		Index = m_TuneColorMapper.TuneNumberToColorIndex(Number);
+	}
+
+	*pIndex = Index;
 	*pFlags = 0;
+}
+
+void CRenderLayerEntityTune::Init()
+{
+	m_TuneColorMapper.Reset();
+	CRenderLayerTile::Init();
 }
 
 int CRenderLayerEntityTune::GetDataIndex(unsigned int &TileSize) const
@@ -1726,7 +1787,7 @@ void CRenderLayerEntityTune::InitTileData()
 void CRenderLayerEntityTune::RenderTileLayerNoTileBuffer(const ColorRGBA &Color, const CRenderLayerParams &Params)
 {
 	Graphics()->BlendNone();
-	RenderMap()->RenderTunemap(m_pTuneTiles, m_pLayerTilemap->m_Width, m_pLayerTilemap->m_Height, 32.0f, Color, (Params.m_RenderTileBorder ? TILERENDERFLAG_EXTEND : 0) | LAYERRENDERFLAG_OPAQUE);
+	RenderMap()->RenderTunemap(m_pTuneTiles, m_pLayerTilemap->m_Width, m_pLayerTilemap->m_Height, 32.0f, Color, (Params.m_RenderTileBorder ? TILERENDERFLAG_EXTEND : 0) | LAYERRENDERFLAG_OPAQUE, &m_TuneColorMapper);
 	Graphics()->BlendNormal();
-	RenderMap()->RenderTunemap(m_pTuneTiles, m_pLayerTilemap->m_Width, m_pLayerTilemap->m_Height, 32.0f, Color, (Params.m_RenderTileBorder ? TILERENDERFLAG_EXTEND : 0) | LAYERRENDERFLAG_TRANSPARENT);
+	RenderMap()->RenderTunemap(m_pTuneTiles, m_pLayerTilemap->m_Width, m_pLayerTilemap->m_Height, 32.0f, Color, (Params.m_RenderTileBorder ? TILERENDERFLAG_EXTEND : 0) | LAYERRENDERFLAG_TRANSPARENT, &m_TuneColorMapper);
 }

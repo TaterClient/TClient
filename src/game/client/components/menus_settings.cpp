@@ -916,7 +916,13 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 
 	{
 		int G = std::gcd(g_Config.m_GfxScreenWidth, g_Config.m_GfxScreenHeight);
-		str_format(aBuf, sizeof(aBuf), "%s: %dx%d @%dhz %d bit (%d:%d)", Localize("Current"), (int)(g_Config.m_GfxScreenWidth * Graphics()->ScreenHiDPIScale()), (int)(g_Config.m_GfxScreenHeight * Graphics()->ScreenHiDPIScale()), g_Config.m_GfxScreenRefreshRate, g_Config.m_GfxColorDepth, g_Config.m_GfxScreenWidth / G, g_Config.m_GfxScreenHeight / G);
+		str_format(aBuf, sizeof(aBuf), "%s: %dx%d @%dhz (%d:%d)",
+			Localize("Current"),
+			(int)(g_Config.m_GfxScreenWidth * Graphics()->ScreenHiDPIScale()),
+			(int)(g_Config.m_GfxScreenHeight * Graphics()->ScreenHiDPIScale()),
+			g_Config.m_GfxScreenRefreshRate,
+			g_Config.m_GfxScreenWidth / G,
+			g_Config.m_GfxScreenHeight / G);
 		Ui()->DoLabel(&ModeLabel, aBuf, sc_FontSizeResListHeader, TEXTALIGN_MC);
 	}
 
@@ -926,9 +932,7 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 
 	for(int i = 0; i < s_NumNodes; ++i)
 	{
-		const int Depth = s_aModes[i].m_Red + s_aModes[i].m_Green + s_aModes[i].m_Blue > 16 ? 24 : 16;
-		if(g_Config.m_GfxColorDepth == Depth &&
-			g_Config.m_GfxScreenWidth == s_aModes[i].m_WindowWidth &&
+		if(g_Config.m_GfxScreenWidth == s_aModes[i].m_WindowWidth &&
 			g_Config.m_GfxScreenHeight == s_aModes[i].m_WindowHeight &&
 			g_Config.m_GfxScreenRefreshRate == s_aModes[i].m_RefreshRate)
 		{
@@ -940,15 +944,13 @@ void CMenus::RenderSettingsGraphics(CUIRect MainView)
 			continue;
 
 		int G = std::gcd(s_aModes[i].m_WindowWidth, s_aModes[i].m_WindowHeight);
-		str_format(aBuf, sizeof(aBuf), " %dx%d @%dhz %d bit (%d:%d)", s_aModes[i].m_CanvasWidth, s_aModes[i].m_CanvasHeight, s_aModes[i].m_RefreshRate, Depth, s_aModes[i].m_WindowWidth / G, s_aModes[i].m_WindowHeight / G);
+		str_format(aBuf, sizeof(aBuf), " %dx%d @%dhz (%d:%d)", s_aModes[i].m_CanvasWidth, s_aModes[i].m_CanvasHeight, s_aModes[i].m_RefreshRate, s_aModes[i].m_WindowWidth / G, s_aModes[i].m_WindowHeight / G);
 		Ui()->DoLabel(&Item.m_Rect, aBuf, sc_FontSizeResList, TEXTALIGN_ML);
 	}
 
 	const int NewSelected = s_ListBox.DoEnd();
 	if(SelectedOld != NewSelected)
 	{
-		const int Depth = s_aModes[NewSelected].m_Red + s_aModes[NewSelected].m_Green + s_aModes[NewSelected].m_Blue > 16 ? 24 : 16;
-		g_Config.m_GfxColorDepth = Depth;
 		g_Config.m_GfxScreenWidth = s_aModes[NewSelected].m_WindowWidth;
 		g_Config.m_GfxScreenHeight = s_aModes[NewSelected].m_WindowHeight;
 		g_Config.m_GfxScreenRefreshRate = s_aModes[NewSelected].m_RefreshRate;
@@ -1357,7 +1359,7 @@ void CMenus::RenderLanguageSettings(CUIRect MainView)
 	const float CreditsMargin = 10.0f;
 
 	CUIRect List, CreditsScroll;
-	MainView.HSplitBottom(4.0f * CreditsFontSize + 2.0f * CreditsMargin + CScrollRegion::HEIGHT_MAGIC_FIX, &List, &CreditsScroll);
+	MainView.HSplitBottom(4.0f * CreditsFontSize + 2.0f * CreditsMargin, &List, &CreditsScroll);
 	List.HSplitBottom(5.0f, &List, nullptr);
 
 	RenderLanguageSelection(List);
@@ -3067,7 +3069,7 @@ CUi::EPopupMenuFunctionResult CMenus::PopupMapPicker(void *pContext, CUIRect Vie
 		char aLabelText[IO_MAX_PATH_LENGTH];
 		str_copy(aLabelText, Map.m_aFilename);
 		if(Map.m_IsDirectory)
-			str_append(aLabelText, "/", sizeof(aLabelText));
+			str_append(aLabelText, "/");
 
 		const char *pIconType;
 		if(!Map.m_IsDirectory)
@@ -3105,8 +3107,8 @@ CUi::EPopupMenuFunctionResult CMenus::PopupMapPicker(void *pContext, CUIRect Vie
 			}
 			else
 			{
-				str_append(pPopupContext->m_aCurrentMapFolder, "/", sizeof(pPopupContext->m_aCurrentMapFolder));
-				str_append(pPopupContext->m_aCurrentMapFolder, SelectedItem.m_aFilename, sizeof(pPopupContext->m_aCurrentMapFolder));
+				str_append(pPopupContext->m_aCurrentMapFolder, "/");
+				str_append(pPopupContext->m_aCurrentMapFolder, SelectedItem.m_aFilename);
 			}
 			pPopupContext->MapListPopulate();
 		}

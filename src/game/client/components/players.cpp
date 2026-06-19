@@ -267,9 +267,13 @@ void CPlayers::RenderHookCollLine(
 				vLineSegments.emplace_back(StartPos, aIntersections[1]);
 		}
 		else if(NumIntersections == 1)
+		{
 			vLineSegments.emplace_back(StartPos, aIntersections[0]);
+		}
 		else
+		{
 			vLineSegments.emplace_back(StartPos, HitPos);
+		}
 	};
 
 	// simulate the hook into the future
@@ -704,7 +708,9 @@ void CPlayers::RenderPlayer(
 	State.Set(&g_pData->m_aAnimations[ANIM_BASE], 0.0f);
 
 	if(InAir)
+	{
 		State.Add(&g_pData->m_aAnimations[ANIM_INAIR], 0.0f, 1.0f); // TODO: some sort of time here
+	}
 	else if(Stationary)
 	{
 		if(Inactive)
@@ -713,7 +719,9 @@ void CPlayers::RenderPlayer(
 			RenderInfo.m_FeetFlipped = true;
 		}
 		else
+		{
 			State.Add(&g_pData->m_aAnimations[ANIM_IDLE], 0.0f, 1.0f); // TODO: some sort of time here
+		}
 	}
 	else if(!WantOtherDir)
 	{
@@ -778,7 +786,7 @@ void CPlayers::RenderPlayer(
 					// static position for hammer
 					WeaponPosition = Position + vec2(State.GetAttach()->m_X, State.GetAttach()->m_Y);
 					WeaponPosition.y += g_pData->m_Weapons.m_aId[CurrentWeapon].m_Offsety;
-					if(Direction.x < 0)
+					if(Direction.x < 0.0f)
 						WeaponPosition.x -= g_pData->m_Weapons.m_aId[CurrentWeapon].m_Offsetx;
 					if(IsSit)
 						WeaponPosition.y += 3.0f;
@@ -786,13 +794,13 @@ void CPlayers::RenderPlayer(
 					// if active and attack is under way, bash stuffs
 					if(!Inactive || LastAttackTime * HammerAnimationTimeScale < 1.0f)
 					{
-						if(Direction.x < 0)
-							Graphics()->QuadsSetRotation(-pi / 2 - State.GetAttach()->m_Angle * pi * 2);
+						if(Direction.x < 0.0f)
+							Graphics()->QuadsSetRotation(-pi / 2.0f - State.GetAttach()->m_Angle * pi * 2.0f);
 						else
-							Graphics()->QuadsSetRotation(-pi / 2 + State.GetAttach()->m_Angle * pi * 2);
+							Graphics()->QuadsSetRotation(-pi / 2.0f + State.GetAttach()->m_Angle * pi * 2.0f);
 					}
 					else
-						Graphics()->QuadsSetRotation(Direction.x < 0 ? 100.0f : 500.0f);
+						Graphics()->QuadsSetRotation(Direction.x < 0.0f ? 100.0f : 500.0f);
 
 					Graphics()->RenderQuadContainerAsSprite(m_WeaponEmoteQuadContainerIndex, QuadOffset, WeaponPosition.x, WeaponPosition.y);
 					break;
@@ -808,7 +816,7 @@ void CPlayers::RenderPlayer(
 
 					// set rotation
 					float QuadsRotation = -pi / 2.0f;
-					QuadsRotation += State.GetAttach()->m_Angle * (Direction.x < 0 ? -1 : 1) * pi * 2;
+					QuadsRotation += State.GetAttach()->m_Angle * (Direction.x < 0.0f ? -1.0f : 1.0f) * pi * 2.0f;
 					QuadsRotation += Angle;
 					if(Direction.x < 0.0f)
 						QuadsRotation += pi;
@@ -1717,7 +1725,9 @@ void CPlayers::OnInit()
 					Graphics()->GetSpriteScaleImpl(96, 64, ScaleX, ScaleY);
 				}
 				else
+				{
 					Graphics()->GetSpriteScale(g_pData->m_Weapons.m_aId[i].m_aSpriteMuzzles[n], ScaleX, ScaleY);
+				}
 			}
 
 			float SWidth = (g_pData->m_Weapons.m_aId[i].m_VisualSize * ScaleX) * (4.0f / 3.0f);

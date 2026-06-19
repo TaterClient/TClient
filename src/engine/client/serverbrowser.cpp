@@ -865,7 +865,7 @@ CServerBrowser::CServerEntry *CServerBrowser::Add(const NETADDR *pAddrs, int Num
 	pEntry->m_Info.m_HasRank = CServerInfo::RANK_UNAVAILABLE;
 	ServerBrowserFormatAddresses(pEntry->m_Info.m_aAddress, sizeof(pEntry->m_Info.m_aAddress), pEntry->m_Info.m_aAddresses, pEntry->m_Info.m_NumAddresses);
 	UpdateServerCommunity(&pEntry->m_Info);
-	str_copy(pEntry->m_Info.m_aName, pEntry->m_Info.m_aAddress, sizeof(pEntry->m_Info.m_aName));
+	str_copy(pEntry->m_Info.m_aName, pEntry->m_Info.m_aAddress);
 
 	// check if it's a favorite
 	pEntry->m_Info.m_Favorite = m_pFavorites->IsFavorite(pEntry->m_Info.m_aAddresses, pEntry->m_Info.m_NumAddresses);
@@ -903,7 +903,7 @@ CServerBrowser::CServerEntry *CServerBrowser::ReplaceEntry(CServerEntry *pEntry,
 	pEntry->m_Info.m_HasRank = CServerInfo::RANK_UNAVAILABLE;
 	ServerBrowserFormatAddresses(pEntry->m_Info.m_aAddress, sizeof(pEntry->m_Info.m_aAddress), pEntry->m_Info.m_aAddresses, pEntry->m_Info.m_NumAddresses);
 	UpdateServerCommunity(&pEntry->m_Info);
-	str_copy(pEntry->m_Info.m_aName, pEntry->m_Info.m_aAddress, sizeof(pEntry->m_Info.m_aName));
+	str_copy(pEntry->m_Info.m_aName, pEntry->m_Info.m_aAddress);
 
 	pEntry->m_Info.m_Favorite = m_pFavorites->IsFavorite(pEntry->m_Info.m_aAddresses, pEntry->m_Info.m_NumAddresses);
 	pEntry->m_Info.m_FavoriteAllowPing = m_pFavorites->IsPingAllowed(pEntry->m_Info.m_aAddresses, pEntry->m_Info.m_NumAddresses);
@@ -1861,7 +1861,6 @@ std::vector<const CCommunity *> CServerBrowser::CurrentCommunities() const
 
 unsigned CServerBrowser::CurrentCommunitiesHash() const
 {
-	std::vector<const CCommunity *> vpCommunities = CurrentCommunities();
 	unsigned Hash = 5381;
 	for(const CCommunity *pCommunity : CurrentCommunities())
 	{

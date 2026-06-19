@@ -1,12 +1,12 @@
 # Needs UnicodeData.txt and confusables.txt in the current directory.
 #
 # Those can be obtained from unicode.org:
-# - http://www.unicode.org/Public/security/<VERSION>/confusables.txt
-# - http://www.unicode.org/Public/<VERSION>/ucd/UnicodeData.txt
+# - https://www.unicode.org/Public/<VERSION>/security/confusables.txt
+# - https://www.unicode.org/Public/<VERSION>/ucd/UnicodeData.txt
 #
 # If executed as a script, it will generate the contents of the files
 # python3 scripts/generate_unicode_confusables_data.py header > `src/base/unicode/confusables.h`,
-# python3 scripts/generate_unicode_confusables_data.py data > `src/base/unicode/confusables_data.h`.
+# python3 scripts/generate_unicode_confusables_data.py data > `src/base/unicode/confusables_data.cpp`.
 
 import sys
 import unicode
@@ -55,6 +55,7 @@ def generate_decompositions():
 
 def gen_header(decompositions, len_set):
 	print("""\
+#include <cstddef>
 #include <cstdint>
 
 struct DECOMP_SLICE
@@ -63,13 +64,9 @@ struct DECOMP_SLICE
 \tuint16_t length : 3;
 };
 """)
-	print("enum")
-	print("{")
-	print(f"\tNUM_DECOMP_LENGTHS = {len(len_set)},")
-	print(f"\tNUM_DECOMPS = {len(decompositions)},")
-	print("};")
+	print(f"static constexpr size_t NUM_DECOMP_LENGTHS = {len(len_set)};")
+	print(f"static constexpr size_t NUM_DECOMPS = {len(decompositions)};")
 	print()
-
 	print("extern const uint8_t decomp_lengths[NUM_DECOMP_LENGTHS];")
 	print("extern const int32_t decomp_chars[NUM_DECOMPS];")
 	print("extern const struct DECOMP_SLICE decomp_slices[NUM_DECOMPS];")
@@ -78,9 +75,7 @@ struct DECOMP_SLICE
 
 def gen_data(decompositions, decomposition_set, decomposition_offsets, len_set):
 	print("""\
-#ifndef CONFUSABLES_DATA
-#error "This file should only be included in `confusables.cpp`"
-#endif
+#include "confusables.h"
 """)
 
 	print("const uint8_t decomp_lengths[NUM_DECOMP_LENGTHS] = {")

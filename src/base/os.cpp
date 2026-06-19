@@ -13,14 +13,12 @@
 #include "io.h"
 
 #include <sys/utsname.h> // uname, utsname
-#include <unistd.h> // execlp, fork
+#include <unistd.h> // _exit, execlp, fork
 
 #if defined(CONF_PLATFORM_MACOS)
 #include <CoreFoundation/CoreFoundation.h>
 #endif
 #elif defined(CONF_FAMILY_WINDOWS)
-#include "mem.h"
-
 #include <objbase.h> // required for shellapi.h
 #include <shellapi.h> // ShellExecuteExW
 #include <windows.h>
@@ -36,7 +34,7 @@ void cmdline_fix(int *argc, const char ***argv)
 #if defined(CONF_FAMILY_WINDOWS)
 	int wide_argc = 0;
 	WCHAR **wide_argv = CommandLineToArgvW(GetCommandLineW(), &wide_argc);
-	dbg_assert(wide_argv != NULL, "CommandLineToArgvW failure");
+	dbg_assert(wide_argv != nullptr, "CommandLineToArgvW failure");
 	dbg_assert(wide_argc > 0, "Invalid argc value");
 
 	int total_size = 0;
@@ -86,7 +84,7 @@ int os_open_link(const char *link)
 	SHELLEXECUTEINFOW info;
 	mem_zero(&info, sizeof(SHELLEXECUTEINFOW));
 	info.cbSize = sizeof(SHELLEXECUTEINFOW);
-	info.lpVerb = nullptr; // NULL to use the default verb, as "open" may not be available
+	info.lpVerb = nullptr; // nullptr to use the default verb, as "open" may not be available
 	info.lpFile = wide_link.c_str();
 	info.nShow = SW_SHOWNORMAL;
 	// The SEE_MASK_NOASYNC flag ensures that the ShellExecuteEx function
@@ -108,12 +106,18 @@ int os_open_link(const char *link)
 #elif defined(CONF_PLATFORM_LINUX)
 	const int pid = fork();
 	if(pid == 0)
+	{
 		execlp("xdg-open", "xdg-open", link, nullptr);
+		_exit(1);
+	}
 	return pid > 0;
 #elif defined(CONF_FAMILY_UNIX)
 	const int pid = fork();
 	if(pid == 0)
+	{
 		execlp("open", "open", link, nullptr);
+		_exit(1);
+	}
 	return pid > 0;
 #endif
 }

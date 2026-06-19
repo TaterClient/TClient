@@ -289,7 +289,7 @@ public:
 		// 2) use compiled-in data-dir if present
 		if(fs_is_dir(DATA_DIR "/mapres"))
 		{
-			str_copy(m_aDatadir, DATA_DIR, sizeof(m_aDatadir));
+			str_copy(m_aDatadir, DATA_DIR);
 			return;
 		}
 #endif
@@ -297,7 +297,7 @@ public:
 		// 3) check for usable path in argv[0]
 		{
 #ifdef CONF_PLATFORM_HAIKU
-			pArgv0 = realpath(pArgv0, NULL);
+			pArgv0 = realpath(pArgv0, nullptr);
 #endif
 			unsigned int Pos = ~0U;
 			for(unsigned i = 0; pArgv0[i]; i++)
@@ -362,7 +362,7 @@ public:
 	void FindBinaryDirectory(const char *pArgv0)
 	{
 #if defined(BINARY_DIR)
-		str_copy(m_aBinarydir, BINARY_DIR, sizeof(m_aBinarydir));
+		str_copy(m_aBinarydir, BINARY_DIR);
 		return;
 #endif
 
@@ -895,7 +895,9 @@ public:
 			}
 		}
 		else
+		{
 			str_copy(pBuffer, aBinaryPath, BufferSize);
+		}
 		return pBuffer;
 	}
 

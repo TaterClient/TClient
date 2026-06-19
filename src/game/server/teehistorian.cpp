@@ -27,7 +27,7 @@ private:
 static const char TEEHISTORIAN_NAME[] = "teehistorian@ddnet.tw";
 static const CUuid TEEHISTORIAN_UUID = CalculateUuid(TEEHISTORIAN_NAME);
 static const char TEEHISTORIAN_VERSION[] = "2";
-static const char TEEHISTORIAN_VERSION_MINOR[] = "20";
+static const char TEEHISTORIAN_VERSION_MINOR[] = "22";
 
 #define UUID(id, name) static const CUuid UUID_##id = CalculateUuid(name);
 #include <engine/shared/teehistorian_ex_chunks.h>
@@ -467,7 +467,7 @@ void CTeeHistorian::RecordPlayerInput(int ClientId, uint32_t UniqueClientId, con
 		Buffer.Reset();
 
 		Buffer.AddInt(-TEEHISTORIAN_INPUT_DIFF);
-		CSnapshotDelta_DiffItem(AsSlice(&pPrev->m_Input), AsSlice(pInput), AsMutSlice(&DiffInput));
+		CSnapshotDelta::DiffItem(AsSlice(&pPrev->m_Input), AsSlice(pInput), AsMutSlice(&DiffInput));
 		if(m_Debug)
 		{
 			const int *pData = (const int *)&DiffInput;

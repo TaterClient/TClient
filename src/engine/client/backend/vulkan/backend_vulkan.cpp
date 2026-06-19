@@ -432,7 +432,9 @@ class CCommandProcessorFragment_Vulkan : public CCommandProcessorFragment_GLBase
 								break;
 						}
 						else
+						{
 							++HeapIterator;
+						}
 					}
 				}
 			}
@@ -1597,7 +1599,7 @@ protected:
 			}
 			if(!FoundAllocation)
 			{
-				typename SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap *pNewHeap = new typename SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap();
+				typename SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap *pNewHeap = new SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap();
 
 				VkBuffer TmpBuffer;
 				if(!GetBufferImpl(MemoryBlockSize * BlockCount, RequiresMapping ? MEMORY_BLOCK_USAGE_STAGING : MEMORY_BLOCK_USAGE_BUFFER, TmpBuffer, TmpBufferMemory, BufferUsage, BufferProperties))
@@ -1816,7 +1818,7 @@ protected:
 			}
 			if(!FoundAllocation)
 			{
-				typename SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap *pNewHeap = new typename SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap();
+				typename SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap *pNewHeap = new SMemoryBlockCache<Id>::SMemoryCacheType::SMemoryCacheHeap();
 
 				if(!GetImageMemoryImpl(MemoryBlockSize * BlockCount, RequiredMemoryTypeBits, TmpBufferMemory, BufferProperties))
 				{
@@ -2600,9 +2602,6 @@ protected:
 
 		if(Requires2DTextureArray)
 		{
-			int Image3DWidth = Width;
-			int Image3DHeight = Height;
-
 			int ConvertWidth = Width;
 			int ConvertHeight = Height;
 
@@ -2623,40 +2622,31 @@ protected:
 				pData = pNewTexData;
 			}
 
-			bool Needs3DTexDel = false;
+			int Image3DWidth, Image3DHeight;
 			uint8_t *pTexData3D = static_cast<uint8_t *>(malloc((size_t)PixelSize * ConvertWidth * ConvertHeight));
-			if(!Texture2DTo3D(pData, ConvertWidth, ConvertHeight, PixelSize, 16, 16, pTexData3D, Image3DWidth, Image3DHeight))
+			Texture2DTo3D(pData, ConvertWidth, ConvertHeight, PixelSize, 16, 16, pTexData3D, Image3DWidth, Image3DHeight);
+
+			const size_t ImageDepth2DArray = (size_t)16 * 16;
+			VkExtent3D ImgSize{(uint32_t)Image3DWidth, (uint32_t)Image3DHeight, 1};
+			if(RequiresMipMaps)
 			{
-				free(pTexData3D);
-				pTexData3D = nullptr;
+				MipMapLevelCount = ImageMipLevelCount(ImgSize);
+				if(!m_OptimalRGBAImageBlitting)
+					MipMapLevelCount = 1;
 			}
-			Needs3DTexDel = true;
 
-			if(pTexData3D != nullptr)
-			{
-				const size_t ImageDepth2DArray = (size_t)16 * 16;
-				VkExtent3D ImgSize{(uint32_t)Image3DWidth, (uint32_t)Image3DHeight, 1};
-				if(RequiresMipMaps)
-				{
-					MipMapLevelCount = ImageMipLevelCount(ImgSize);
-					if(!m_OptimalRGBAImageBlitting)
-						MipMapLevelCount = 1;
-				}
+			if(!CreateTextureImage(ImageIndex, Texture.m_Img3D, Texture.m_Img3DMem, pTexData3D, Format, Image3DWidth, Image3DHeight, ImageDepth2DArray, PixelSize, MipMapLevelCount))
+				return false;
+			VkFormat ImgFormat = Format;
+			VkImageView ImgView = CreateTextureImageView(Texture.m_Img3D, ImgFormat, VK_IMAGE_VIEW_TYPE_2D_ARRAY, ImageDepth2DArray, MipMapLevelCount);
+			Texture.m_Img3DView = ImgView;
+			VkSampler ImgSampler = GetTextureSampler(SUPPORTED_SAMPLER_TYPE_2D_TEXTURE_ARRAY);
+			Texture.m_Sampler3D = ImgSampler;
 
-				if(!CreateTextureImage(ImageIndex, Texture.m_Img3D, Texture.m_Img3DMem, pTexData3D, Format, Image3DWidth, Image3DHeight, ImageDepth2DArray, PixelSize, MipMapLevelCount))
-					return false;
-				VkFormat ImgFormat = Format;
-				VkImageView ImgView = CreateTextureImageView(Texture.m_Img3D, ImgFormat, VK_IMAGE_VIEW_TYPE_2D_ARRAY, ImageDepth2DArray, MipMapLevelCount);
-				Texture.m_Img3DView = ImgView;
-				VkSampler ImgSampler = GetTextureSampler(SUPPORTED_SAMPLER_TYPE_2D_TEXTURE_ARRAY);
-				Texture.m_Sampler3D = ImgSampler;
+			if(!CreateNew3DTexturedStandardDescriptorSets(ImageIndex))
+				return false;
 
-				if(!CreateNew3DTexturedStandardDescriptorSets(ImageIndex))
-					return false;
-
-				if(Needs3DTexDel)
-					free(pTexData3D);
-			}
+			free(pTexData3D);
 		}
 		return true;
 	}
@@ -3530,7 +3520,7 @@ public:
 	[[nodiscard]] bool GetVulkanLayers(std::vector<std::string> &vVKLayers)
 	{
 		uint32_t LayerCount = 0;
-		VkResult Res = vkEnumerateInstanceLayerProperties(&LayerCount, NULL);
+		VkResult Res = vkEnumerateInstanceLayerProperties(&LayerCount, nullptr);
 		if(Res != VK_SUCCESS)
 		{
 			SetError(EGfxErrorType::GFX_ERROR_TYPE_INIT, "Could not get Vulkan layers.");
@@ -3596,7 +3586,7 @@ public:
 
 		VkApplicationInfo VKAppInfo = {};
 		VKAppInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-		VKAppInfo.pNext = NULL;
+		VKAppInfo.pNext = nullptr;
 		VKAppInfo.pApplicationName = "DDNet";
 		VKAppInfo.applicationVersion = 1;
 		VKAppInfo.pEngineName = "DDNet-Vulkan";
@@ -3629,7 +3619,7 @@ public:
 
 		bool TryAgain = false;
 
-		VkResult Res = vkCreateInstance(&VKInstanceInfo, NULL, &m_VKInstance);
+		VkResult Res = vkCreateInstance(&VKInstanceInfo, nullptr, &m_VKInstance);
 		const char *pCritErrorMsg = CheckVulkanCriticalError(Res);
 		if(pCritErrorMsg != nullptr)
 		{
@@ -3637,7 +3627,9 @@ public:
 			return false;
 		}
 		else if(Res == VK_ERROR_LAYER_NOT_PRESENT || Res == VK_ERROR_EXTENSION_NOT_PRESENT)
+		{
 			TryAgain = true;
+		}
 
 		if(TryAgain && TryDebugExtensions)
 			return CreateVulkanInstance(vVKLayers, vVKExtensions, false);
@@ -3895,14 +3887,14 @@ public:
 			vLayerCNames.emplace_back(Layer.c_str());
 
 		uint32_t DevPropCount = 0;
-		if(vkEnumerateDeviceExtensionProperties(m_VKGPU, NULL, &DevPropCount, NULL) != VK_SUCCESS)
+		if(vkEnumerateDeviceExtensionProperties(m_VKGPU, nullptr, &DevPropCount, nullptr) != VK_SUCCESS)
 		{
 			SetError(EGfxErrorType::GFX_ERROR_TYPE_INIT, "Querying logical device extension properties failed.");
 			return false;
 		}
 
 		std::vector<VkExtensionProperties> vDevPropList(DevPropCount);
-		if(vkEnumerateDeviceExtensionProperties(m_VKGPU, NULL, &DevPropCount, vDevPropList.data()) != VK_SUCCESS)
+		if(vkEnumerateDeviceExtensionProperties(m_VKGPU, nullptr, &DevPropCount, vDevPropList.data()) != VK_SUCCESS)
 		{
 			SetError(EGfxErrorType::GFX_ERROR_TYPE_INIT, "Querying logical device extension properties failed.");
 			return false;
@@ -3925,7 +3917,7 @@ public:
 		VKQueueCreateInfo.queueCount = 1;
 		float QueuePrio = 1.0f;
 		VKQueueCreateInfo.pQueuePriorities = &QueuePrio;
-		VKQueueCreateInfo.pNext = NULL;
+		VKQueueCreateInfo.pNext = nullptr;
 		VKQueueCreateInfo.flags = 0;
 
 		VkDeviceCreateInfo VKCreateInfo;
@@ -3936,8 +3928,8 @@ public:
 		VKCreateInfo.enabledLayerCount = static_cast<uint32_t>(vLayerCNames.size());
 		VKCreateInfo.ppEnabledExtensionNames = vDevPropCNames.data();
 		VKCreateInfo.enabledExtensionCount = static_cast<uint32_t>(vDevPropCNames.size());
-		VKCreateInfo.pNext = NULL;
-		VKCreateInfo.pEnabledFeatures = NULL;
+		VKCreateInfo.pNext = nullptr;
+		VKCreateInfo.pEnabledFeatures = nullptr;
 		VKCreateInfo.flags = 0;
 
 		if(vkCreateDevice(m_VKGPU, &VKCreateInfo, nullptr, &m_VKDevice) != VK_SUCCESS)
@@ -3977,7 +3969,7 @@ public:
 	[[nodiscard]] bool GetPresentationMode(VkPresentModeKHR &VKIOMode)
 	{
 		uint32_t PresentModeCount = 0;
-		if(vkGetPhysicalDeviceSurfacePresentModesKHR(m_VKGPU, m_VKPresentSurface, &PresentModeCount, NULL) != VK_SUCCESS)
+		if(vkGetPhysicalDeviceSurfacePresentModesKHR(m_VKGPU, m_VKPresentSurface, &PresentModeCount, nullptr) != VK_SUCCESS)
 		{
 			SetError(EGfxErrorType::GFX_ERROR_TYPE_INIT, "The device surface presentation modes could not be fetched.");
 			return false;
@@ -4200,7 +4192,9 @@ public:
 			return false;
 		}
 		else if(SwapchainCreateRes == VK_ERROR_NATIVE_WINDOW_IN_USE_KHR)
+		{
 			return false;
+		}
 
 		return true;
 	}
@@ -7536,7 +7530,9 @@ public:
 
 		m_ThreadCount = g_Config.m_GfxRenderThreadCount;
 		if(m_ThreadCount <= 1)
+		{
 			m_ThreadCount = 1;
+		}
 		else
 		{
 			m_ThreadCount = std::clamp<decltype(m_ThreadCount)>(m_ThreadCount, 3, std::max<decltype(m_ThreadCount)>(3, std::thread::hardware_concurrency()));

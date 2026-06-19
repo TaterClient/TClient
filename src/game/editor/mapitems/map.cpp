@@ -91,6 +91,8 @@ void CEditorMap::Clean()
 	m_ShiftBy = 1;
 
 	m_MapViewState.Reset(Editor());
+	m_MapGridState.Reset();
+	m_ProofModeState.Reset();
 	m_QuadKnifeState.Reset();
 }
 

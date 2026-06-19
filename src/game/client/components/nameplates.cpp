@@ -366,7 +366,7 @@ protected:
 	void UpdateText(CGameClient &This, const CNamePlateData &Data) override
 	{
 		m_FontSize = Data.m_FontSize;
-		str_copy(m_aText, Data.m_aName, sizeof(m_aText));
+		str_copy(m_aText, Data.m_aName);
 		CTextCursor Cursor;
 		Cursor.m_FontSize = m_FontSize;
 		This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, m_aText);
@@ -398,7 +398,7 @@ protected:
 	void UpdateText(CGameClient &This, const CNamePlateData &Data) override
 	{
 		m_FontSize = Data.m_FontSizeClan;
-		str_copy(m_aText, Data.m_aClan, sizeof(m_aText));
+		str_copy(m_aText, Data.m_aClan);
 		CTextCursor Cursor;
 		Cursor.m_FontSize = m_FontSize;
 		This.TextRender()->CreateOrAppendTextContainer(m_TextContainerIndex, &Cursor, m_aText);
@@ -970,7 +970,9 @@ void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *p
 			Data.m_HookStrongWeakId = Other.m_ExtendedData.m_StrongWeakId;
 			Data.m_ShowHookStrongWeakId = g_Config.m_Debug || g_Config.m_ClNamePlatesStrong == 2;
 			if(SelectedId == pPlayerInfo->m_ClientId)
+			{
 				Data.m_ShowHookStrongWeak = Data.m_ShowHookStrongWeakId;
+			}
 			else
 			{
 				Data.m_HookStrongWeakState = SelectedStrongWeakId > Other.m_ExtendedData.m_StrongWeakId ? EHookStrongWeakState::STRONG : EHookStrongWeakState::WEAK;

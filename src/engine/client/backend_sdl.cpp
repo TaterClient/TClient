@@ -283,7 +283,7 @@ void CCommandProcessorFragment_SDL::Cmd_WindowDestroyNtf(const CCommandBuffer::S
 	// Unbind the graphic context from the window, so it does not get destroyed
 #ifdef CONF_PLATFORM_ANDROID
 	if(m_GLContext)
-		SDL_GL_MakeCurrent(NULL, NULL);
+		SDL_GL_MakeCurrent(nullptr, nullptr);
 #endif
 }
 
@@ -754,11 +754,17 @@ EBackendType CGraphicsBackend_SDL_GL::DetectBackend()
 #if defined(CONF_BACKEND_VULKAN)
 	const char *pEnvDriver = SDL_getenv("DDNET_DRIVER");
 	if(pEnvDriver && str_comp_nocase(pEnvDriver, "GLES") == 0)
+	{
 		RetBackendType = BACKEND_TYPE_OPENGL_ES;
+	}
 	else if(pEnvDriver && str_comp_nocase(pEnvDriver, "Vulkan") == 0)
+	{
 		RetBackendType = BACKEND_TYPE_VULKAN;
+	}
 	else if(pEnvDriver && str_comp_nocase(pEnvDriver, "OpenGL") == 0)
+	{
 		RetBackendType = BACKEND_TYPE_OPENGL;
+	}
 	else if(pEnvDriver == nullptr)
 	{
 		// load the config backend
@@ -1014,10 +1020,6 @@ static void DisplayToVideoMode(CVideoMode *pVMode, SDL_DisplayMode *pMode, float
 	pVMode->m_WindowWidth = pMode->w;
 	pVMode->m_WindowHeight = pMode->h;
 	pVMode->m_RefreshRate = RefreshRate;
-	pVMode->m_Red = SDL_BITSPERPIXEL(pMode->format);
-	pVMode->m_Green = SDL_BITSPERPIXEL(pMode->format);
-	pVMode->m_Blue = SDL_BITSPERPIXEL(pMode->format);
-	pVMode->m_Format = pMode->format;
 }
 
 void CGraphicsBackend_SDL_GL::GetVideoModes(CVideoMode *pModes, int MaxModes, int *pNumModes, float HiDPIScale, int MaxWindowWidth, int MaxWindowHeight, int ScreenId)
@@ -1386,7 +1388,9 @@ int CGraphicsBackend_SDL_GL::Init(const char *pName, int *pScreen, int *pWidth, 
 			SDL_Vulkan_GetDrawableSize(m_pWindow, pCurrentWidth, pCurrentHeight);
 	}
 	else
+	{
 		SDL_GetWindowSize(m_pWindow, pCurrentWidth, pCurrentHeight);
+	}
 	SDL_GetWindowSize(m_pWindow, pWidth, pHeight);
 
 	if(IsOpenGLFamilyBackend)
@@ -1662,7 +1666,7 @@ void CGraphicsBackend_SDL_GL::SetWindowParams(int FullscreenMode, bool IsBorderl
 	}
 }
 
-bool CGraphicsBackend_SDL_GL::SetWindowScreen(int Index, bool MoveToCenter)
+bool CGraphicsBackend_SDL_GL::SetWindowScreen(int Index, bool MoveToCenter, ivec2 *pDesktopSize)
 {
 	if(Index < 0 || Index >= m_NumScreens)
 	{
@@ -1690,10 +1694,10 @@ bool CGraphicsBackend_SDL_GL::SetWindowScreen(int Index, bool MoveToCenter)
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(Index));
 	}
 
-	return UpdateDisplayMode(Index);
+	return UpdateDisplayMode(Index, pDesktopSize);
 }
 
-bool CGraphicsBackend_SDL_GL::UpdateDisplayMode(int Index)
+bool CGraphicsBackend_SDL_GL::UpdateDisplayMode(int Index, ivec2 *pDesktopSize)
 {
 	SDL_DisplayMode DisplayMode;
 	if(SDL_GetDesktopDisplayMode(Index, &DisplayMode) < 0)
@@ -1703,8 +1707,8 @@ bool CGraphicsBackend_SDL_GL::UpdateDisplayMode(int Index)
 	}
 
 	g_Config.m_GfxScreen = Index;
-	g_Config.m_GfxDesktopWidth = DisplayMode.w;
-	g_Config.m_GfxDesktopHeight = DisplayMode.h;
+	pDesktopSize->x = DisplayMode.w;
+	pDesktopSize->y = DisplayMode.h;
 	return true;
 }
 

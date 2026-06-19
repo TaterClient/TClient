@@ -381,7 +381,6 @@ public:
 		CJoystickActionTouchButtonBehavior() :
 			CJoystickTouchButtonBehavior(BEHAVIOR_ID) {}
 
-		void Init(CTouchButton *pTouchButton) override;
 		int SelectedAction() const override;
 	};
 
@@ -600,6 +599,7 @@ private:
 	int m_LastHeight = -10;
 	void BuildPositionXY(std::vector<CUnitRect> vVisibleButtonRects, CUnitRect MyRect);
 	std::optional<CUnitRect> FindPositionXY(std::vector<CUnitRect> &vVisibleButtonRects, CUnitRect MyRect);
+	CUnitRect FindSizeWH(std::vector<CUnitRect> vVisibleButtonRects, CUnitRect MyRect);
 
 	// This is how editor render buttons.
 	void RenderButtonsEditor();

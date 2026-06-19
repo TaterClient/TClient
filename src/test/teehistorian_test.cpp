@@ -43,7 +43,7 @@ protected:
 	m_Config.m_##Name = (Def);
 #define MACRO_CONFIG_COL(Name, ScriptName, Def, Save, Desc) MACRO_CONFIG_INT(Name, ScriptName, Def, 0, 0, Save, Desc)
 #define MACRO_CONFIG_STR(Name, ScriptName, Len, Def, Save, Desc) \
-	str_copy(m_Config.m_##Name, (Def), sizeof(m_Config.m_##Name));
+	str_copy(m_Config.m_##Name, (Def));
 #include <engine/shared/config_variables.h>
 #undef MACRO_CONFIG_STR
 #undef MACRO_CONFIG_COL
@@ -110,7 +110,7 @@ protected:
 	void Expect(const unsigned char *pOutput, size_t OutputSize)
 	{
 		static CUuid TEEHISTORIAN_UUID = CalculateUuid("teehistorian@ddnet.tw");
-		static const char PREFIX1[] = "{\"comment\":\"teehistorian@ddnet.tw\",\"version\":\"2\",\"version_minor\":\"20\",\"game_uuid\":\"a1eb7182-796e-3b3e-941d-38ca71b2a4a8\",\"server_version\":\"DDNet test\",\"start_time\":\"";
+		static const char PREFIX1[] = "{\"comment\":\"teehistorian@ddnet.tw\",\"version\":\"2\",\"version_minor\":\"22\",\"game_uuid\":\"a1eb7182-796e-3b3e-941d-38ca71b2a4a8\",\"server_version\":\"DDNet test\",\"start_time\":\"";
 		static const char PREFIX2[] = "\",\"server_name\":\"server name\",\"server_port\":\"8303\",\"game_type\":\"game type\",\"map_name\":\"Kobra 3 Solo\",\"map_size\":\"903514\",\"map_sha256\":\"0123456789012345678901234567890123456789012345678901234567890123\",\"map_crc\":\"eceaf25c\",\"prng_description\":\"test-prng:02468ace\",\"config\":{},\"tuning\":{},\"uuids\":[";
 		static const char PREFIX3[] = "]}";
 
