@@ -2722,8 +2722,8 @@ void CMenus::RenderSettingsTClientConfigs(CUIRect MainView)
 	ListArea.VSplitRight(5.0f, &ListArea, nullptr);
 	CUIRect Content = ListArea;
 
-	auto DomainName = [](ConfigDomain D) {
-		switch(D)
+	auto DomainName = [](ConfigDomain Domain) {
+		switch(Domain)
 		{
 		case ConfigDomain::DDNET: return "DDNet";
 		case ConfigDomain::TCLIENT: return "TClient";
