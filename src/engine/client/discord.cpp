@@ -113,6 +113,8 @@ public:
 
 				m_pActivityManager->update_activity(m_pActivityManager, &m_Activity, nullptr, nullptr);
 			}
+
+			m_pCore->run_callbacks(m_pCore);
 		}
 	}
 
