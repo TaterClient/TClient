@@ -29,6 +29,10 @@ class CTranslate : public CComponent
 		// For chat translations
 		CChat::CLine *m_pLine = nullptr;
 		std::shared_ptr<CTranslateResponse> m_pTranslateResponse = nullptr;
+		// For outgoing translations (translating our own message before sending it)
+		bool m_IsOutgoing = false;
+		int m_OutgoingTeam = 0;
+		char m_aOutgoingOriginalText[256] = "";
 	};
 	std::vector<CTranslateJob> m_vJobs;
 
@@ -46,6 +50,10 @@ public:
 	void Translate(CChat::CLine &Line, bool ShowProgress = true);
 
 	void AutoTranslate(CChat::CLine &Line);
+
+	// Translates pText into g_Config.m_TcTranslateOutgoingTarget, then sends the
+	// result (or the original text if translation fails) as a chat message.
+	void TranslateOutgoing(int Team, const char *pText);
 };
 
 #endif

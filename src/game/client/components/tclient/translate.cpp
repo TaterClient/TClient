@@ -196,7 +196,7 @@ public:
 	{
 		return "LibreTranslate";
 	}
-	CTranslateBackendLibretranslate(IHttp &Http, const char *pText)
+	CTranslateBackendLibretranslate(IHttp &Http, const char *pText, const char *pTargetLang)
 	{
 		CJsonStringWriter Json = CJsonStringWriter();
 		Json.BeginObject();
@@ -205,7 +205,7 @@ public:
 		Json.WriteAttribute("source");
 		Json.WriteStrValue("auto");
 		Json.WriteAttribute("target");
-		Json.WriteStrValue(EncodeTarget(g_Config.m_TcTranslateTarget));
+		Json.WriteStrValue(EncodeTarget(pTargetLang));
 		Json.WriteAttribute("format");
 		Json.WriteStrValue("text");
 		if(g_Config.m_TcTranslateKey[0] != '\0')
@@ -289,18 +289,107 @@ public:
 	{
 		return "FreeTranslateAPI";
 	}
-	CTranslateBackendFtapi(IHttp &Http, const char *pText)
+	CTranslateBackendFtapi(IHttp &Http, const char *pText, const char *pTargetLang)
 	{
 		char aBuf[4096];
 		str_format(aBuf, sizeof(aBuf), "%s/translate?dl=%s&text=",
 			g_Config.m_TcTranslateEndpoint[0] != '\0' ? g_Config.m_TcTranslateEndpoint : "https://ftapi.pythonanywhere.com",
-			EncodeTarget(g_Config.m_TcTranslateTarget));
+			EncodeTarget(pTargetLang));
 
 		UrlEncode(pText, aBuf + strlen(aBuf), sizeof(aBuf) - strlen(aBuf));
 
 		CreateHttpRequest(Http, aBuf);
 	}
 };
+
+// Talks directly to Google's free, unofficial (undocumented) translate endpoint.
+// This is the same endpoint FreeTranslateAPI (ftapi.pythonanywhere.com, now dead) used to wrap.
+class CTranslateBackendGoogle : public ITranslateBackendHttp
+{
+private:
+	bool ParseResponseJson(const json_value *pObj, CTranslateResponse &Out)
+	{
+		if(!pObj)
+		{
+			str_copy(Out.m_Text, "Response is not JSON");
+			return false;
+		}
+		if(pObj->type != json_array || json_array_length(pObj) < 3)
+		{
+			str_copy(Out.m_Text, "Unexpected response format");
+			return false;
+		}
+
+		const json_value *pSentences = json_array_get(pObj, 0);
+		if(!pSentences || pSentences->type != json_array)
+		{
+			str_copy(Out.m_Text, "No translated sentences");
+			return false;
+		}
+
+		char aText[sizeof(Out.m_Text)] = "";
+		const int NumSentences = json_array_length(pSentences);
+		for(int i = 0; i < NumSentences; i++)
+		{
+			const json_value *pSentence = json_array_get(pSentences, i);
+			if(!pSentence || pSentence->type != json_array || json_array_length(pSentence) < 1)
+				continue;
+			const json_value *pChunk = json_array_get(pSentence, 0);
+			if(!pChunk || pChunk->type != json_string)
+				continue;
+			str_append(aText, pChunk->u.string.ptr);
+		}
+		if(aText[0] == '\0')
+		{
+			str_copy(Out.m_Text, "Empty translation");
+			return false;
+		}
+
+		const json_value *pLanguage = json_array_get(pObj, 2);
+		if(pLanguage && pLanguage->type == json_string)
+			str_copy(Out.m_Language, pLanguage->u.string.ptr);
+
+		str_copy(Out.m_Text, aText);
+		return true;
+	}
+
+protected:
+	bool ParseResponse(CTranslateResponse &Out) override
+	{
+		json_value *pObj = m_pHttpRequest->ResultJson();
+		bool Res = ParseResponseJson(pObj, Out);
+		json_value_free(pObj);
+		return Res;
+	}
+
+public:
+	const char *Name() const override
+	{
+		return "Google";
+	}
+	CTranslateBackendGoogle(IHttp &Http, const char *pText, const char *pTargetLang)
+	{
+		char aBuf[4096];
+		str_format(aBuf, sizeof(aBuf), "%s?client=gtx&sl=auto&dt=t&tl=%s&q=",
+			g_Config.m_TcTranslateEndpoint[0] != '\0' ? g_Config.m_TcTranslateEndpoint : "https://translate.googleapis.com/translate_a/single",
+			EncodeTarget(pTargetLang));
+
+		UrlEncode(pText, aBuf + strlen(aBuf), sizeof(aBuf) - strlen(aBuf));
+
+		CreateHttpRequest(Http, aBuf);
+	}
+};
+
+static std::unique_ptr<ITranslateBackend> CreateTranslateBackend(IHttp &Http, const char *pText, const char *pTargetLang)
+{
+	if(str_comp_nocase(g_Config.m_TcTranslateBackend, "libretranslate") == 0)
+		return std::make_unique<CTranslateBackendLibretranslate>(Http, pText, pTargetLang);
+	if(str_comp_nocase(g_Config.m_TcTranslateBackend, "ftapi") == 0)
+		return std::make_unique<CTranslateBackendFtapi>(Http, pText, pTargetLang);
+	if(str_comp_nocase(g_Config.m_TcTranslateBackend, "google") == 0)
+		return std::make_unique<CTranslateBackendGoogle>(Http, pText, pTargetLang);
+	return nullptr;
+}
 
 void CTranslate::ConTranslate(IConsole::IResult *pResult, void *pUserData)
 {
@@ -398,11 +487,8 @@ void CTranslate::Translate(CChat::CLine &Line, bool ShowProgress)
 	Job.m_pTranslateResponse = std::make_shared<CTranslateResponse>();
 	Job.m_pLine->m_pTranslateResponse = Job.m_pTranslateResponse;
 
-	if(str_comp_nocase(g_Config.m_TcTranslateBackend, "libretranslate") == 0)
-		Job.m_pBackend = std::make_unique<CTranslateBackendLibretranslate>(*Http(), Job.m_pLine->m_aText);
-	else if(str_comp_nocase(g_Config.m_TcTranslateBackend, "ftapi") == 0)
-		Job.m_pBackend = std::make_unique<CTranslateBackendFtapi>(*Http(), Job.m_pLine->m_aText);
-	else
+	Job.m_pBackend = CreateTranslateBackend(*Http(), Job.m_pLine->m_aText, g_Config.m_TcTranslateTarget);
+	if(!Job.m_pBackend)
 	{
 		GameClient()->m_Chat.Echo("Invalid translate backend");
 		return;
@@ -428,6 +514,23 @@ void CTranslate::OnRender()
 {
 	const auto Time = time();
 	auto ForEach = [&](CTranslateJob &Job) {
+		if(Job.m_IsOutgoing)
+		{
+			const std::optional<bool> Done = Job.m_pBackend->Update(*Job.m_pTranslateResponse);
+			if(!Done.has_value())
+				return false; // Keep ongoing tasks
+			if(*Done && Job.m_pTranslateResponse->m_Text[0] != '\0')
+				GameClient()->m_Chat.SendChat(Job.m_OutgoingTeam, Job.m_pTranslateResponse->m_Text);
+			else
+			{
+				// Translation failed (or came back empty): don't swallow the message, send it untranslated
+				char aBuf[sizeof(Job.m_pTranslateResponse->m_Text) + 64];
+				str_format(aBuf, sizeof(aBuf), TCLocalize("Translating your message failed, sending it untranslated: %s", "translate"), Job.m_pTranslateResponse->m_Text);
+				GameClient()->m_Chat.Echo(aBuf);
+				GameClient()->m_Chat.SendChat(Job.m_OutgoingTeam, Job.m_aOutgoingOriginalText);
+			}
+			return true;
+		}
 		if(Job.m_pLine->m_pTranslateResponse != Job.m_pTranslateResponse)
 			return true; // Not the same line anymore
 		const std::optional<bool> Done = Job.m_pBackend->Update(*Job.m_pTranslateResponse);
@@ -470,4 +573,30 @@ void CTranslate::AutoTranslate(CChat::CLine &Line)
 		return;
 	}
 	Translate(Line, false);
+}
+
+void CTranslate::TranslateOutgoing(int Team, const char *pText)
+{
+	if(m_vJobs.size() > 15)
+	{
+		// Too many jobs in flight, don't make the player wait: send untranslated
+		GameClient()->m_Chat.SendChat(Team, pText);
+		return;
+	}
+
+	CTranslateJob Job;
+	Job.m_IsOutgoing = true;
+	Job.m_OutgoingTeam = Team;
+	str_copy(Job.m_aOutgoingOriginalText, pText);
+	Job.m_pTranslateResponse = std::make_shared<CTranslateResponse>();
+
+	Job.m_pBackend = CreateTranslateBackend(*Http(), pText, g_Config.m_TcTranslateOutgoingTarget);
+	if(!Job.m_pBackend)
+	{
+		GameClient()->m_Chat.Echo("Invalid translate backend");
+		GameClient()->m_Chat.SendChat(Team, pText);
+		return;
+	}
+
+	m_vJobs.emplace_back(std::move(Job));
 }
