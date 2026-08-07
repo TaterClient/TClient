@@ -632,7 +632,7 @@ private:
 protected:
 	bool UpdateNeeded(CGameClient &This, const CNamePlateData &Data) override
 	{
-		m_Visible = Data.m_InGame;
+		m_Visible = Data.m_InGame && g_Config.m_TcWarListReason;
 		if(!m_Visible)
 			return false;
 		const char *pReason = This.m_WarList.GetWarData(Data.m_ClientId).m_aReason;
