@@ -276,15 +276,10 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			; // Do nothing as bindchat was executed
 		else if(GameClient()->m_TClient.ChatDoSpecId(m_Input.GetString()))
 			; // Do nothing as specid was executed
+		else if(GameClient()->m_Translate.ChatDoTranslateOutgoing(m_Mode == MODE_TEAM ? 1 : 0, m_Input.GetString()))
+			; // Do nothing as outgoing translate was queued
 		else
-		{
-			const char *pMessage = m_Input.GetString();
-			// Don't translate server commands (e.g. "/w name msg"), translating would break their syntax
-			if(g_Config.m_TcTranslateOutgoing && pMessage[0] != '\0' && pMessage[0] != '/')
-				GameClient()->m_Translate.TranslateOutgoing(m_Mode == MODE_TEAM ? 1 : 0, pMessage);
-			else
-				SendChatQueued(pMessage);
-		}
+			SendChatQueued(m_Input.GetString());
 		m_pHistoryEntry = nullptr;
 		DisableMode();
 		GameClient()->OnRelease();

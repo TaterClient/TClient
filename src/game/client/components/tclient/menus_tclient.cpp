@@ -1098,53 +1098,38 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	Ui()->DoLabel(&Label, TCLocalize("Translate"), HeadlineFontSize, TEXTALIGN_ML);
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
-	static const char *s_apTranslateLanguageNames[] = {
-		"Arabic", "Chinese (Simplified)", "Chinese (Traditional)", "Czech", "Dutch", "English",
-		"Finnish", "French", "German", "Greek", "Hebrew", "Hindi", "Hungarian", "Italian",
-		"Japanese", "Korean", "Polish", "Portuguese", "Romanian", "Russian", "Spanish", "Swedish",
-		"Thai", "Turkish", "Ukrainian", "Vietnamese"};
-	static const char *s_apTranslateLanguageCodes[] = {
-		"ar", "zh", "zh-TW", "cs", "nl", "en",
-		"fi", "fr", "de", "el", "he", "hi", "hu", "it",
-		"ja", "ko", "pl", "pt", "ro", "ru", "es", "sv",
-		"th", "tr", "uk", "vi"};
-	const int NumTranslateLanguages = (int)std::size(s_apTranslateLanguageNames);
-	static_assert(std::size(s_apTranslateLanguageNames) == std::size(s_apTranslateLanguageCodes), "language name/code list length mismatch");
-	auto TranslateLanguageIndex = [&](const char *pCode) {
-		for(int i = 0; i < NumTranslateLanguages; i++)
-			if(str_comp_nocase(pCode, s_apTranslateLanguageCodes[i]) == 0)
-				return i;
-		return 5; // Fall back to English if unset or a custom code we don't have a name for
-	};
+	// Current backend's language table -- Google and LibreTranslate genuinely
+	// support different language sets (see translate.h/.cpp's
+	// g_aTranslateBackends), so the dropdowns below are backend-scoped
+	// rather than one shared list.
+	int CurrentBackendIndex = 0;
+	for(int i = 0; i < g_NumTranslateBackends; i++)
+	{
+		if(str_comp_nocase(g_Config.m_TcTranslateBackend, g_aTranslateBackends[i].m_pValue) == 0)
+			CurrentBackendIndex = i;
+	}
+	const STranslateBackendInfo &CurrentBackend = g_aTranslateBackends[CurrentBackendIndex];
 
 	{
-		static std::vector<const char *> s_TranslateBackendNames = {"Google", "FreeTranslateAPI (defunct)", "LibreTranslate"};
-		static const char *s_apTranslateBackendValues[] = {"google", "ftapi", "libretranslate"};
+		static std::vector<const char *> s_TranslateBackendNames;
+		s_TranslateBackendNames.clear();
+		for(int i = 0; i < g_NumTranslateBackends; i++)
+			s_TranslateBackendNames.push_back(g_aTranslateBackends[i].m_pName);
+
 		static CUi::SDropDownState s_TranslateBackendDropDownState;
 		static CScrollRegion s_TranslateBackendDropDownScrollRegion;
 		s_TranslateBackendDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_TranslateBackendDropDownScrollRegion;
-		int BackendSelectedOld = 0;
-		for(int i = 0; i < (int)std::size(s_apTranslateBackendValues); i++)
-		{
-			if(str_comp_nocase(g_Config.m_TcTranslateBackend, s_apTranslateBackendValues[i]) == 0)
-				BackendSelectedOld = i;
-		}
 		CUIRect BackendDropDownRect;
 		Column.HSplitTop(LineSize, &BackendDropDownRect, &Column);
 		BackendDropDownRect.VSplitLeft(120.0f, &Label, &BackendDropDownRect);
 		Ui()->DoLabel(&Label, TCLocalize("Backend: "), FontSize, TEXTALIGN_ML);
-		const int BackendSelectedNew = Ui()->DoDropDown(&BackendDropDownRect, BackendSelectedOld, s_TranslateBackendNames.data(), s_TranslateBackendNames.size(), s_TranslateBackendDropDownState);
-		if(BackendSelectedOld != BackendSelectedNew)
-			str_copy(g_Config.m_TcTranslateBackend, s_apTranslateBackendValues[BackendSelectedNew]);
+		const int BackendSelectedNew = Ui()->DoDropDown(&BackendDropDownRect, CurrentBackendIndex, s_TranslateBackendNames.data(), s_TranslateBackendNames.size(), s_TranslateBackendDropDownState);
+		if(BackendSelectedNew != CurrentBackendIndex)
+			str_copy(g_Config.m_TcTranslateBackend, g_aTranslateBackends[BackendSelectedNew].m_pValue);
 	}
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
 	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcTranslateAuto, TCLocalize("Automatically translate incoming messages"), &g_Config.m_TcTranslateAuto, &Column, LineSize);
-	if(g_Config.m_TcTranslateAuto && str_comp_nocase(g_Config.m_TcTranslateBackend, "ftapi") == 0)
-	{
-		Column.HSplitTop(LineSize, &Label, &Column);
-		Ui()->DoLabel(&Label, TCLocalize("FreeTranslateAPI does not support automatic translation, switch to Google or LibreTranslate"), FontSize * 0.8f, TEXTALIGN_ML);
-	}
 	CUIRect IncomingTargetBox;
 	Column.HSplitTop(LineSize + MarginExtraSmall, &IncomingTargetBox, &Column);
 	if(g_Config.m_TcTranslateAuto)
@@ -1155,10 +1140,14 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 		static CUi::SDropDownState s_IncomingLangDropDownState;
 		static CScrollRegion s_IncomingLangDropDownScrollRegion;
 		s_IncomingLangDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_IncomingLangDropDownScrollRegion;
-		const int IncomingLangOld = TranslateLanguageIndex(g_Config.m_TcTranslateTarget);
-		const int IncomingLangNew = Ui()->DoDropDown(&IncomingTargetBox, IncomingLangOld, s_apTranslateLanguageNames, NumTranslateLanguages, s_IncomingLangDropDownState);
+		static std::vector<const char *> s_IncomingLangNames;
+		s_IncomingLangNames.clear();
+		for(int i = 0; i < CurrentBackend.m_NumLanguages; i++)
+			s_IncomingLangNames.push_back(CurrentBackend.m_pLanguages[i].m_pName);
+		const int IncomingLangOld = TranslateLanguageIndex(CurrentBackend.m_pLanguages, CurrentBackend.m_NumLanguages, g_Config.m_TcTranslateTarget);
+		const int IncomingLangNew = Ui()->DoDropDown(&IncomingTargetBox, IncomingLangOld, s_IncomingLangNames.data(), s_IncomingLangNames.size(), s_IncomingLangDropDownState);
 		if(IncomingLangOld != IncomingLangNew)
-			str_copy(g_Config.m_TcTranslateTarget, s_apTranslateLanguageCodes[IncomingLangNew]);
+			str_copy(g_Config.m_TcTranslateTarget, CurrentBackend.m_pLanguages[IncomingLangNew].m_pCode);
 	}
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
@@ -1173,14 +1162,18 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 		static CUi::SDropDownState s_OutgoingLangDropDownState;
 		static CScrollRegion s_OutgoingLangDropDownScrollRegion;
 		s_OutgoingLangDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_OutgoingLangDropDownScrollRegion;
-		const int OutgoingLangOld = TranslateLanguageIndex(g_Config.m_TcTranslateOutgoingTarget);
-		const int OutgoingLangNew = Ui()->DoDropDown(&OutgoingTargetBox, OutgoingLangOld, s_apTranslateLanguageNames, NumTranslateLanguages, s_OutgoingLangDropDownState);
+		static std::vector<const char *> s_OutgoingLangNames;
+		s_OutgoingLangNames.clear();
+		for(int i = 0; i < CurrentBackend.m_NumLanguages; i++)
+			s_OutgoingLangNames.push_back(CurrentBackend.m_pLanguages[i].m_pName);
+		const int OutgoingLangOld = TranslateLanguageIndex(CurrentBackend.m_pLanguages, CurrentBackend.m_NumLanguages, g_Config.m_TcTranslateOutgoingTarget);
+		const int OutgoingLangNew = Ui()->DoDropDown(&OutgoingTargetBox, OutgoingLangOld, s_OutgoingLangNames.data(), s_OutgoingLangNames.size(), s_OutgoingLangDropDownState);
 		if(OutgoingLangOld != OutgoingLangNew)
-			str_copy(g_Config.m_TcTranslateOutgoingTarget, s_apTranslateLanguageCodes[OutgoingLangNew]);
+			str_copy(g_Config.m_TcTranslateOutgoingTarget, CurrentBackend.m_pLanguages[OutgoingLangNew].m_pCode);
 	}
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
-	if(str_comp_nocase(g_Config.m_TcTranslateBackend, "libretranslate") == 0)
+	if(CurrentBackend.m_NeedsEndpointConfig)
 	{
 		CUIRect EndpointBox;
 		Column.HSplitTop(LineSize + MarginExtraSmall, &EndpointBox, &Column);
