@@ -59,6 +59,7 @@ bool ITranslateBackend::CompareTargets(const char *pA, const char *pB) const
 class ITranslateBackendHttp : public ITranslateBackend
 {
 protected:
+	using ITranslateBackend::ITranslateBackend;
 	std::shared_ptr<CHttpRequest> m_pHttpRequest = nullptr;
 	virtual bool ParseResponse(CTranslateResponse &Out) = 0;
 	virtual bool ParseHttpError() const { return false; }
@@ -210,10 +211,8 @@ protected:
 	bool ParseHttpError() const override { return true; }
 
 public:
-	static constexpr const char *StaticValue() { return "libretranslate"; }
-	static constexpr const char *StaticName() { return "LibreTranslate"; }
-	const char *Name() const override { return StaticName(); }
-	CTranslateBackendLibretranslate(IHttp &Http, const char *pText, const char *pTargetLang)
+	CTranslateBackendLibretranslate(IHttp &Http, const char *pText, const char *pTargetLang, const char *pName) :
+		ITranslateBackendHttp(pName)
 	{
 		CJsonStringWriter Json = CJsonStringWriter();
 		Json.BeginObject();
@@ -303,10 +302,8 @@ protected:
 	}
 
 public:
-	static constexpr const char *StaticValue() { return "google"; }
-	static constexpr const char *StaticName() { return "Google"; }
-	const char *Name() const override { return StaticName(); }
-	CTranslateBackendGoogle(IHttp &Http, const char *pText, const char *pTargetLang)
+	CTranslateBackendGoogle(IHttp &Http, const char *pText, const char *pTargetLang, const char *pName) :
+		ITranslateBackendHttp(pName)
 	{
 		// Query params go in the POST body, not the URL -- keeps the URL
 		// itself short and fixed (see CreateHttpRequestPost) regardless of
@@ -327,48 +324,101 @@ public:
 // subsets (Google supports 100+ languages; LibreTranslate's exact set
 // depends on which models a given self-hosted instance has installed), not
 // a claim of exhaustive coverage.
-static const STranslateLanguage s_aGoogleLanguages[] = {
-	{"Arabic", "ar"}, {"Bulgarian", "bg"}, {"Chinese (Simplified)", "zh"}, {"Chinese (Traditional)", "zh-TW"},
-	{"Croatian", "hr"}, {"Czech", "cs"}, {"Danish", "da"}, {"Dutch", "nl"}, {"English", "en"},
-	{"Estonian", "et"}, {"Finnish", "fi"}, {"French", "fr"}, {"German", "de"}, {"Greek", "el"},
-	{"Hebrew", "he"}, {"Hindi", "hi"}, {"Hungarian", "hu"}, {"Indonesian", "id"}, {"Italian", "it"},
-	{"Japanese", "ja"}, {"Korean", "ko"}, {"Latvian", "lv"}, {"Lithuanian", "lt"}, {"Norwegian", "no"},
-	{"Persian", "fa"}, {"Polish", "pl"}, {"Portuguese", "pt"}, {"Romanian", "ro"}, {"Russian", "ru"},
-	{"Serbian", "sr"}, {"Slovak", "sk"}, {"Slovenian", "sl"}, {"Spanish", "es"}, {"Swedish", "sv"},
-	{"Thai", "th"}, {"Turkish", "tr"}, {"Ukrainian", "uk"}, {"Vietnamese", "vi"},
+static const std::vector<STranslateLanguage> s_vGoogleLanguages = {
+	{"Arabic", "ar"},
+	{"Bulgarian", "bg"},
+	{"Chinese (Simplified)", "zh"},
+	{"Chinese (Traditional)", "zh-TW"},
+	{"Croatian", "hr"},
+	{"Czech", "cs"},
+	{"Danish", "da"},
+	{"Dutch", "nl"},
+	{"English", "en"},
+	{"Estonian", "et"},
+	{"Finnish", "fi"},
+	{"French", "fr"},
+	{"German", "de"},
+	{"Greek", "el"},
+	{"Hebrew", "he"},
+	{"Hindi", "hi"},
+	{"Hungarian", "hu"},
+	{"Indonesian", "id"},
+	{"Italian", "it"},
+	{"Japanese", "ja"},
+	{"Korean", "ko"},
+	{"Latvian", "lv"},
+	{"Lithuanian", "lt"},
+	{"Norwegian", "no"},
+	{"Persian", "fa"},
+	{"Polish", "pl"},
+	{"Portuguese", "pt"},
+	{"Romanian", "ro"},
+	{"Russian", "ru"},
+	{"Serbian", "sr"},
+	{"Slovak", "sk"},
+	{"Slovenian", "sl"},
+	{"Spanish", "es"},
+	{"Swedish", "sv"},
+	{"Thai", "th"},
+	{"Turkish", "tr"},
+	{"Ukrainian", "uk"},
+	{"Vietnamese", "vi"},
 };
 
-static const STranslateLanguage s_aLibretranslateLanguages[] = {
-	{"Arabic", "ar"}, {"Chinese (Simplified)", "zh"}, {"Czech", "cs"}, {"Dutch", "nl"}, {"English", "en"},
-	{"Finnish", "fi"}, {"French", "fr"}, {"German", "de"}, {"Greek", "el"}, {"Hebrew", "he"}, {"Hindi", "hi"},
-	{"Hungarian", "hu"}, {"Indonesian", "id"}, {"Italian", "it"}, {"Japanese", "ja"}, {"Korean", "ko"},
-	{"Polish", "pl"}, {"Portuguese", "pt"}, {"Russian", "ru"}, {"Spanish", "es"}, {"Swedish", "sv"},
-	{"Turkish", "tr"}, {"Ukrainian", "uk"}, {"Vietnamese", "vi"},
+static const std::vector<STranslateLanguage> s_vLibretranslateLanguages = {
+	{"Arabic", "ar"},
+	{"Chinese (Simplified)", "zh"},
+	{"Czech", "cs"},
+	{"Dutch", "nl"},
+	{"English", "en"},
+	{"Finnish", "fi"},
+	{"French", "fr"},
+	{"German", "de"},
+	{"Greek", "el"},
+	{"Hebrew", "he"},
+	{"Hindi", "hi"},
+	{"Hungarian", "hu"},
+	{"Indonesian", "id"},
+	{"Italian", "it"},
+	{"Japanese", "ja"},
+	{"Korean", "ko"},
+	{"Polish", "pl"},
+	{"Portuguese", "pt"},
+	{"Russian", "ru"},
+	{"Spanish", "es"},
+	{"Swedish", "sv"},
+	{"Turkish", "tr"},
+	{"Ukrainian", "uk"},
+	{"Vietnamese", "vi"},
 };
 
-const STranslateBackendInfo g_aTranslateBackends[] = {
-	{CTranslateBackendGoogle::StaticValue(), CTranslateBackendGoogle::StaticName(), s_aGoogleLanguages, (int)std::size(s_aGoogleLanguages), false},
-	{CTranslateBackendLibretranslate::StaticValue(), CTranslateBackendLibretranslate::StaticName(), s_aLibretranslateLanguages, (int)std::size(s_aLibretranslateLanguages), true},
-};
-const int g_NumTranslateBackends = (int)std::size(g_aTranslateBackends);
+const std::array<STranslateBackendInfo, 2> g_aTranslateBackends = {{
+	{"google", "Google", s_vGoogleLanguages, false},
+	{"libretranslate", "LibreTranslate", s_vLibretranslateLanguages, true},
+}};
 
-int TranslateLanguageIndex(const STranslateLanguage *pLanguages, int NumLanguages, const char *pCode)
+int TranslateLanguageIndex(const std::vector<STranslateLanguage> &vLanguages, const char *pCode)
 {
-	for(int i = 0; i < NumLanguages; i++)
-		if(str_comp_nocase(pCode, pLanguages[i].m_pCode) == 0)
-			return i;
-	for(int i = 0; i < NumLanguages; i++)
-		if(str_comp_nocase("en", pLanguages[i].m_pCode) == 0)
-			return i;
+	for(size_t i = 0; i < vLanguages.size(); i++)
+		if(str_comp_nocase(pCode, vLanguages[i].m_pCode) == 0)
+			return (int)i;
+	for(size_t i = 0; i < vLanguages.size(); i++)
+		if(str_comp_nocase("en", vLanguages[i].m_pCode) == 0)
+			return (int)i;
 	return 0;
 }
 
 static std::unique_ptr<ITranslateBackend> CreateTranslateBackend(IHttp &Http, const char *pText, const char *pTargetLang)
 {
-	if(str_comp_nocase(g_Config.m_TcTranslateBackend, CTranslateBackendLibretranslate::StaticValue()) == 0)
-		return std::make_unique<CTranslateBackendLibretranslate>(Http, pText, pTargetLang);
-	if(str_comp_nocase(g_Config.m_TcTranslateBackend, CTranslateBackendGoogle::StaticValue()) == 0)
-		return std::make_unique<CTranslateBackendGoogle>(Http, pText, pTargetLang);
+	for(const STranslateBackendInfo &Backend : g_aTranslateBackends)
+	{
+		if(str_comp_nocase(g_Config.m_TcTranslateBackend, Backend.m_pValue) != 0)
+			continue;
+		if(str_comp_nocase(Backend.m_pValue, "libretranslate") == 0)
+			return std::make_unique<CTranslateBackendLibretranslate>(Http, pText, pTargetLang, Backend.m_pName);
+		if(str_comp_nocase(Backend.m_pValue, "google") == 0)
+			return std::make_unique<CTranslateBackendGoogle>(Http, pText, pTargetLang, Backend.m_pName);
+	}
 	return nullptr;
 }
 

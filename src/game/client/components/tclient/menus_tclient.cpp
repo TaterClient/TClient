@@ -1103,18 +1103,18 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	// g_aTranslateBackends), so the dropdowns below are backend-scoped
 	// rather than one shared list.
 	int CurrentBackendIndex = 0;
-	for(int i = 0; i < g_NumTranslateBackends; i++)
+	for(size_t i = 0; i < g_aTranslateBackends.size(); i++)
 	{
 		if(str_comp_nocase(g_Config.m_TcTranslateBackend, g_aTranslateBackends[i].m_pValue) == 0)
-			CurrentBackendIndex = i;
+			CurrentBackendIndex = (int)i;
 	}
 	const STranslateBackendInfo &CurrentBackend = g_aTranslateBackends[CurrentBackendIndex];
 
 	{
 		static std::vector<const char *> s_TranslateBackendNames;
 		s_TranslateBackendNames.clear();
-		for(int i = 0; i < g_NumTranslateBackends; i++)
-			s_TranslateBackendNames.push_back(g_aTranslateBackends[i].m_pName);
+		for(const STranslateBackendInfo &Backend : g_aTranslateBackends)
+			s_TranslateBackendNames.push_back(Backend.m_pName);
 
 		static CUi::SDropDownState s_TranslateBackendDropDownState;
 		static CScrollRegion s_TranslateBackendDropDownScrollRegion;
@@ -1142,12 +1142,12 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 		s_IncomingLangDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_IncomingLangDropDownScrollRegion;
 		static std::vector<const char *> s_IncomingLangNames;
 		s_IncomingLangNames.clear();
-		for(int i = 0; i < CurrentBackend.m_NumLanguages; i++)
-			s_IncomingLangNames.push_back(CurrentBackend.m_pLanguages[i].m_pName);
-		const int IncomingLangOld = TranslateLanguageIndex(CurrentBackend.m_pLanguages, CurrentBackend.m_NumLanguages, g_Config.m_TcTranslateTarget);
+		for(const STranslateLanguage &Language : CurrentBackend.m_vLanguages)
+			s_IncomingLangNames.push_back(Language.m_pName);
+		const int IncomingLangOld = TranslateLanguageIndex(CurrentBackend.m_vLanguages, g_Config.m_TcTranslateTarget);
 		const int IncomingLangNew = Ui()->DoDropDown(&IncomingTargetBox, IncomingLangOld, s_IncomingLangNames.data(), s_IncomingLangNames.size(), s_IncomingLangDropDownState);
 		if(IncomingLangOld != IncomingLangNew)
-			str_copy(g_Config.m_TcTranslateTarget, CurrentBackend.m_pLanguages[IncomingLangNew].m_pCode);
+			str_copy(g_Config.m_TcTranslateTarget, CurrentBackend.m_vLanguages[IncomingLangNew].m_pCode);
 	}
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
@@ -1164,12 +1164,12 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 		s_OutgoingLangDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_OutgoingLangDropDownScrollRegion;
 		static std::vector<const char *> s_OutgoingLangNames;
 		s_OutgoingLangNames.clear();
-		for(int i = 0; i < CurrentBackend.m_NumLanguages; i++)
-			s_OutgoingLangNames.push_back(CurrentBackend.m_pLanguages[i].m_pName);
-		const int OutgoingLangOld = TranslateLanguageIndex(CurrentBackend.m_pLanguages, CurrentBackend.m_NumLanguages, g_Config.m_TcTranslateOutgoingTarget);
+		for(const STranslateLanguage &Language : CurrentBackend.m_vLanguages)
+			s_OutgoingLangNames.push_back(Language.m_pName);
+		const int OutgoingLangOld = TranslateLanguageIndex(CurrentBackend.m_vLanguages, g_Config.m_TcTranslateOutgoingTarget);
 		const int OutgoingLangNew = Ui()->DoDropDown(&OutgoingTargetBox, OutgoingLangOld, s_OutgoingLangNames.data(), s_OutgoingLangNames.size(), s_OutgoingLangDropDownState);
 		if(OutgoingLangOld != OutgoingLangNew)
-			str_copy(g_Config.m_TcTranslateOutgoingTarget, CurrentBackend.m_pLanguages[OutgoingLangNew].m_pCode);
+			str_copy(g_Config.m_TcTranslateOutgoingTarget, CurrentBackend.m_vLanguages[OutgoingLangNew].m_pCode);
 	}
 	Column.HSplitTop(MarginSmall, nullptr, &Column);
 
