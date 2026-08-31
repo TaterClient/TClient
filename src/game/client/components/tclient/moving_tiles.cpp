@@ -147,21 +147,19 @@ void CMovingTiles::OnRender()
 		{
 			Graphics()->MapScreenToInterface(Center.x, Center.y, Zoom);
 
-			float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-			Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
-
-			const float ScreenWidth = ScreenX1 - ScreenX0;
-			const float ScreenHeight = ScreenY1 - ScreenY0;
-			const float Left = pGroup->m_ClipX - ScreenX0;
-			const float Top = pGroup->m_ClipY - ScreenY0;
-			const float Right = pGroup->m_ClipX + pGroup->m_ClipW - ScreenX0;
-			const float Bottom = pGroup->m_ClipY + pGroup->m_ClipH - ScreenY0;
+			CScreenRect ScreenRect = Graphics()->GetScreen();
+			float ScreenWidth = ScreenRect.Width();
+			float ScreenHeight = ScreenRect.Height();
+			float Left = pGroup->m_ClipX - ScreenRect.m_TopLeft.x;
+			float Top = pGroup->m_ClipY - ScreenRect.m_TopLeft.y;
+			float Right = pGroup->m_ClipX + pGroup->m_ClipW - ScreenRect.m_TopLeft.x;
+			float Bottom = pGroup->m_ClipY + pGroup->m_ClipH - ScreenRect.m_TopLeft.y;
 
 			if(Right < 0.0f || Left > ScreenWidth || Bottom < 0.0f || Top > ScreenHeight)
 				return false;
 
-			const int ClipX = (int)std::round(Left * Graphics()->ScreenWidth() / ScreenWidth);
-			const int ClipY = (int)std::round(Top * Graphics()->ScreenHeight() / ScreenHeight);
+			int ClipX = (int)std::round(Left * Graphics()->ScreenWidth() / ScreenWidth);
+			int ClipY = (int)std::round(Top * Graphics()->ScreenHeight() / ScreenHeight);
 
 			Graphics()->ClipEnable(
 				ClipX,
@@ -170,121 +168,106 @@ void CMovingTiles::OnRender()
 				(int)std::round(Bottom * Graphics()->ScreenHeight() / ScreenHeight) - ClipY);
 		}
 
-		const int ParallaxZoom = std::clamp(maximum(pGroup->m_ParallaxX, pGroup->m_ParallaxY), 0, 100);
-		float aPoints[4];
-		Graphics()->MapScreenToWorld(
+		int ParallaxZoom = std::clamp(std::max(pGroup->m_ParallaxX, pGroup->m_ParallaxY), 0, 100);
+		CScreenRect ScreenRect = Graphics()->MapScreenToWorld(
 			Center.x, Center.y,
 			pGroup->m_ParallaxX, pGroup->m_ParallaxY, (float)ParallaxZoom,
 			pGroup->m_OffsetX, pGroup->m_OffsetY,
-			Graphics()->ScreenAspect(), Zoom, aPoints);
-		Graphics()->MapScreen(aPoints[0], aPoints[1], aPoints[2], aPoints[3]);
+			Graphics()->ScreenAspect(), Zoom);
+		Graphics()->MapScreen(ScreenRect);
 
 		return true;
 	};
 
-	auto RenderPass = [&](int RenderFlags) {
-		constexpr float ColorConv = 1.0f / 255.0f;
+	constexpr float ColorConv = 1.0f / 255.0f;
 
-		size_t QuadStart = 0;
-		while(QuadStart < m_vQuads.size())
+	size_t QuadStart = 0;
+	while(QuadStart < m_vQuads.size())
+	{
+		const CMapItemGroup *pGroup = m_vQuads[QuadStart].m_pGroup;
+		const CMapItemLayerQuads *pLayer = m_vQuads[QuadStart].m_pLayer;
+		if(!pLayer)
 		{
-			const CMapItemGroup *pGroup = m_vQuads[QuadStart].m_pGroup;
-			const CMapItemLayerQuads *pLayer = m_vQuads[QuadStart].m_pLayer;
-			if(!pLayer)
-			{
-				QuadStart++;
-				continue;
-			}
-
-			size_t QuadEnd = QuadStart + 1;
-			while(QuadEnd < m_vQuads.size() &&
-				m_vQuads[QuadEnd].m_pGroup == pGroup &&
-				m_vQuads[QuadEnd].m_pLayer == pLayer)
-			{
-				QuadEnd++;
-			}
-
-			if(!ApplyGroupState(pGroup))
-			{
-				QuadStart = QuadEnd;
-				continue;
-			}
-
-			if(pLayer->m_Image >= 0 && pLayer->m_Image < GameClient()->m_MapImages.Num())
-				Graphics()->TextureSet(GameClient()->m_MapImages.Get(pLayer->m_Image));
-			else
-				Graphics()->TextureClear();
-
-			Graphics()->TrianglesBegin();
-
-			for(size_t QuadIndex = QuadStart; QuadIndex < QuadEnd; QuadIndex++)
-			{
-				const CQuadData &QuadData = m_vQuads[QuadIndex];
-				const CQuad *pQuad = QuadData.m_pQuad;
-				if(!pQuad)
-					continue;
-
-				ColorRGBA Color(1.0f, 1.0f, 1.0f, 1.0f);
-				m_EnvEvaluator.EnvelopeEval(pQuad->m_ColorEnvOffset, pQuad->m_ColorEnv, Color, 4);
-				if(Color.a <= 0.0f)
-					continue;
-
-				bool Opaque = false;
-				if(Opaque && !(RenderFlags & LAYERRENDERFLAG_OPAQUE))
-					continue;
-				if(!Opaque && !(RenderFlags & LAYERRENDERFLAG_TRANSPARENT))
-					continue;
-
-				Graphics()->QuadsSetSubsetFree(
-					fx2f(pQuad->m_aTexcoords[0].x), fx2f(pQuad->m_aTexcoords[0].y),
-					fx2f(pQuad->m_aTexcoords[1].x), fx2f(pQuad->m_aTexcoords[1].y),
-					fx2f(pQuad->m_aTexcoords[2].x), fx2f(pQuad->m_aTexcoords[2].y),
-					fx2f(pQuad->m_aTexcoords[3].x), fx2f(pQuad->m_aTexcoords[3].y));
-
-				ColorRGBA Position(0.0f, 0.0f, 0.0f, 0.0f);
-				m_EnvEvaluator.EnvelopeEval(pQuad->m_PosEnvOffset, pQuad->m_PosEnv, Position, 3);
-
-				const vec2 Offset(Position.r, Position.g);
-				const float Rotation = Position.b / 180.0f * pi + QuadData.m_Angle;
-
-				IGraphics::CColorVertex aColors[4] = {
-					IGraphics::CColorVertex(0, pQuad->m_aColors[0].r * ColorConv * Color.r, pQuad->m_aColors[0].g * ColorConv * Color.g, pQuad->m_aColors[0].b * ColorConv * Color.b, pQuad->m_aColors[0].a * ColorConv * Color.a),
-					IGraphics::CColorVertex(1, pQuad->m_aColors[1].r * ColorConv * Color.r, pQuad->m_aColors[1].g * ColorConv * Color.g, pQuad->m_aColors[1].b * ColorConv * Color.b, pQuad->m_aColors[1].a * ColorConv * Color.a),
-					IGraphics::CColorVertex(2, pQuad->m_aColors[2].r * ColorConv * Color.r, pQuad->m_aColors[2].g * ColorConv * Color.g, pQuad->m_aColors[2].b * ColorConv * Color.b, pQuad->m_aColors[2].a * ColorConv * Color.a),
-					IGraphics::CColorVertex(3, pQuad->m_aColors[3].r * ColorConv * Color.r, pQuad->m_aColors[3].g * ColorConv * Color.g, pQuad->m_aColors[3].b * ColorConv * Color.b, pQuad->m_aColors[3].a * ColorConv * Color.a)};
-				Graphics()->SetColorVertex(aColors, std::size(aColors));
-
-				vec2 aPoints[4] = {
-					QuadData.m_Pos[0],
-					QuadData.m_Pos[1],
-					QuadData.m_Pos[2],
-					QuadData.m_Pos[3],
-				};
-
-				if(Rotation != 0.0f)
-				{
-					for(vec2 &Point : aPoints)
-						RotatePoint(QuadData.m_Pos[4], Point, Rotation);
-				}
-
-				const IGraphics::CFreeformItem Freeform(
-					aPoints[0] + Offset,
-					aPoints[1] + Offset,
-					aPoints[2] + Offset,
-					aPoints[3] + Offset);
-				Graphics()->QuadsDrawFreeform(&Freeform, 1);
-			}
-
-			Graphics()->TrianglesEnd();
-			QuadStart = QuadEnd;
+			QuadStart++;
+			continue;
 		}
-	};
 
-	Graphics()->BlendNone();
-	RenderPass(LAYERRENDERFLAG_OPAQUE);
+		size_t QuadEnd = QuadStart + 1;
+		while(QuadEnd < m_vQuads.size() &&
+			m_vQuads[QuadEnd].m_pGroup == pGroup &&
+			m_vQuads[QuadEnd].m_pLayer == pLayer)
+		{
+			QuadEnd++;
+		}
 
-	Graphics()->BlendNormal();
-	RenderPass(LAYERRENDERFLAG_TRANSPARENT);
+		if(!ApplyGroupState(pGroup))
+		{
+			QuadStart = QuadEnd;
+			continue;
+		}
+
+		if(pLayer->m_Image >= 0 && pLayer->m_Image < GameClient()->m_MapImages.Num())
+			Graphics()->TextureSet(GameClient()->m_MapImages.Get(pLayer->m_Image));
+		else
+			Graphics()->TextureClear();
+
+		Graphics()->TrianglesBegin();
+
+		for(size_t QuadIndex = QuadStart; QuadIndex < QuadEnd; QuadIndex++)
+		{
+			const CQuadData &QuadData = m_vQuads[QuadIndex];
+			const CQuad *pQuad = QuadData.m_pQuad;
+			if(!pQuad)
+				continue;
+
+			ColorRGBA Color(1.0f, 1.0f, 1.0f, 1.0f);
+			m_EnvEvaluator.EnvelopeEval(pQuad->m_ColorEnvOffset, pQuad->m_ColorEnv, Color, 4);
+			if(Color.a <= 0.0f)
+				continue;
+
+			Graphics()->QuadsSetSubsetFree(
+				fx2f(pQuad->m_aTexcoords[0].x), fx2f(pQuad->m_aTexcoords[0].y),
+				fx2f(pQuad->m_aTexcoords[1].x), fx2f(pQuad->m_aTexcoords[1].y),
+				fx2f(pQuad->m_aTexcoords[2].x), fx2f(pQuad->m_aTexcoords[2].y),
+				fx2f(pQuad->m_aTexcoords[3].x), fx2f(pQuad->m_aTexcoords[3].y));
+
+			ColorRGBA Position(0.0f, 0.0f, 0.0f, 0.0f);
+			m_EnvEvaluator.EnvelopeEval(pQuad->m_PosEnvOffset, pQuad->m_PosEnv, Position, 3);
+
+			const vec2 Offset(Position.r, Position.g);
+			const float Rotation = Position.b / 180.0f * pi + QuadData.m_Angle;
+
+			IGraphics::CColorVertex aColors[4] = {
+				IGraphics::CColorVertex(0, pQuad->m_aColors[0].r * ColorConv * Color.r, pQuad->m_aColors[0].g * ColorConv * Color.g, pQuad->m_aColors[0].b * ColorConv * Color.b, pQuad->m_aColors[0].a * ColorConv * Color.a),
+				IGraphics::CColorVertex(1, pQuad->m_aColors[1].r * ColorConv * Color.r, pQuad->m_aColors[1].g * ColorConv * Color.g, pQuad->m_aColors[1].b * ColorConv * Color.b, pQuad->m_aColors[1].a * ColorConv * Color.a),
+				IGraphics::CColorVertex(2, pQuad->m_aColors[2].r * ColorConv * Color.r, pQuad->m_aColors[2].g * ColorConv * Color.g, pQuad->m_aColors[2].b * ColorConv * Color.b, pQuad->m_aColors[2].a * ColorConv * Color.a),
+				IGraphics::CColorVertex(3, pQuad->m_aColors[3].r * ColorConv * Color.r, pQuad->m_aColors[3].g * ColorConv * Color.g, pQuad->m_aColors[3].b * ColorConv * Color.b, pQuad->m_aColors[3].a * ColorConv * Color.a)};
+			Graphics()->SetColorVertex(aColors, std::size(aColors));
+
+			vec2 aPoints[4] = {
+				QuadData.m_Pos[0],
+				QuadData.m_Pos[1],
+				QuadData.m_Pos[2],
+				QuadData.m_Pos[3],
+			};
+
+			if(Rotation != 0.0f)
+			{
+				for(vec2 &Point : aPoints)
+					RotatePoint(QuadData.m_Pos[4], Point, Rotation);
+			}
+
+			const IGraphics::CFreeformItem Freeform(
+				aPoints[0] + Offset,
+				aPoints[1] + Offset,
+				aPoints[2] + Offset,
+				aPoints[3] + Offset);
+			Graphics()->QuadsDrawFreeform(&Freeform, 1);
+		}
+
+		Graphics()->TrianglesEnd();
+		QuadStart = QuadEnd;
+	}
 
 	Graphics()->ClipDisable();
 }
