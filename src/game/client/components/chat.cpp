@@ -680,15 +680,16 @@ void CChat::AddLine(int ClientId, int Team, const char *pLine)
 		return;
 
 	// TClient
-	if (([&]() {
-		if(ClientId == CLIENT_MSG || ClientId == SERVER_MSG)
-			return false;
-		for(const auto LocalClientId : GameClient()->m_aLocalIds)
-			if(LocalClientId == ClientId)
-				return false;
-		auto &Re = GameClient()->m_TClient.m_RegexChatIgnore;
-		return Re.error().empty() && Re.test(pLine);
-	})()) return;
+	if(([&]() {
+		   if(ClientId == CLIENT_MSG || ClientId == SERVER_MSG)
+			   return false;
+		   for(const auto LocalClientId : GameClient()->m_aLocalIds)
+			   if(LocalClientId == ClientId)
+				   return false;
+		   auto &Re = GameClient()->m_TClient.m_RegexChatIgnore;
+		   return Re.error().empty() && Re.test(pLine);
+	   })())
+		return;
 
 	// trim right and set maximum length to 256 utf8-characters
 	int Length = 0;
