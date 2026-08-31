@@ -160,7 +160,7 @@ bool CMenus::DoSliderWithScaledValue(const void *pId, int *pOption, const CUIRec
 	}
 
 	CUIRect Label, ScrollBar;
-	pRect->VSplitMid(&Label, &ScrollBar, minimum(10.0f, pRect->w * 0.05f));
+	pRect->VSplitMid(&Label, &ScrollBar, std::min(10.0f, pRect->w * 0.05f));
 
 	const float LabelFontSize = Label.h * CUi::ms_FontmodHeight * 0.8f;
 	Ui()->DoLabel(&Label, aBuf, LabelFontSize, TEXTALIGN_ML);
@@ -1201,7 +1201,7 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	// Scroll
 	CUIRect ScrollRegion;
 	ScrollRegion.x = MainView.x;
-	ScrollRegion.y = maximum(LeftView.y, RightView.y) + MarginSmall * 2.0f;
+	ScrollRegion.y = std::max(LeftView.y, RightView.y) + MarginSmall * 2.0f;
 	ScrollRegion.w = MainView.w;
 	ScrollRegion.h = 0.0f;
 	s_ScrollRegion.AddRect(ScrollRegion);
@@ -1213,7 +1213,7 @@ void CMenus::RenderSettingsTClientBindWheel(CUIRect MainView)
 	CUIRect LeftView, RightView, Label, Button;
 	MainView.VSplitLeft(MainView.w / 2.1f, &LeftView, &RightView);
 
-	const float Radius = minimum(RightView.w, RightView.h) / 2.0f;
+	const float Radius = std::min(RightView.w, RightView.h) / 2.0f;
 	vec2 Center = RightView.Center();
 	// Draw Circle
 	Graphics()->TextureClear();
@@ -1452,7 +1452,7 @@ void CMenus::RenderSettingsTClientChatBinds(CUIRect MainView)
 	// Scroll
 	CUIRect ScrollRegion;
 	ScrollRegion.x = MainView.x;
-	ScrollRegion.y = maximum(LeftView.y, RightView.y) + MarginSmall * 2.0f;
+	ScrollRegion.y = std::max(LeftView.y, RightView.y) + MarginSmall * 2.0f;
 	ScrollRegion.w = MainView.w;
 	ScrollRegion.h = 0.0f;
 	s_ScrollRegion.AddRect(ScrollRegion);

@@ -309,7 +309,7 @@ void CStatusBar::OnRender()
 
 	UpdateStatusBarSize();
 
-	Graphics()->MapScreen(0.0f, 0.0f, m_Width, m_Height);
+	Graphics()->MapScreen({0.0f, 0.0f, m_Width, m_Height});
 	Graphics()->DrawRect(m_BarX, m_BarY, m_Width, m_BarHeight, color_cast<ColorRGBA>(ColorHSLA(g_Config.m_TcStatusBarColor)).WithAlpha(g_Config.m_TcStatusBarAlpha / 100.0f), 0, 0);
 	TextRender()->TextColor(color_cast<ColorRGBA>(ColorHSLA(g_Config.m_TcStatusBarTextColor)).WithAlpha(g_Config.m_TcStatusBarTextAlpha / 100.0f));
 

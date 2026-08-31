@@ -568,8 +568,7 @@ void CBgDraw::OnRender()
 	// Remove extra items
 	MakeSpaceFor(0);
 	// Update age of items, delete old items, render items
-	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+	const CScreenRect ScreenRect = Graphics()->GetScreen();
 	for(CBgDrawItem &Item : *m_pvItems)
 	{
 		// If this item is currently active
@@ -585,10 +584,13 @@ void CBgDraw::OnRender()
 			if(g_Config.m_TcBgDrawFadeTime > 0 && Item.m_SecondsAge > (float)g_Config.m_TcBgDrawFadeTime)
 				Item.m_Killed = true;
 		}
-		const bool InRangeX = Item.BoundingBox().m_Min.x < ScreenX1 || Item.BoundingBox().m_Max.x > ScreenX0;
-		const bool InRangeY = Item.BoundingBox().m_Min.y < ScreenY1 || Item.BoundingBox().m_Max.y > ScreenY0;
-		if(InRangeX && InRangeY)
+		if(Item.BoundingBox().m_Min.x < ScreenRect.m_BottomRight.x &&
+			Item.BoundingBox().m_Max.x > ScreenRect.m_TopLeft.x &&
+			Item.BoundingBox().m_Min.y < ScreenRect.m_BottomRight.y &&
+			Item.BoundingBox().m_Max.y > ScreenRect.m_TopLeft.y)
+		{
 			Item.Render();
+		}
 	}
 	// Remove killed items
 	if(m_pvItems->remove_if([&](CBgDrawItem &Item) { return Item.m_Killed; }))

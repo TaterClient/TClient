@@ -1229,33 +1229,8 @@ void CPlayers::OnRender()
 			continue;
 		}
 
-		RenderHookCollLine(&GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, ClientId);
-
-		if(!in_range(GameClient()->m_aClients[ClientId].m_RenderPos.x, ScreenX0, ScreenX1) || !in_range(GameClient()->m_aClients[ClientId].m_RenderPos.y, ScreenY0, ScreenY1))
-		{
-			if(!(g_Config.m_TcShowOthersGhosts && g_Config.m_TcSwapGhosts))
-				continue;
-		}
-
-		bool Frozen = (GameClient()->m_aClients[ClientId].m_FreezeEnd > 0) && g_Config.m_TcHideFrozenGhosts;
-		bool RenderGhost = true;
-		if(g_Config.m_TcHideFrozenGhosts && Frozen && g_Config.m_TcShowOthersGhosts)
-		{
-			if(!g_Config.m_TcSwapGhosts)
-				RenderGhost = false;
-		}
-		if(g_Config.m_TcUnpredOthersInFreeze && Client()->m_IsLocalFrozen && g_Config.m_TcShowOthersGhosts)
-		{
-			RenderGhost = false;
-		}
-
-		bool Spec = GameClient()->m_Snap.m_SpecInfo.m_Active;
-
-		// If we are frozen and hiding frozen ghosts and not swapping render only the regular player
-		if(RenderGhost && g_Config.m_TcShowOthersGhosts && !Spec && Client()->State() != IClient::STATE_DEMOPLAYBACK)
-			RenderPlayerGhost(&GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, &aRenderInfo[ClientId], ClientId);
-
-		RenderPlayer(&GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, &aRenderInfo[ClientId], ClientId);
+		RenderHookCollLine(ScreenRect, &GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, ClientId);
+		RenderPlayer(ScreenRect, &GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, &aRenderInfo[ClientId], ClientId);
 	}
 	if(RenderLastId != -1 && IsPlayerInfoAvailable(RenderLastId))
 	{

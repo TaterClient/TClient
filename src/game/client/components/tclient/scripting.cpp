@@ -20,9 +20,7 @@ private:
 	{
 		if(Client()->State() == IClient::STATE_ONLINE || Client()->State() == IClient::STATE_DEMOPLAYBACK)
 		{
-			static CServerInfo s_ServerInfo; // Prevent use after stack return
-			Client()->GetServerInfo(&s_ServerInfo);
-			return &s_ServerInfo;
+			return &Client()->ServerInfo();
 		}
 		else if(GameClient()->m_ConnectServerInfo)
 		{

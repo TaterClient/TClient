@@ -2,14 +2,14 @@
 #define GAME_CLIENT_COMPONENTS_TCLIENT_CUSTOM_COMMUNITIES_H
 
 #include <engine/shared/console.h>
-#include <engine/shared/http.h>
+#include <engine/http.h>
 
 #include <game/client/component.h>
 
 class CCustomCommunities : public CComponent
 {
 private:
-	std::shared_ptr<CHttpRequest> m_pCustomCommunitiesDDNetInfoTask = nullptr;
+	std::shared_ptr<IHttpRequest> m_pCustomCommunitiesDDNetInfoTask = nullptr;
 	json_value *m_pCustomCommunitiesDDNetInfo = nullptr;
 	void DownloadCustomCommunitiesDDNetInfo();
 	void LoadCustomCommunitiesDDNetInfo();

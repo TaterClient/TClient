@@ -1,5 +1,6 @@
 #include "translate.h"
 
+#include <base/dbg.h>
 #include <base/log.h>
 
 #include <engine/shared/json.h>
@@ -60,13 +61,13 @@ class ITranslateBackendHttp : public ITranslateBackend
 {
 protected:
 	using ITranslateBackend::ITranslateBackend;
-	std::shared_ptr<CHttpRequest> m_pHttpRequest = nullptr;
+	std::shared_ptr<IHttpRequest> m_pHttpRequest = nullptr;
 	virtual bool ParseResponse(CTranslateResponse &Out) = 0;
 	virtual bool ParseHttpError() const { return false; }
 
 	void CreateHttpRequest(IHttp &Http, const char *pUrl)
 	{
-		auto pGet = std::make_shared<CHttpRequest>(pUrl);
+		auto pGet = HttpGet(pUrl);
 		pGet->LogProgress(HTTPLOG::FAILURE);
 		pGet->FailOnErrorStatus(false);
 		pGet->Timeout(CTimeout{10000, 0, 500, 10});
@@ -82,15 +83,15 @@ protected:
 	// chat message otherwise) and matches what the endpoint actually expects.
 	void CreateHttpRequestPost(IHttp &Http, const char *pUrl, const char *pBody)
 	{
-		auto pPost = std::make_shared<CHttpRequest>(pUrl);
+		auto pPost = HttpGet(pUrl);
 		pPost->LogProgress(HTTPLOG::FAILURE);
 		pPost->FailOnErrorStatus(false);
 		pPost->Timeout(CTimeout{10000, 0, 500, 10});
 		pPost->HeaderString("Content-Type", "application/x-www-form-urlencoded");
 		pPost->Post((const unsigned char *)pBody, str_length(pBody));
 
-		m_pHttpRequest = pPost;
-		Http.Run(pPost);
+		m_pHttpRequest = std::move(pPost);
+		Http.Run(m_pHttpRequest);
 	}
 
 public:

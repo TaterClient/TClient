@@ -2,7 +2,7 @@
 #define GAME_CLIENT_COMPONENTS_TCLIENT_MOD_H
 
 #include <engine/shared/console.h>
-#include <engine/shared/http.h>
+#include <engine/http.h>
 
 #include <game/client/component.h>
 
