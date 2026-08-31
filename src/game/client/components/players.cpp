@@ -625,7 +625,7 @@ void CPlayers::RenderPlayer(
 	if(OtherTeam || ClientId < 0)
 		Alpha = g_Config.m_ClShowOthersAlpha / 100.0f;
 	else if(g_Config.m_TcShowOthersGhosts && !Local && !Spec)
-		Alpha = g_Config.m_TcPredGhostsAlpha / 100.0f;
+		Alpha = (g_Config.m_TcSwapGhosts ? g_Config.m_TcUnpredGhostsAlpha : g_Config.m_TcPredGhostsAlpha) / 100.0f;
 
 	if(!OtherTeam && g_Config.m_TcShowOthersGhosts && !Local && g_Config.m_TcUnpredOthersInFreeze && Client()->m_IsLocalFrozen && !Spec)
 		Alpha = 1.0f;
@@ -671,6 +671,17 @@ void CPlayers::RenderPlayer(
 			vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y),
 			vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
 			Client()->IntraGameTick(g_Config.m_ClDummy));
+
+	// TClient: render the ghost as a circle instead of a tee
+	if(g_Config.m_TcShowOthersGhosts && !Local && !Spec && g_Config.m_TcRenderGhostAsCircle)
+	{
+		Graphics()->TextureClear();
+		Graphics()->QuadsBegin();
+		Graphics()->SetColor(RenderInfo.m_ColorBody.r, RenderInfo.m_ColorBody.g, RenderInfo.m_ColorBody.b, Alpha);
+		Graphics()->DrawCircle(Position.x, Position.y, 22.0f, 24);
+		Graphics()->QuadsEnd();
+		return;
+	}
 
 	GameClient()->m_Flow.Add(Position, Vel * 100.0f, 10.0f);
 
