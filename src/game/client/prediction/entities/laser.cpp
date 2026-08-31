@@ -36,14 +36,14 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	vec2 At;
 	CCharacter *pOwnerChar = GameWorld()->GetCharacterById(m_Owner);
 	CCharacter *pHit;
-	bool DontHitSelf = (g_Config.m_SvOldLaser || !GameWorld()->m_WorldConfig.m_IsDDRace) || (m_Bounces == 0);
+	bool DontHitSelf = (GameWorld()->m_WorldConfig.m_OldLaser || !GameWorld()->m_WorldConfig.m_IsDDRace) || (m_Bounces == 0);
 
 	if(pOwnerChar ? (!pOwnerChar->LaserHitDisabled() && m_Type == WEAPON_LASER) || (!pOwnerChar->ShotgunHitDisabled() && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
 		pHit = GameWorld()->IntersectCharacter(m_Pos, To, 0.f, At, DontHitSelf ? pOwnerChar : nullptr, m_Owner);
 	else
 		pHit = GameWorld()->IntersectCharacter(m_Pos, To, 0.f, At, DontHitSelf ? pOwnerChar : nullptr, m_Owner, pOwnerChar);
 
-	if(!pHit || (pHit == pOwnerChar && g_Config.m_SvOldLaser) || (pHit != pOwnerChar && pOwnerChar ? (pOwnerChar->LaserHitDisabled() && m_Type == WEAPON_LASER) || (pOwnerChar->ShotgunHitDisabled() && m_Type == WEAPON_SHOTGUN) : !g_Config.m_SvHit))
+	if(!pHit || (pHit == pOwnerChar && GameWorld()->m_WorldConfig.m_OldLaser) || (pHit != pOwnerChar && pOwnerChar ? (pOwnerChar->LaserHitDisabled() && m_Type == WEAPON_LASER) || (pOwnerChar->ShotgunHitDisabled() && m_Type == WEAPON_SHOTGUN) : !g_Config.m_SvHit))
 		return false;
 	m_From = From;
 	m_Pos = At;
@@ -53,7 +53,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 		float Strength = TuningList()[m_TuneZone].m_ShotgunStrength;
 
 		const vec2 &HitPos = pHit->Core()->m_Pos;
-		if(!g_Config.m_SvOldLaser)
+		if(!GameWorld()->m_WorldConfig.m_OldLaser)
 		{
 			if(m_PrevPos != HitPos)
 			{
@@ -64,7 +64,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 				pHit->SetRawVelocity(StackedLaserShotgunBugSpeed);
 			}
 		}
-		else if(g_Config.m_SvOldLaser && pOwnerChar)
+		else if(GameWorld()->m_WorldConfig.m_OldLaser && pOwnerChar)
 		{
 			if(pOwnerChar->Core()->m_Pos != HitPos)
 			{
@@ -79,6 +79,11 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 		{
 			// Re-apply move restrictions as a part of 'shotgun bug' reproduction
 			pHit->ApplyMoveRestrictions();
+		}
+
+		if(pOwnerChar)
+		{
+			pOwnerChar->AntiPingInterference(pHit->GetCid());
 		}
 	}
 	else if(m_Type == WEAPON_LASER)
@@ -179,10 +184,12 @@ void CLaser::Tick()
 	}
 }
 
-CLaser::CLaser(CGameWorld *pGameWorld, int Id, CLaserData *pLaser) :
+CLaser::CLaser(CGameWorld *pGameWorld, int Id, const CLaserData *pLaser) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = pLaser->m_To;
+	m_Number = pLaser->m_SwitchNumber;
+	m_Layer = m_Number > 0 ? LAYER_SWITCH : LAYER_GAME;
 	m_From = pLaser->m_From;
 	m_EvalTick = pLaser->m_StartTick;
 	m_TuneZone = GameWorld()->m_WorldConfig.m_UseTuneZones ? Collision()->IsTune(Collision()->GetMapIndex(m_Pos)) : 0;
@@ -227,5 +234,6 @@ CLaserData CLaser::GetData() const
 	Result.m_Subtype = -1;
 	Result.m_TuneZone = m_TuneZone;
 	Result.m_SwitchNumber = m_Number;
+	Result.m_Predict = true;
 	return Result;
 }

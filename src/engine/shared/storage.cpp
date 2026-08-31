@@ -110,6 +110,7 @@ public:
 			"demos/auto/server",
 			"demos/replays",
 			"editor",
+			"editor/automap",
 			"ghosts",
 			"teehistorian"};
 
@@ -368,7 +369,7 @@ public:
 
 		if(fs_executable_path(m_aBinarydir, sizeof(m_aBinarydir)) == 0)
 		{
-			fs_parent_dir(m_aBinarydir);
+			dbg_assert(fs_parent_dir(m_aBinarydir) == 0, "Could not determine parent of executable: '%s'", m_aBinarydir);
 			return;
 		}
 

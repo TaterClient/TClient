@@ -89,8 +89,6 @@ int main(int argc, const char *argv[])
 		aaaGameAreas[i][1][1] = aaaGameAreas[i][1][0] + str_tofloat(argv[8]) * 32; //y + height
 	}
 
-	cmdline_free(argc, argv);
-
 	dbg_msg("map_replace_area", "from_map='%s'; to_map='%s'; from_area='%fx,%fy'; to_area='%fx,%fy'; area_width='%fpx'; area_height='%fpx'; output_map='%s'",
 		aaMapNames[0], aaMapNames[1], aaaGameAreas[0][0][0], aaaGameAreas[0][1][0], aaaGameAreas[1][0][0], aaaGameAreas[1][1][0],
 		aaaGameAreas[0][0][1] - aaaGameAreas[0][0][0], aaaGameAreas[0][1][1] - aaaGameAreas[0][1][0], aaMapNames[2]);
@@ -304,8 +302,7 @@ void RemoveDestinationTiles(CMapItemLayerTilemap *pTilemap, CTile *pTile, float 
 	int aaRange[2][2];
 	ConvertToTiles(aaReplaceableArea, aaRange);
 
-	CTile EmptyTile;
-	EmptyTile.m_Index = EmptyTile.m_Flags = EmptyTile.m_Skip = EmptyTile.m_Reserved = 0;
+	const CTile EmptyTile = {.m_Index = TILE_AIR, .m_Flags = 0, .m_Skip = 0, .m_MustBe0 = 0};
 
 	for(int y = aaRange[1][0]; y < aaRange[1][1]; y++)
 		for(int x = aaRange[0][0]; x < aaRange[0][1]; x++)

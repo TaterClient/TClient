@@ -7,6 +7,10 @@ on:
   pull_request:
   merge_group:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
   check-clang-tidy:
     runs-on: ubuntu-latest
@@ -14,7 +18,7 @@ jobs:
       CARGO_HTTP_MULTIPLEXING: false
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: recursive
 
@@ -48,7 +52,7 @@ jobs:
         cache: true
 
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces: |
@@ -77,6 +81,7 @@ jobs:
           -DANTIBOT=ON \
           -DAUTOUPDATE=ON \
           -DDISCORD=ON \
+          -DDOWNLOAD_GTEST=ON \
           -DMYSQL=ON \
           -DSTEAM=ON \
           -DUPNP=ON \
@@ -84,4 +89,4 @@ jobs:
           -DVULKAN=ON \
           -DWEBSOCKETS=ON \
           -Werror=dev ..
-        cmake --build . --config Debug --target everything -- -k 0
+        cmake --build . --config Debug --target everything testrunner -- -k 0

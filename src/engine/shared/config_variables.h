@@ -18,7 +18,7 @@ MACRO_CONFIG_INT(ClPredictEvents, cl_predict_events, 0, 0, 1, CFGFLAG_CLIENT | C
 MACRO_CONFIG_INT(ClAntiPingLimit, cl_antiping_limit, 0, 0, 500, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Adds delay to antiping (0 to disable)")
 MACRO_CONFIG_INT(ClAntiPingPercent, cl_antiping_percent, 100, 0, 100, CFGFLAG_CLIENT | CFGFLAG_SAVE, "How far ahead antiping predicts, ignored when antiping limit is used")
 MACRO_CONFIG_INT(ClAntiPing, cl_antiping, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable antiping, i. e. more aggressive prediction.")
-MACRO_CONFIG_INT(ClAntiPingPlayers, cl_antiping_players, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Predict other player's movement more aggressively (only enabled if cl_antiping is set to 1)")
+MACRO_CONFIG_INT(ClAntiPingPlayers, cl_antiping_players, 1, 0, 3, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Predict other player's movement (only enabled if cl_antiping is set to 1) (1 = always on, 2 = interaction only, 3 = 2 and frozen tees always)")
 MACRO_CONFIG_INT(ClAntiPingGrenade, cl_antiping_grenade, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Predict grenades (only enabled if cl_antiping is set to 1)")
 MACRO_CONFIG_INT(ClAntiPingWeapons, cl_antiping_weapons, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Predict weapon projectiles (only enabled if cl_antiping is set to 1)")
 MACRO_CONFIG_INT(ClAntiPingSmooth, cl_antiping_smooth, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Make the prediction of other player's movement smoother")
@@ -26,12 +26,17 @@ MACRO_CONFIG_INT(ClAntiPingGunfire, cl_antiping_gunfire, 1, 0, 1, CFGFLAG_CLIENT
 MACRO_CONFIG_INT(ClAntiPingPreInput, cl_antiping_preinput, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Predict other players using preinputs for more accurate input prediction")
 MACRO_CONFIG_INT(ClPredictionMargin, cl_prediction_margin, 10, 1, 300, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Prediction margin in ms (adds latency, can reduce lag from ping jumps)")
 MACRO_CONFIG_INT(ClSubTickAiming, cl_sub_tick_aiming, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Send aiming data at sub-tick accuracy")
-#if defined(CONF_PLATFORM_ANDROID)
+#if defined(CONF_PLATFORM_ANDROID) || defined(CONF_PLATFORM_IOS)
 MACRO_CONFIG_INT(ClTouchControls, cl_touch_controls, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable ingame touch controls")
 #else
 MACRO_CONFIG_INT(ClTouchControls, cl_touch_controls, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Enable ingame touch controls")
 #endif
+#if defined(CONF_PLATFORM_IOS)
+// iOS has neither a back button nor a keyboard to press the escape-key with.
+MACRO_CONFIG_INT(ClBackButton, cl_back_button, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show draggable virtual back button")
+#else
 MACRO_CONFIG_INT(ClBackButton, cl_back_button, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Show draggable virtual back button")
+#endif
 MACRO_CONFIG_INT(ClBackButtonX, cl_back_button_x, 5000, 0, 1000000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Relative X position of the draggable back button")
 MACRO_CONFIG_INT(ClBackButtonY, cl_back_button_y, 5000, 0, 1000000, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Relative Y position of the draggable back button")
 
@@ -222,7 +227,7 @@ MACRO_CONFIG_STR(ClDummy7SkinEyes, dummy7_skin_eyes, protocol7::MAX_SKIN_ARRAY_S
 // MACRO_CONFIG_STR(ClCensorUrl, cl_censor_url, 100, "https://info.ddnet.org/censor.json", CFGFLAG_CLIENT | CFGFLAG_SAVE, "URL used to download words to censor (must start with https://)")
 
 MACRO_CONFIG_INT(UiPage, ui_page, 6, 6, 13, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interface page")
-MACRO_CONFIG_INT(UiSettingsPage, ui_settings_page, 0, 0, 12, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interface settings page")
+MACRO_CONFIG_INT(UiSettingsPage, ui_settings_page, 0, 0, 13, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Interface settings page")
 MACRO_CONFIG_INT(UiToolboxPage, ui_toolbox_page, 0, 0, 2, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Toolbox page")
 MACRO_CONFIG_STR(UiServerAddress, ui_server_address, 1024, "localhost:8303", CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_INSENSITIVE, "Interface server address")
 MACRO_CONFIG_INT(UiMousesens, ui_mousesens, 200, 1, 100000, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Mouse sensitivity for menus/editor")
@@ -242,7 +247,7 @@ MACRO_CONFIG_INT(GfxNoclip, gfx_noclip, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, 
 // dummy
 MACRO_CONFIG_STR(ClDummyName, dummy_name, 16, "", CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Name of the dummy")
 MACRO_CONFIG_STR(ClDummyClan, dummy_clan, 12, "", CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Clan of the dummy")
-MACRO_CONFIG_INT(ClDummyCountry, dummy_country, -1, -999, 1000, CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Country of the dummy (ISO 3166-1 numeric)")
+MACRO_CONFIG_INT(ClDummyCountry, dummy_country, CountryCode::DEFAULT, CountryCode::MINIMUM, CountryCode::MAXIMUM, CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Country of the dummy (ISO 3166-1 numeric)")
 MACRO_CONFIG_INT(ClDummyUseCustomColor, dummy_use_custom_color, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_INSENSITIVE, "Toggles usage of custom colors")
 MACRO_CONFIG_COL(ClDummyColorBody, dummy_color_body, 65408, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_COLLIGHT | CFGFLAG_INSENSITIVE, "Dummy body color")
 MACRO_CONFIG_COL(ClDummyColorFeet, dummy_color_feet, 65408, CFGFLAG_CLIENT | CFGFLAG_SAVE | CFGFLAG_COLLIGHT | CFGFLAG_INSENSITIVE, "Dummy feet color")
@@ -291,7 +296,7 @@ MACRO_CONFIG_INT(SvDeepfly, sv_deepfly, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, 
 MACRO_CONFIG_INT(SvDestroyBulletsOnDeath, sv_destroy_bullets_on_death, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Destroy bullets when their owner dies")
 MACRO_CONFIG_INT(SvDestroyLasersOnDeath, sv_destroy_lasers_on_death, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Destroy lasers when their owner dies")
 
-MACRO_CONFIG_INT(SvMapUpdateRate, sv_mapupdaterate, 5, 1, 100, CFGFLAG_SERVER, "64 player id <-> vanilla id players map update rate")
+MACRO_CONFIG_INT(SvMapUpdateRate, sv_mapupdaterate, 15, 1, 100, CFGFLAG_SERVER, "128 player id <-> 64 player id map update rate")
 
 MACRO_CONFIG_STR(SvServerType, sv_server_type, 64, "none", CFGFLAG_SERVER, "Type of the server (novice, moderate, ...)")
 
@@ -319,7 +324,7 @@ MACRO_CONFIG_INT(DbgTuning, dbg_tuning, 0, 0, 2, CFGFLAG_CLIENT, "Display inform
 
 MACRO_CONFIG_STR(PlayerName, player_name, 16, "", CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Name of the player")
 MACRO_CONFIG_STR(PlayerClan, player_clan, 12, "", CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Clan of the player")
-MACRO_CONFIG_INT(PlayerCountry, player_country, -1, -999, 1000, CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Country of the player (ISO 3166-1 numeric)")
+MACRO_CONFIG_INT(PlayerCountry, player_country, CountryCode::DEFAULT, CountryCode::MINIMUM, CountryCode::MAXIMUM, CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_INSENSITIVE, "Country of the player (ISO 3166-1 numeric)")
 
 MACRO_CONFIG_STR(Password, password, 256, "", CFGFLAG_CLIENT | CFGFLAG_SERVER | CFGFLAG_NONTEEHISTORIC, "Password to the server")
 MACRO_CONFIG_INT(Events, events, 1, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_SERVER, "Enable triggering of events, (eye emotes on some holidays in server, christmas skins in client).")
@@ -364,8 +369,8 @@ MACRO_CONFIG_INT(BrFilterFull, br_filter_full, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_C
 MACRO_CONFIG_INT(BrFilterEmpty, br_filter_empty, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Filter out empty server in browser")
 MACRO_CONFIG_INT(BrFilterSpectators, br_filter_spectators, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Filter out spectators from player numbers")
 MACRO_CONFIG_INT(BrFilterFriends, br_filter_friends, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Filter out servers with no friends")
-MACRO_CONFIG_INT(BrFilterCountry, br_filter_country, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Filter out servers with non-matching player country (ISO 3166-1 numeric)")
-MACRO_CONFIG_INT(BrFilterCountryIndex, br_filter_country_index, -1, -1, 999, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Player country to filter by in the server browser (ISO 3166-1 numeric)")
+MACRO_CONFIG_INT(BrFilterCountry, br_filter_country, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Filter out servers with non-matching player country (see br_filter_country_index)")
+MACRO_CONFIG_INT(BrFilterCountryIndex, br_filter_country_index, CountryCode::DEFAULT, CountryCode::MINIMUM, CountryCode::MAXIMUM, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Player country to filter by in the server browser (ISO 3166-1 numeric)")
 MACRO_CONFIG_INT(BrFilterPw, br_filter_pw, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Filter out password protected servers in browser")
 MACRO_CONFIG_STR(BrFilterGametype, br_filter_gametype, 128, "", CFGFLAG_SAVE | CFGFLAG_CLIENT, "Game types to filter")
 MACRO_CONFIG_INT(BrFilterGametypeStrict, br_filter_gametype_strict, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Strict gametype filter")
@@ -463,12 +468,13 @@ MACRO_CONFIG_INT(SvMaxClients, sv_max_clients, SERVER_MAX_CLIENTS, 1, SERVER_MAX
 MACRO_CONFIG_INT(SvMaxClientsPerIp, sv_max_clients_per_ip, 4, 1, SERVER_MAX_CLIENTS, CFGFLAG_SERVER, "Maximum number of clients with the same IP that can connect to the server")
 MACRO_CONFIG_INT(SvHighBandwidth, sv_high_bandwidth, 0, 0, 1, CFGFLAG_SERVER, "Use high bandwidth mode. Doubles the bandwidth required for the server. LAN use only")
 MACRO_CONFIG_INT(SvPreInput, sv_preinput, 1, 0, 1, CFGFLAG_SERVER, "Sends client inputs to other clients before their correct tick. Increases the bandwidth required for the server")
+MACRO_CONFIG_INT(SvMaxPreInputsPerTick, sv_max_preinputs_per_tick, 8, 0, 1000, CFGFLAG_SERVER, "Maximum number of inputs per tick and client that are sent on to the other clients as preinput (0 for no limit)")
 MACRO_CONFIG_STR(SvRegister, sv_register, 16, "1", CFGFLAG_SERVER, "Register server with master server for public listing, can also accept a comma-separated list of protocols to register on, like 'ipv4,ipv6'")
 MACRO_CONFIG_STR(SvRegisterExtra, sv_register_extra, 256, "", CFGFLAG_SERVER, "Extra headers to send to the register endpoint, comma-separated 'Header: Value' pairs")
 MACRO_CONFIG_STR(SvRegisterUrl, sv_register_url, 128, "https://master1.ddnet.org/ddnet/15/register", CFGFLAG_SERVER, "Masterserver URL to register to")
 MACRO_CONFIG_INT(SvRegisterPort, sv_register_port, 0, 0, 65535, CFGFLAG_SERVER, "Port for the master server to register the server with, useful if you are behind NAT, otherwise you only need sv_port")
 MACRO_CONFIG_STR(SvRegisterCommunityToken, sv_register_community_token, 128, "", CFGFLAG_SERVER, "Token to register this server to a particular community")
-MACRO_CONFIG_INT(SvFlag, sv_flag, -1, -1, 999, CFGFLAG_SERVER, "Country flag to group this community under (ISO 3166-1 numeric)")
+MACRO_CONFIG_INT(SvFlag, sv_flag, CountryCode::DEFAULT, CountryCode::MINIMUM, CountryCode::MAXIMUM, CFGFLAG_SERVER, "Country flag to group this community under (ISO 3166-1 numeric)")
 MACRO_CONFIG_STR(SvOfficialTutorial, sv_official_tutorial, 128, "", CFGFLAG_SERVER, "Don't set this, used to mark official tutorial servers")
 MACRO_CONFIG_STR(SvMapsBaseUrl, sv_maps_base_url, 128, "", CFGFLAG_SERVER, "Base path used to provide HTTPS map download URL to the clients")
 MACRO_CONFIG_STR(SvRconPassword, sv_rcon_password, 128, "", CFGFLAG_SERVER | CFGFLAG_NONTEEHISTORIC, "Remote console password (full access)")
@@ -479,7 +485,8 @@ MACRO_CONFIG_INT(SvRconBantime, sv_rcon_bantime, 5, 0, 1440, CFGFLAG_SERVER, "Th
 MACRO_CONFIG_INT(SvAutoDemoRecord, sv_auto_demo_record, 0, 0, 1, CFGFLAG_SERVER, "Automatically record demos")
 MACRO_CONFIG_INT(SvAutoDemoMax, sv_auto_demo_max, 10, 0, 1000, CFGFLAG_SERVER, "Maximum number of automatically recorded demos (0 = no limit)")
 MACRO_CONFIG_INT(SvTeeHistorian, sv_tee_historian, 0, 0, 1, CFGFLAG_SERVER, "Activate the tee historian that writes complete gameplay data to disk (WARNING: This will use a lot of disk space)")
-MACRO_CONFIG_INT(SvVanillaAntiSpoof, sv_vanilla_antispoof, 1, 0, 1, CFGFLAG_SERVER, "Enable vanilla Antispoof")
+MACRO_CONFIG_INT(SvVanillaAntiSpoof, sv_vanilla_antispoof, 1, 0, 1, CFGFLAG_SERVER, "Enable antispoof for vanilla 0.6 clients")
+MACRO_CONFIG_INT(SvVanillaConnections, sv_vanilla_connections, 1, 0, 1, CFGFLAG_SERVER, "Enable connections from vanilla 0.6 clients")
 MACRO_CONFIG_INT(SvDnsbl, sv_dnsbl, 0, 0, 1, CFGFLAG_SERVER, "Enable DNSBL (DNS-based Blackhole List)")
 MACRO_CONFIG_STR(SvDnsblHost, sv_dnsbl_host, 128, "", CFGFLAG_SERVER, "Hostname of DNSBL provider to use for IP Verification")
 MACRO_CONFIG_STR(SvDnsblKey, sv_dnsbl_key, 128, "", CFGFLAG_SERVER | CFGFLAG_NONTEEHISTORIC, "Optional Authentication Key for the specified DNSBL provider")
@@ -492,7 +499,12 @@ MACRO_CONFIG_INT(SvRconVote, sv_rcon_vote, 0, 0, 1, CFGFLAG_SERVER, "Only allow 
 MACRO_CONFIG_INT(SvPlayerDemoRecord, sv_player_demo_record, 0, 0, 1, CFGFLAG_SERVER, "Automatically record a demo when a player sets a new personal best time.")
 MACRO_CONFIG_INT(SvDemoChat, sv_demo_chat, 0, 0, 1, CFGFLAG_SERVER, "Record chat for demos")
 MACRO_CONFIG_INT(SvServerInfoPerSecond, sv_server_info_per_second, 50, 0, 10000, CFGFLAG_SERVER, "Maximum number of complete server info responses that are sent out per second (0 for no limit)")
+MACRO_CONFIG_INT(SvServerInfoRepliesPerSecond, sv_server_info_replies_per_second, 500, 0, 1000000, CFGFLAG_SERVER, "Maximum number of server info responses of any size that are sent out per second, the requesting address is not verified in 0.6 (0 for no limit)")
 MACRO_CONFIG_INT(SvVanConnPerSecond, sv_van_conn_per_second, 10, 0, 10000, CFGFLAG_SERVER, "Antispoof specific ratelimit (0 for no limit)")
+MACRO_CONFIG_INT(SvVanConnRepliesPerSecond, sv_van_conn_replies_per_second, 200, 0, 1000000, CFGFLAG_SERVER, "Maximum number of vanilla antispoof handshakes that are answered per second, they are answered to addresses that are not verified yet (0 for no limit)")
+MACRO_CONFIG_INT(SvMaxPacketsPerRecv, sv_max_packets_per_recv, 2048, 0, 1000000, CFGFLAG_SERVER, "Maximum number of packets that are received in one batch before returning to the main loop, the rest is left for the operating system to drop (0 for no limit)")
+MACRO_CONFIG_INT(SvPreConnDecompressPerSecond, sv_preconn_decompress_per_second, 800, 0, 1000000, CFGFLAG_SERVER, "Maximum number of compressed packets from addresses without a connection that are decompressed per second, only the vanilla antispoof handshake needs these (0 for no limit)")
+MACRO_CONFIG_INT(SvBanRepliesPerSecond, sv_ban_replies_per_second, 200, 0, 1000000, CFGFLAG_SERVER, "Maximum number of banned addresses that are told about their ban per second (0 for no limit)")
 MACRO_CONFIG_INT(SvSixup, sv_sixup, 1, 0, 1, CFGFLAG_SERVER, "Enable sixup connections")
 MACRO_CONFIG_INT(SvSkillLevel, sv_skill_level, 1, SERVERINFO_LEVEL_MIN, SERVERINFO_LEVEL_MAX, CFGFLAG_SERVER, "Difficulty level for Teeworlds 0.7 (0: Casual, 1: Normal, 2: Competitive)")
 
@@ -505,7 +517,7 @@ MACRO_CONFIG_INT(EcOutputLevel, ec_output_level, 0, -3, 2, CFGFLAG_ECON, "Adjust
 
 MACRO_CONFIG_INT(Debug, debug, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SERVER, "Debug mode")
 MACRO_CONFIG_INT(DbgSql, dbg_sql, 1, 0, 1, CFGFLAG_SERVER, "Debug SQL")
-MACRO_CONFIG_INT(DbgCurl, dbg_curl, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SERVER, "Debug curl")
+MACRO_CONFIG_INT(DbgHttp, dbg_http, 0, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SERVER, "Debug HTTP")
 MACRO_CONFIG_INT(DbgGraphs, dbg_graphs, 0, 0, 1, CFGFLAG_CLIENT, "Show performance graphs")
 MACRO_CONFIG_INT(DbgGfx, dbg_gfx, 0, 0, 4, CFGFLAG_CLIENT, "Show graphic library warnings and errors, if the GPU supports it (0: none, 1: minimal, 2: affects performance, 3: verbose, 4: all)")
 #if defined(CONF_WEBSOCKETS)
@@ -529,7 +541,7 @@ MACRO_CONFIG_INT(SvHit, sv_hit, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Whether
 MACRO_CONFIG_INT(SvEndlessDrag, sv_endless_drag, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Turns endless hooking on/off")
 MACRO_CONFIG_INT(SvTestingCommands, sv_test_cmds, 0, 0, 1, CFGFLAG_SERVER, "Turns testing commands aka cheats on/off (setting only works in initial config)")
 MACRO_CONFIG_INT(SvFreezeDelay, sv_freeze_delay, 3, 1, 30, CFGFLAG_SERVER | CFGFLAG_GAME, "How many seconds the players will remain frozen (applies to all except delayed freeze in switch layer & deepfreeze)")
-MACRO_CONFIG_INT(ClDDRaceBindsSet, cl_race_binds_set, 0, 0, 2, CFGFLAG_CLIENT | CFGFLAG_SAVE, "What level the DDRace binds are set to (this is automated, you don't need to use this)")
+MACRO_CONFIG_INT(ClDDRaceBindsSet, cl_race_binds_set, 0, 0, 3, CFGFLAG_CLIENT | CFGFLAG_SAVE, "What level the DDRace binds are set to (this is automated, you don't need to use this)")
 MACRO_CONFIG_INT(SvEndlessSuperHook, sv_endless_super_hook, 0, 0, 1, CFGFLAG_SERVER, "Endless hook for super players on/off")
 MACRO_CONFIG_INT(SvHideScore, sv_hide_score, 0, 0, 1, CFGFLAG_SERVER, "Whether players scores will be announced or not")
 MACRO_CONFIG_INT(SvSaveWorseScores, sv_save_worse_scores, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Whether to save worse scores when you already have a better one")
@@ -554,7 +566,7 @@ MACRO_CONFIG_INT(SvVoteMapTimeDelay, sv_vote_map_delay, 0, 0, 9999, CFGFLAG_SERV
 MACRO_CONFIG_INT(SvVoteDelay, sv_vote_delay, 3, 0, 9999, CFGFLAG_SERVER, "The time in seconds between any vote")
 MACRO_CONFIG_INT(SvVoteKickDelay, sv_vote_kick_delay, 0, 0, 9999, CFGFLAG_SERVER, "The minimum time in seconds between kick votes")
 MACRO_CONFIG_INT(SvVoteYesPercentage, sv_vote_yes_percentage, 50, 1, 99, CFGFLAG_SERVER, "More than this percentage of players need to agree for a vote to succeed")
-MACRO_CONFIG_INT(SvVoteMajority, sv_vote_majority, 0, 0, 1, CFGFLAG_SERVER, "Whether non-voting players are considered as votes for \"no\" (0) or are ignored (1)")
+MACRO_CONFIG_INT(SvVoteMajority, sv_vote_majority, 0, 0, 1, CFGFLAG_SERVER, "Whether non-voting players are ignored (0) or are considered as votes for \"no\" (1)")
 MACRO_CONFIG_INT(SvVoteMaxTotal, sv_vote_max_total, 0, 0, SERVER_MAX_CLIENTS, CFGFLAG_SERVER, "How many players can participate in a vote at max (0 = no limit)")
 MACRO_CONFIG_INT(SvVoteVetoTime, sv_vote_veto_time, 20, 0, 1000, CFGFLAG_SERVER, "Minutes of time on a server until a player can veto map change votes (0 = disabled)")
 MACRO_CONFIG_INT(SvKillDelay, sv_kill_delay, 1, 0, 9999, CFGFLAG_SERVER, "The minimum time in seconds between kills")
@@ -574,6 +586,9 @@ MACRO_CONFIG_INT(SvSwap, sv_swap, 1, 0, 1, CFGFLAG_SERVER, "Enable /swap")
 MACRO_CONFIG_INT(SvTeam0Mode, sv_team0mode, 1, 0, 1, CFGFLAG_SERVER, "Enables /team0mode")
 MACRO_CONFIG_INT(SvUseSql, sv_use_sql, 0, 0, 1, CFGFLAG_SERVER, "Enables MySQL backend instead of SQLite backend (sv_sqlite_file is still used as fallback write server when no MySQL server is reachable)")
 MACRO_CONFIG_INT(SvSqlQueriesDelay, sv_sql_queries_delay, 1, 0, 20, CFGFLAG_SERVER, "Delay in seconds between SQL queries of a single player")
+MACRO_CONFIG_STR(SvSqlSslCa, sv_sql_ssl_ca, 256, "", CFGFLAG_SERVER, "Path to CA certificate for verifying the MySQL/MariaDB server certificate")
+MACRO_CONFIG_STR(SvSqlSslCert, sv_sql_ssl_cert, 256, "", CFGFLAG_SERVER, "Path to client certificate for the MySQL/MariaDB SSL connection")
+MACRO_CONFIG_STR(SvSqlSslKey, sv_sql_ssl_key, 256, "", CFGFLAG_SERVER, "Path to client key for the MySQL/MariaDB SSL connection")
 MACRO_CONFIG_STR(SvSqliteFile, sv_sqlite_file, 64, "ddnet-server.sqlite", CFGFLAG_SERVER, "File to store ranks in case sv_use_sql is turned off or used as backup sql server")
 
 #if defined(CONF_UPNP)
@@ -633,6 +648,7 @@ MACRO_CONFIG_COL(ClMessageFriendColor, cl_message_friend_color, 65425, CFGFLAG_C
 
 MACRO_CONFIG_INT(ConnTimeout, conn_timeout, 100, 5, 1000, CFGFLAG_SAVE | CFGFLAG_CLIENT | CFGFLAG_SERVER, "Network timeout")
 MACRO_CONFIG_INT(ConnTimeoutProtection, conn_timeout_protection, 1000, 5, 10000, CFGFLAG_SERVER, "Network timeout protection")
+MACRO_CONFIG_INT(ConnResendRequestsPerSecond, conn_resend_requests_per_second, 10, 0, 1000, CFGFLAG_CLIENT | CFGFLAG_SERVER, "Maximum number of resend requests of a peer that are answered per second, one answer resends everything that is not acked yet (0 for no limit)")
 MACRO_CONFIG_INT(ClShowIds, cl_show_ids, 0, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Whether to show client IDs in scoreboard, chat and spectator menu")
 MACRO_CONFIG_INT(ClScoreboardOnDeath, cl_scoreboard_on_death, 1, 0, 1, CFGFLAG_SAVE | CFGFLAG_CLIENT, "Whether to show scoreboard after death or not")
 MACRO_CONFIG_INT(ClAutoRaceRecord, cl_auto_race_record, 1, 0, 1, CFGFLAG_CLIENT | CFGFLAG_SAVE, "Save the best demo of each race")
@@ -701,7 +717,7 @@ MACRO_CONFIG_STR(SvBannedVersions, sv_banned_versions, 128, "", CFGFLAG_SERVER, 
 MACRO_CONFIG_INT(SvNetlimit, sv_netlimit, 0, 0, 10000, CFGFLAG_SERVER, "Netlimit: Maximum amount of traffic a client is allowed to use (in kb/s)")
 MACRO_CONFIG_INT(SvNetlimitAlpha, sv_netlimit_alpha, 50, 1, 100, CFGFLAG_SERVER, "Netlimit: Alpha of Exponentiation moving average")
 
-MACRO_CONFIG_INT(SvConnlimit, sv_connlimit, 5, 0, 100, CFGFLAG_SERVER, "Connlimit: Number of connections an IP is allowed to do in a timespan")
+MACRO_CONFIG_INT(SvConnlimit, sv_connlimit, 5, 1, 100, CFGFLAG_SERVER, "Connlimit: Number of connections an IP is allowed to do in a timespan")
 MACRO_CONFIG_INT(SvConnlimitTime, sv_connlimit_time, 20, 0, 1000, CFGFLAG_SERVER, "Connlimit: Time in which IP's connections are counted")
 
 #if defined(CONF_FAMILY_UNIX)
@@ -771,7 +787,7 @@ MACRO_CONFIG_STR(Gfx3DTextureAnalysisVersion, gfx_3d_texture_analysis_version, 1
 MACRO_CONFIG_STR(GfxGpuName, gfx_gpu_name, 256, "auto", CFGFLAG_SAVE | CFGFLAG_CLIENT, "The GPU's name, which will be selected by the backend. (if supported by the backend)")
 #if defined(CONF_PLATFORM_ANDROID)
 MACRO_CONFIG_STR(GfxBackend, gfx_backend, 256, "GLES", CFGFLAG_SAVE | CFGFLAG_CLIENT, "The backend to use (e.g. GLES or Vulkan)")
-#elif defined(CONF_PLATFORM_EMSCRIPTEN)
+#elif defined(CONF_PLATFORM_EMSCRIPTEN) || defined(CONF_PLATFORM_IOS)
 MACRO_CONFIG_STR(GfxBackend, gfx_backend, 256, "GLES", CFGFLAG_SAVE | CFGFLAG_CLIENT, "The backend to use (e.g. GLES)")
 #elif !defined(CONF_ARCH_IA32) && !defined(CONF_PLATFORM_MACOS)
 MACRO_CONFIG_STR(GfxBackend, gfx_backend, 256, "Vulkan", CFGFLAG_SAVE | CFGFLAG_CLIENT, "The backend to use (e.g. OpenGL or Vulkan)")

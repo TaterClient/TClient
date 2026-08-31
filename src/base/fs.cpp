@@ -31,7 +31,7 @@
 #error NOT IMPLEMENTED
 #endif
 
-#if defined(CONF_PLATFORM_MACOS)
+#if defined(CONF_PLATFORM_MACOS) || defined(CONF_PLATFORM_IOS)
 #include <mach-o/dyld.h> // _NSGetExecutablePath
 #endif
 
@@ -232,7 +232,10 @@ void fs_listdir_fileinfo(const char *dir, FS_LISTDIR_CALLBACK_FILEINFO cb, int t
 		}
 		str_copy(buffer + length, entry->d_name, sizeof(buffer) - length);
 		time_t created = -1, modified = -1;
-		fs_file_time(buffer, &created, &modified);
+		if(fs_file_time(buffer, &created, &modified) != 0)
+		{
+			log_warn("filesystem", "Failed to determine file time of '%s'", buffer);
+		}
 
 		CFsFileInfo info;
 		info.m_pName = entry->d_name;
@@ -324,6 +327,8 @@ int fs_storage_path(const char *appname, char *path, int max)
 
 #if defined(CONF_PLATFORM_HAIKU)
 	str_format(path, max, "%s/config/settings/%s", home, appname);
+#elif defined(CONF_PLATFORM_IOS)
+	str_format(path, max, "%s/Documents", home);
 #elif defined(CONF_PLATFORM_MACOS)
 	str_format(path, max, "%s/Library/Application Support/%s", home, appname);
 #else
@@ -374,7 +379,7 @@ int fs_executable_path(char *buffer, int buffer_size)
 	}
 	str_copy(buffer, path.value().c_str(), buffer_size);
 	return 0;
-#elif defined(CONF_PLATFORM_MACOS)
+#elif defined(CONF_PLATFORM_MACOS) || defined(CONF_PLATFORM_IOS)
 	// Get the size
 	uint32_t path_size = 0;
 	_NSGetExecutablePath(nullptr, &path_size);
@@ -586,17 +591,26 @@ int fs_remove(const char *filename)
 int fs_rename(const char *oldname, const char *newname)
 {
 #if defined(CONF_FAMILY_WINDOWS)
-	// Target file must be deleted first, else rename fails on Windows when the target file has open handles.
-	// Ignore the result and try to perform the rename anyway.
-	(void)fs_remove(newname);
-
 	const std::wstring wide_oldname = windows_utf8_to_wide(oldname);
 	const std::wstring wide_newname = windows_utf8_to_wide(newname);
 	if(MoveFileExW(wide_oldname.c_str(), wide_newname.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED | MOVEFILE_WRITE_THROUGH) != 0)
 	{
 		return 0;
 	}
-	const DWORD error = GetLastError();
+
+	// Can't rename on Windows when target file has open handles, delete target
+	// file and retry. We can't retry it before renaming because for a rename of
+	// foo to FOO the source file would be deleted.
+	DWORD error = GetLastError();
+	if(error == ERROR_ACCESS_DENIED)
+	{
+		(void)fs_remove(newname);
+		if(MoveFileExW(wide_oldname.c_str(), wide_newname.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED | MOVEFILE_WRITE_THROUGH) != 0)
+		{
+			return 0;
+		}
+		error = GetLastError();
+	}
 	log_error("filesystem", "Failed to rename file '%s' to '%s' (%ld '%s')", oldname, newname, error, windows_format_system_message(error).c_str());
 	return 1;
 #else

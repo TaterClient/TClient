@@ -2,6 +2,7 @@
 #define ENGINE_SERVER_DATABASES_CONNECTION_POOL_H
 
 #include <base/sphore.h>
+#include <base/types.h>
 
 #include <atomic>
 #include <memory>
@@ -44,8 +45,6 @@ enum Write
 	NORMAL_FAILED,
 };
 
-class IConsole;
-
 struct CMysqlConfig
 {
 	char m_aDatabase[64];
@@ -56,6 +55,10 @@ struct CMysqlConfig
 	char m_aBindaddr[128];
 	int m_Port;
 	bool m_Setup;
+	bool m_UseSsl;
+	char m_aSslCa[IO_MAX_PATH_LENGTH];
+	char m_aSslCert[IO_MAX_PATH_LENGTH];
+	char m_aSslKey[IO_MAX_PATH_LENGTH];
 };
 
 class CDbConnectionPool
@@ -77,7 +80,7 @@ public:
 		NUM_MODES,
 	};
 
-	void Print(IConsole *pConsole, Mode DatabaseMode);
+	void Print(Mode DatabaseMode);
 
 	void RegisterSqliteDatabase(Mode DatabaseMode, const char aFilename[64]);
 	void RegisterMysqlDatabase(Mode DatabaseMode, const CMysqlConfig *pMysqlConfig);

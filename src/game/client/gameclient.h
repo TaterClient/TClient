@@ -143,6 +143,14 @@ public:
 	bool m_DDRaceTeam;
 
 	bool m_PredictEvents;
+
+	bool m_OldLaser;
+
+	// zero if the server does not send them
+	int m_MinTeamSize;
+	int m_MaxTeamSize;
+
+	int m_NumDDRaceTeams;
 };
 
 class CSnapEntities
@@ -375,8 +383,15 @@ public:
 
 	vec2 m_LocalCharacterPos;
 
-	// predicted players
+	/**
+	 * Our prediction for the local character at tick
+	 * `IClient::PredGameTick() - 1`.
+	 */
 	CCharacterCore m_PredictedPrevChar;
+	/**
+	 * Our prediction for the local character at tick
+	 * `IClient::PredGameTick()`.
+	 */
 	CCharacterCore m_PredictedChar;
 
 	// snap pointers
@@ -493,6 +508,9 @@ public:
 
 		char m_aName[MAX_NAME_LENGTH];
 		char m_aClan[MAX_CLAN_LENGTH];
+		/**
+		 * Country code in ISO 3166-1 numeric.
+		 */
 		int m_Country;
 		char m_aSkinName[MAX_SKIN_LENGTH];
 		int m_Team;
@@ -717,7 +735,7 @@ public:
 	void SendInfo(bool Start);
 	void SendDummyInfo(bool Start) override;
 	void SendKill() const;
-	void SendReadyChange7();
+	void SendReadyChange7(); // NOLINT(readability-make-member-function-const)
 
 	void ApplyPreInputs(int Tick, bool Direct, CGameWorld &GameWorld);
 	bool GetDummyFastInput(CNetObj_PlayerInput &DummyFastInput, const CNetObj_PlayerInput *pDummyInputData, const class CCharacter *pDummyChar, int LocalTee, int DummyTee) const;
@@ -742,11 +760,13 @@ public:
 	int CurrentRaceTime() const;
 
 	bool IsTeamPlay() const;
+	int MinTeamSize() const;
+	int MaxTeamSize() const;
 	bool IsWorldPaused() const;
 	bool IsDemoPlaybackPaused() const;
 	float GetAnimationPlaybackSpeed() const;
 
-	bool AntiPingPlayers() const;
+	int AntiPingPlayers() const;
 	bool AntiPingGrenade() const;
 	bool AntiPingWeapons() const;
 	bool AntiPingGunfire() const;
@@ -989,6 +1009,7 @@ private:
 		char m_aPath[IO_MAX_PATH_LENGTH];
 		bool m_IsDefault;
 		CImageInfo m_ImageInfo;
+		std::optional<CImageInfo> m_FallbackImageInfo;
 	};
 
 	CImageAsset LoadAssetFromPath(const char *pPath, bool AsDir, int AssetId, const char *pDirectory) const;
@@ -1025,10 +1046,10 @@ private:
 	float m_LastFollowFactor;
 	bool m_LastDummyConnected;
 
+	bool InitMultiView(int Team);
 	void HandleMultiView();
 	bool IsMultiViewIdSet();
 	void CleanMultiViewIds();
-	bool InitMultiView(int Team);
 	float CalculateMultiViewMultiplier(vec2 TargetPos);
 	float CalculateMultiViewZoom(vec2 MinPos, vec2 MaxPos, float Vel);
 	float MapValue(float MaxValue, float MinValue, float MaxRange, float MinRange, float Value);

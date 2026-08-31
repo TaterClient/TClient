@@ -2650,16 +2650,45 @@ Mute emoticons
 == Mutear emoticonos
 
 Refresh the demo list
-== 
+== Actualizar la lista de demos
 
 Open the selected folder
-== 
+== Abrir la carpeta seleccionada
 
 Play the selected demo
-== 
+== Reproducir la demo seleccionada
 
 Prediction margin
-== 
+== Margen de predicción
 
 Predict events (experimental)
+== Predecir eventos (experimental)
+
+[Direct touch input]
+Relative aim
+== 
+
+[Predefined touch button behaviors]
+Joystick Relative Aim
+== 
+
+Virtual joystick which only aims and moves the mouse pointer relatively.
+== 
+
+[AntiPing: predict other players]
+Off
+== 
+
+[AntiPing: predict other players]
+All
+== 
+
+[AntiPing: predict other players]
+Interact
+== 
+
+Always predict frozen players
+== 
+
+No country flags match your filter criteria
 == 

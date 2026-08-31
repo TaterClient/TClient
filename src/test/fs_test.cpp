@@ -107,7 +107,7 @@ TEST(Filesystem, ExecutablePath)
 	char aExecutablePath[IO_MAX_PATH_LENGTH];
 	ASSERT_FALSE(fs_executable_path(aExecutablePath, sizeof(aExecutablePath)));
 	EXPECT_TRUE(fs_is_file(aExecutablePath));
-	fs_parent_dir(aExecutablePath);
+	EXPECT_FALSE(fs_parent_dir(aExecutablePath));
 	EXPECT_FALSE(fs_is_relative_path(aExecutablePath));
 }
 
@@ -235,6 +235,45 @@ TEST(Filesystem, RenameFile)
 	EXPECT_FALSE(fs_rename(Info.m_aFilename, aNewFilename));
 	EXPECT_FALSE(fs_is_file(Info.m_aFilename));
 	EXPECT_TRUE(fs_is_file(aNewFilename));
+
+	EXPECT_FALSE(fs_remove(aNewFilename));
+}
+
+TEST(Filesystem, RenameFileCaseOnly)
+{
+	char aOldFilename[IO_MAX_PATH_LENGTH];
+	char aNewFilename[IO_MAX_PATH_LENGTH];
+	CTestInfo Info;
+	Info.Filename(aOldFilename, sizeof(aOldFilename), ".case.tmp");
+	Info.Filename(aNewFilename, sizeof(aNewFilename), ".CASE.tmp");
+
+	IOHANDLE FileWrite = io_open(aOldFilename, IOFLAG_WRITE);
+	ASSERT_TRUE(FileWrite);
+	EXPECT_FALSE(io_close(FileWrite));
+
+	EXPECT_TRUE(fs_is_file(aOldFilename));
+	EXPECT_FALSE(fs_rename(aOldFilename, aNewFilename));
+	EXPECT_TRUE(fs_is_file(aNewFilename));
+
+	EXPECT_FALSE(fs_remove(aNewFilename));
+}
+
+TEST(Filesystem, RenameOpenFileCaseOnly)
+{
+	char aOldFilename[IO_MAX_PATH_LENGTH];
+	char aNewFilename[IO_MAX_PATH_LENGTH];
+	CTestInfo Info;
+	Info.Filename(aOldFilename, sizeof(aOldFilename), ".case.tmp");
+	Info.Filename(aNewFilename, sizeof(aNewFilename), ".CASE.tmp");
+
+	IOHANDLE FileWrite = io_open(aOldFilename, IOFLAG_WRITE);
+	ASSERT_TRUE(FileWrite);
+
+	EXPECT_TRUE(fs_is_file(aOldFilename));
+	EXPECT_FALSE(fs_rename(aOldFilename, aNewFilename));
+	EXPECT_TRUE(fs_is_file(aNewFilename));
+
+	EXPECT_FALSE(io_close(FileWrite));
 
 	EXPECT_FALSE(fs_remove(aNewFilename));
 }

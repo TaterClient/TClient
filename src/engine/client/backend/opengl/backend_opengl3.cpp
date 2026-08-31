@@ -8,7 +8,12 @@
 #ifndef BACKEND_AS_OPENGL_ES
 #include <GL/glew.h>
 #else
+#if defined(CONF_PLATFORM_IOS)
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
+#else
 #include <GLES3/gl3.h>
+#endif
 #endif
 
 #include <engine/client/backend/glsl_shader_compiler.h>
@@ -117,7 +122,7 @@ bool CCommandProcessorFragment_OpenGL3_3::Cmd_Init(const SCommand_Init *pCommand
 	GLint CapVal;
 	glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &CapVal);
 
-	m_MaxQuadsAtOnce = minimum<int>(((CapVal - 20) / (3 * 4)), ms_MaxQuadsPossible);
+	m_MaxQuadsAtOnce = std::min(((int)CapVal - 20) / (3 * 4), (int)ms_MaxQuadsPossible);
 
 	{
 		CGLSL PrimitiveVertexShader;
@@ -536,6 +541,8 @@ void CCommandProcessorFragment_OpenGL3_3::TextureUpdate(int Slot, int X, int Y, 
 
 	if(m_vTextures[Slot].m_RescaleCount > 0)
 	{
+		const int OldWidth = Width;
+		const int OldHeight = Height;
 		for(int i = 0; i < m_vTextures[Slot].m_RescaleCount; ++i)
 		{
 			Width >>= 1;
@@ -545,7 +552,7 @@ void CCommandProcessorFragment_OpenGL3_3::TextureUpdate(int Slot, int X, int Y, 
 			Y /= 2;
 		}
 
-		uint8_t *pTmpData = ResizeImage(pTexData, Width, Height, Width, Height, GLFormatToPixelSize(GLFormat));
+		uint8_t *pTmpData = ResizeImage(pTexData, OldWidth, OldHeight, Width, Height, GLFormatToPixelSize(GLFormat));
 		free(pTexData);
 		pTexData = pTmpData;
 	}
@@ -573,6 +580,8 @@ void CCommandProcessorFragment_OpenGL3_3::TextureCreate(int Slot, int Width, int
 	{
 		if(Width > m_MaxTexSize || Height > m_MaxTexSize)
 		{
+			const int OldWidth = Width;
+			const int OldHeight = Height;
 			do
 			{
 				Width >>= 1;
@@ -580,7 +589,7 @@ void CCommandProcessorFragment_OpenGL3_3::TextureCreate(int Slot, int Width, int
 				++RescaleCount;
 			} while(Width > m_MaxTexSize || Height > m_MaxTexSize);
 
-			uint8_t *pTmpData = ResizeImage(pTexData, Width, Height, Width, Height, GLFormatToPixelSize(GLFormat));
+			uint8_t *pTmpData = ResizeImage(pTexData, OldWidth, OldHeight, Width, Height, GLFormatToPixelSize(GLFormat));
 			free(pTexData);
 			pTexData = pTmpData;
 		}
@@ -660,8 +669,8 @@ void CCommandProcessorFragment_OpenGL3_3::TextureCreate(int Slot, int Width, int
 
 			if(ConvertWidth == 0 || (ConvertWidth % 16) != 0 || ConvertHeight == 0 || (ConvertHeight % 16) != 0)
 			{
-				int NewWidth = maximum<int>(HighestBit(ConvertWidth), 16);
-				int NewHeight = maximum<int>(HighestBit(ConvertHeight), 16);
+				int NewWidth = std::max(HighestBit(ConvertWidth), 16);
+				int NewHeight = std::max(HighestBit(ConvertHeight), 16);
 				uint8_t *pNewTexData = ResizeImage(pTexData, ConvertWidth, ConvertHeight, NewWidth, NewHeight, GLFormatToPixelSize(GLFormat));
 				log_debug("gfx/opengl", "3D/2D array texture was resized. Slot=%d Size=(%d, %d) Resized=(%d, %d)", Slot, ConvertWidth, ConvertHeight, NewWidth, NewHeight);
 
@@ -1172,7 +1181,7 @@ void CCommandProcessorFragment_OpenGL3_3::Cmd_RenderQuadLayer(const CCommandBuff
 
 		while(QuadsLeft > 0)
 		{
-			int ActualQuadCount = minimum<int>(QuadsLeft, m_MaxQuadsAtOnce);
+			int ActualQuadCount = std::min(QuadsLeft, m_MaxQuadsAtOnce);
 			for(size_t i = 0; i < (size_t)ActualQuadCount; ++i)
 			{
 				aColors[i] = pCommand->m_pQuadInfo[i + QuadOffset].m_Color;

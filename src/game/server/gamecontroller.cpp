@@ -410,26 +410,6 @@ void IGameController::OnPlayerConnect(CPlayer *pPlayer)
 		str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' team=%d", ClientId, Server()->ClientName(ClientId), pPlayer->GetTeam());
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 	}
-
-	if(Server()->IsSixup(ClientId))
-	{
-		{
-			protocol7::CNetMsg_Sv_GameInfo Msg;
-			Msg.m_GameFlags = m_GameFlags;
-			Msg.m_MatchCurrent = 1;
-			Msg.m_MatchNum = 0;
-			Msg.m_ScoreLimit = 0;
-			Msg.m_TimeLimit = 0;
-			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, ClientId);
-		}
-
-		// /team is essential
-		{
-			protocol7::CNetMsg_Sv_CommandInfoRemove Msg;
-			Msg.m_pName = "team";
-			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, ClientId);
-		}
-	}
 }
 
 void IGameController::OnPlayerDisconnect(class CPlayer *pPlayer, const char *pReason)
@@ -443,7 +423,7 @@ void IGameController::OnPlayerDisconnect(class CPlayer *pPlayer, const char *pRe
 			str_format(aBuf, sizeof(aBuf), "'%s' has left the game (%s)", Server()->ClientName(ClientId), pReason);
 		else
 			str_format(aBuf, sizeof(aBuf), "'%s' has left the game", Server()->ClientName(ClientId));
-		GameServer()->SendChat(-1, TEAM_ALL, aBuf, -1, CGameContext::FLAG_SIX);
+		GameServer()->SendChat(-1, TEAM_ALL, aBuf, -1);
 
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", ClientId, Server()->ClientName(ClientId));
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);
@@ -654,10 +634,17 @@ void IGameController::Snap(int SnappingClient)
 		GAMEINFOFLAG_ENTITIES_DDRACE |
 		GAMEINFOFLAG_ENTITIES_RACE |
 		GAMEINFOFLAG_RACE;
-	GameInfoEx.m_Flags2 = GAMEINFOFLAG2_HUD_DDRACE | GAMEINFOFLAG2_DDRACE_TEAM | GAMEINFOFLAG2_PREDICT_EVENTS;
+	GameInfoEx.m_Flags2 = GAMEINFOFLAG2_HUD_DDRACE |
+			      GAMEINFOFLAG2_DDRACE_TEAM |
+			      GAMEINFOFLAG2_PREDICT_EVENTS;
 	if(g_Config.m_SvNoWeakHook)
 		GameInfoEx.m_Flags2 |= GAMEINFOFLAG2_NO_WEAK_HOOK;
+	if(g_Config.m_SvOldLaser)
+		GameInfoEx.m_Flags2 |= GAMEINFOFLAG2_OLD_LASER;
 	GameInfoEx.m_Version = GAMEINFO_CURVERSION;
+	GameInfoEx.m_MinTeamSize = g_Config.m_SvMinTeamSize;
+	GameInfoEx.m_MaxTeamSize = g_Config.m_SvMaxTeamSize;
+	GameInfoEx.m_NumDDRaceTeams = NUM_DDRACE_TEAMS;
 	Server()->SnapNewItem(0, GameInfoEx);
 
 	if(Server()->IsSixup(SnappingClient))

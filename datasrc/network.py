@@ -1,5 +1,5 @@
 from datatypes import Enum, Flags, NetArray, NetBool, NetEvent, NetEventEx, NetIntAny, NetTwIntString, NetIntRange
-from datatypes import NetMessage, NetMessageEx, NetObject, NetObjectEx, NetString, NetStringHalfStrict, NetStringStrict, NetTick
+from datatypes import NetMessage, NetMessageEx, NetObject, NetObjectEx, NetString, NetStringHalfStrict, NetStringStrict, NetTick, NetTickStrict
 
 Emotes = ["NORMAL", "PAIN", "HAPPY", "SURPRISE", "ANGRY", "BLINK"]
 PlayerFlags = ["PLAYING", "IN_MENU", "CHATTING", "SCOREBOARD", "AIM", "SPEC_CAM", "INPUT_ABSOLUTE", "INPUT_MANUAL"]
@@ -24,7 +24,7 @@ GameInfoFlags = [
 ]
 GameInfoFlags2 = [
 	"ALLOW_X_SKINS", "GAMETYPE_CITY", "GAMETYPE_FDDRACE", "ENTITIES_FDDRACE", "HUD_HEALTH_ARMOR", "HUD_AMMO",
-	"HUD_DDRACE", "NO_WEAK_HOOK", "NO_SKIN_CHANGE_FOR_FROZEN", "DDRACE_TEAM", "PREDICT_EVENTS"
+	"HUD_DDRACE", "NO_WEAK_HOOK", "NO_SKIN_CHANGE_FOR_FROZEN", "DDRACE_TEAM", "PREDICT_EVENTS", "OLD_LASER"
 ]
 ExPlayerFlags = ["AFK", "PAUSED", "SPEC"]
 LegacyProjectileFlags = [f"CLIENTID_BIT{i}" for i in range(8)] + [
@@ -77,7 +77,7 @@ enum
 
 enum
 {
-	GAMEINFO_CURVERSION=11,
+	GAMEINFO_CURVERSION=12,
 };
 '''
 
@@ -226,7 +226,7 @@ Objects = [
 	NetObject("ClientInfo", [
 		NetTwIntString("m_aName", 16),
 		NetTwIntString("m_aClan", 12),
-		NetIntAny("m_Country"),
+		NetIntAny("m_Country"), # ISO 3166-1 numeric
 		NetTwIntString("m_aSkin", 24),
 		NetIntRange("m_UseCustomColor", 0, 1),
 		NetIntAny("m_ColorBody"),
@@ -272,6 +272,9 @@ Objects = [
 		NetIntAny("m_Flags", default=0),
 		NetIntAny("m_Version", default=0),
 		NetIntAny("m_Flags2", default=0),
+		NetIntRange("m_MinTeamSize", 0, 'MAX_CLIENTS', default=0),
+		NetIntRange("m_MaxTeamSize", 0, 'MAX_CLIENTS', default=0),
+		NetIntAny("m_NumDDRaceTeams", default=0),
 	], validate_size=False),
 
 	# The code assumes that this has the same in-memory representation as
@@ -307,7 +310,7 @@ Objects = [
 		NetTick("m_StartTick"),
 		NetIntRange("m_Owner", -1, 'MAX_CLIENTS-1'),
 		NetIntAny("m_SwitchNumber"),
-		NetIntAny("m_TuneZone"),
+		NetIntRange("m_TuneZone", 0, 'TuneZone::NUM-1'),
 		NetIntAny("m_Flags"),
 	]),
 
@@ -493,7 +496,7 @@ Messages = [
 	NetMessage("Cl_StartInfo", [
 		NetStringStrict("m_pName"),
 		NetStringStrict("m_pClan"),
-		NetIntAny("m_Country"),
+		NetIntAny("m_Country"), # ISO 3166-1 numeric
 		NetStringStrict("m_pSkin"),
 		NetBool("m_UseCustomColor"),
 		NetIntAny("m_ColorBody"),
@@ -503,7 +506,7 @@ Messages = [
 	NetMessage("Cl_ChangeInfo", [
 		NetStringStrict("m_pName"),
 		NetStringStrict("m_pClan"),
-		NetIntAny("m_Country"),
+		NetIntAny("m_Country"), # ISO 3166-1 numeric
 		NetStringStrict("m_pSkin"),
 		NetBool("m_UseCustomColor"),
 		NetIntAny("m_ColorBody"),
@@ -615,7 +618,7 @@ Messages = [
 	NetMessageEx("Sv_CommandInfoGroupEnd", "sv-commandinfo-group-end@netmsg.ddnet.org", []),
 
 	NetMessageEx("Sv_ChangeInfoCooldown", "change-info-cooldown@netmsg.ddnet.org", [
-		NetTick("m_WaitUntil")
+		NetTickStrict("m_WaitUntil")
 	]),
 
 	NetMessageEx("Sv_MapSoundGlobal", "map-sound-global@netmsg.ddnet.org", [
@@ -636,7 +639,7 @@ Messages = [
 		NetIntAny("m_PrevWeapon"),
 
 		NetIntRange("m_Owner", 0, 'MAX_CLIENTS-1'),
-		NetTick("m_IntendedTick"),
+		NetTickStrict("m_IntendedTick"),
 	]),
 
 	NetMessageEx("Sv_SaveCode", "save-code@netmsg.ddnet.org", [

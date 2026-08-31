@@ -226,8 +226,6 @@ public:
 	class ITextRender *TextRender() const { return m_pTextRender; }
 	class CGameClient *GameClient() const { return m_pGameClient; }
 
-	bool m_LocalTeeRender = false; // TClient
-
 	void Init(class IGraphics *pGraphics, class ITextRender *pTextRender, class CGameClient *pGameClient);
 
 	void RenderCursor(vec2 Center, float Size, float Alpha = 1.0f) const;

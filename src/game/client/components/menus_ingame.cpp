@@ -627,8 +627,7 @@ void CMenus::RenderServerInfo(CUIRect MainView)
 	const float FontSizeTitle = 32.0f;
 	const float FontSizeBody = 20.0f;
 
-	CServerInfo CurrentServerInfo;
-	Client()->GetServerInfo(&CurrentServerInfo);
+	const CServerInfo &CurrentServerInfo = Client()->ServerInfo();
 
 	CUIRect ServerInfo, GameInfo, Motd;
 	MainView.Draw(ms_ColorTabbarActive, IGraphics::CORNER_B, 10.0f);
@@ -787,14 +786,16 @@ void CMenus::RenderServerInfo(CUIRect MainView)
 		default:
 			dbg_assert_failed("unknown team mode");
 		}
-		if((Config()->m_SvTeam == SV_TEAM_ALLOWED || Config()->m_SvTeam == SV_TEAM_MANDATORY) && (Config()->m_SvMinTeamSize != DefaultConfig::SvMinTeamSize || Config()->m_SvMaxTeamSize != DefaultConfig::SvMaxTeamSize))
+		int MinTeamSize = GameClient()->MinTeamSize();
+		int MaxTeamSize = GameClient()->MaxTeamSize();
+		if((Config()->m_SvTeam == SV_TEAM_ALLOWED || Config()->m_SvTeam == SV_TEAM_MANDATORY) && (MinTeamSize != DefaultConfig::SvMinTeamSize || MaxTeamSize != DefaultConfig::SvMaxTeamSize))
 		{
-			if(Config()->m_SvMinTeamSize != DefaultConfig::SvMinTeamSize && Config()->m_SvMaxTeamSize != DefaultConfig::SvMaxTeamSize)
-				str_format(aBuf, sizeof(aBuf), "%s: %s (%s %d, %s %d)", Localize("Teams"), pTeamMode, Localize("minimum", "Team size"), Config()->m_SvMinTeamSize, Localize("maximum", "Team size"), Config()->m_SvMaxTeamSize);
-			else if(Config()->m_SvMinTeamSize != DefaultConfig::SvMinTeamSize)
-				str_format(aBuf, sizeof(aBuf), "%s: %s (%s %d)", Localize("Teams"), pTeamMode, Localize("minimum", "Team size"), Config()->m_SvMinTeamSize);
+			if(MinTeamSize != DefaultConfig::SvMinTeamSize && MaxTeamSize != DefaultConfig::SvMaxTeamSize)
+				str_format(aBuf, sizeof(aBuf), "%s: %s (%s %d, %s %d)", Localize("Teams"), pTeamMode, Localize("minimum", "Team size"), MinTeamSize, Localize("maximum", "Team size"), MaxTeamSize);
+			else if(MinTeamSize != DefaultConfig::SvMinTeamSize)
+				str_format(aBuf, sizeof(aBuf), "%s: %s (%s %d)", Localize("Teams"), pTeamMode, Localize("minimum", "Team size"), MinTeamSize);
 			else
-				str_format(aBuf, sizeof(aBuf), "%s: %s (%s %d)", Localize("Teams"), pTeamMode, Localize("maximum", "Team size"), Config()->m_SvMaxTeamSize);
+				str_format(aBuf, sizeof(aBuf), "%s: %s (%s %d)", Localize("Teams"), pTeamMode, Localize("maximum", "Team size"), MaxTeamSize);
 		}
 		else
 			str_format(aBuf, sizeof(aBuf), "%s: %s", Localize("Teams"), pTeamMode);
@@ -1629,7 +1630,7 @@ void CMenus::RenderIngameHint()
 		return;
 
 	float Width = 300 * Graphics()->ScreenAspect();
-	Graphics()->MapScreen(0, 0, Width, 300);
+	Graphics()->MapScreenToSize(Width, 300);
 	TextRender()->TextColor(1, 1, 1, 1);
 	TextRender()->Text(5, 280, 5, Localize("Menu opened. Press Esc key again to close menu."), -1.0f);
 	Ui()->MapScreen();

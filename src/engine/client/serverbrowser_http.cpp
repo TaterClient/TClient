@@ -12,8 +12,8 @@
 #include <engine/console.h>
 #include <engine/engine.h>
 #include <engine/external/json-parser/json.h>
+#include <engine/http.h>
 #include <engine/serverbrowser.h>
-#include <engine/shared/http.h>
 #include <engine/shared/jobs.h>
 #include <engine/shared/linereader.h>
 #include <engine/shared/serverinfo.h>
@@ -60,6 +60,7 @@ public:
 	virtual ~CChooseMaster();
 
 	bool GetBestUrl(const char **pBestUrl) const;
+	void Shutdown();
 	void Reset();
 	bool IsRefreshing() const { return m_pJob && !m_pJob->Done(); }
 	void Refresh();
@@ -81,8 +82,8 @@ private:
 		CChooseMaster *m_pParent;
 		CLock m_Lock;
 		std::shared_ptr<CData> m_pData;
-		std::shared_ptr<CHttpRequest> m_pHead;
-		std::shared_ptr<CHttpRequest> m_pGet;
+		std::shared_ptr<IHttpRequest> m_pHead;
+		std::shared_ptr<IHttpRequest> m_pGet;
 		void Run() override REQUIRES(!m_Lock);
 
 	public:
@@ -122,10 +123,7 @@ CChooseMaster::CChooseMaster(IEngine *pEngine, IHttp *pHttp, VALIDATOR pfnValida
 
 CChooseMaster::~CChooseMaster()
 {
-	if(m_pJob)
-	{
-		m_pJob->Abort();
-	}
+	dbg_assert(m_pJob == nullptr, "Choose master job was not cleared");
 }
 
 int CChooseMaster::GetBestIndex() const
@@ -151,6 +149,15 @@ bool CChooseMaster::GetBestUrl(const char **ppBestUrl) const
 	}
 	*ppBestUrl = m_pData->m_aaUrls[Index];
 	return false;
+}
+
+void CChooseMaster::Shutdown()
+{
+	if(m_pJob)
+	{
+		m_pJob->Abort();
+		m_pJob = nullptr;
+	}
 }
 
 void CChooseMaster::Reset()
@@ -217,7 +224,7 @@ void CChooseMaster::CJob::Run()
 		aTimeMs[i] = -1;
 		aAgeS[i] = SanitizeAge({});
 		const char *pUrl = m_pData->m_aaUrls[aRandomized[i]];
-		std::shared_ptr<CHttpRequest> pHead = HttpHead(pUrl);
+		std::shared_ptr<IHttpRequest> pHead = HttpHead(pUrl);
 		pHead->Timeout(Timeout);
 		pHead->LogProgress(HTTPLOG::FAILURE);
 		{
@@ -238,7 +245,7 @@ void CChooseMaster::CJob::Run()
 		}
 
 		auto StartTime = time_get_nanoseconds();
-		std::shared_ptr<CHttpRequest> pGet = HttpGet(pUrl);
+		std::shared_ptr<IHttpRequest> pGet = HttpGet(pUrl);
 		pGet->Timeout(Timeout);
 		pGet->LogProgress(HTTPLOG::FAILURE);
 		{
@@ -310,6 +317,7 @@ class CServerBrowserHttp : public IServerBrowserHttp
 public:
 	CServerBrowserHttp(IEngine *pEngine, IHttp *pHttp, const char **ppUrls, int NumUrls, int PreviousBestIndex);
 	~CServerBrowserHttp() override;
+	void Shutdown() override;
 	void Update() override;
 	bool IsRefreshing() const override { return m_State != STATE_DONE && m_State != STATE_NO_MASTER; }
 	bool IsError() const override { return m_State == STATE_NO_MASTER; }
@@ -340,7 +348,7 @@ private:
 	IHttp *m_pHttp;
 
 	int m_State = STATE_WANTREFRESH;
-	std::shared_ptr<CHttpRequest> m_pGetServers;
+	std::shared_ptr<IHttpRequest> m_pGetServers;
 	std::unique_ptr<CChooseMaster> m_pChooseMaster;
 
 	std::vector<CServerInfo> m_vServers;
@@ -355,10 +363,17 @@ CServerBrowserHttp::CServerBrowserHttp(IEngine *pEngine, IHttp *pHttp, const cha
 
 CServerBrowserHttp::~CServerBrowserHttp()
 {
+	dbg_assert(m_pGetServers == nullptr, "Server browser load job was not cleared");
+}
+
+void CServerBrowserHttp::Shutdown()
+{
 	if(m_pGetServers != nullptr)
 	{
 		m_pGetServers->Abort();
+		m_pGetServers = nullptr;
 	}
+	m_pChooseMaster->Shutdown();
 }
 
 void CServerBrowserHttp::Update()
@@ -388,7 +403,7 @@ void CServerBrowserHttp::Update()
 			return;
 		}
 		m_State = STATE_DONE;
-		std::shared_ptr<CHttpRequest> pGetServers = nullptr;
+		std::shared_ptr<IHttpRequest> pGetServers = nullptr;
 		std::swap(m_pGetServers, pGetServers);
 
 		bool Success = true;

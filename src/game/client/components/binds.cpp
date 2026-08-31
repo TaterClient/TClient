@@ -427,7 +427,11 @@ CBindSlot CBinds::GetBindSlot(const char *pBindString) const
 			return EMPTY_BIND_SLOT;
 
 		if(str_find(pKey + 1, "+"))
+		{
 			pKey = str_next_token(pKey + 1, "+", aMod, sizeof(aMod));
+			if(pKey == nullptr)
+				return EMPTY_BIND_SLOT;
+		}
 		else
 			break;
 	}
@@ -543,5 +547,10 @@ void CBinds::SetDDRaceBinds(bool FreeOnly)
 		Bind(KEY_LALT, "toggle_scoreboard_cursor", FreeOnly);
 	}
 
-	g_Config.m_ClDDRaceBindsSet = 2;
+	if(g_Config.m_ClDDRaceBindsSet < 3)
+	{
+		Bind(KEY_W, "+jump", FreeOnly);
+	}
+
+	g_Config.m_ClDDRaceBindsSet = 3;
 }

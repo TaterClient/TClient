@@ -7,6 +7,10 @@ on:
   pull_request:
   merge_group:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
   build-cmake:
     runs-on: ${{ matrix.os }}
@@ -51,7 +55,7 @@ jobs:
           workaround-issue10203-run-after-configure: rm libwinpthread-1.dll
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
 
@@ -61,7 +65,27 @@ jobs:
         sudo apt-get update -y
         # mount: /var/lib/grub/esp: special device /dev/disk/by-id/scsi-... does not exist.
         # sudo apt-get upgrade -y
-        sudo apt-get install pkg-config ninja-build libfreetype6-dev libnotify-dev libsdl2-dev libsqlite3-dev libavcodec-dev libavformat-dev libavutil-dev libswresample-dev libswscale-dev libx264-dev libpng-dev valgrind gcovr libglew-dev -y
+        packages=(
+          # tidy-alphabetical-start
+          gcovr
+          libavcodec-dev
+          libavformat-dev
+          libavutil-dev
+          libfreetype6-dev
+          libglew-dev
+          libnotify-dev
+          libpng-dev
+          libsdl2-dev
+          libsqlite3-dev
+          libswresample-dev
+          libswscale-dev
+          libx264-dev
+          ninja-build
+          pkg-config
+          valgrind
+          # tidy-alphabetical-end
+        )
+        sudo apt-get install -y "${packages[@]}"
 
     - name: Prepare Linux (non-fancy)
       if: contains(matrix.os, 'ubuntu') && !contains(matrix.name, 'fancy')
@@ -105,7 +129,7 @@ jobs:
         brew update
         brew install ffmpeg molten-vk ninja pkg-config sdl2
         brew upgrade freetype
-        pip3 install --break-system-packages dmgbuild
+        pip3 install --break-system-packages dmgbuild pyobjc-framework-Quartz
         echo /Library/Frameworks/Python.framework/Versions/3.12/bin >> $GITHUB_PATH
         sudo rm -rf /Library/Developer/CommandLineTools
 
@@ -124,7 +148,7 @@ jobs:
         cache: true
 
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces: |
@@ -213,7 +237,7 @@ jobs:
 
     - name: Upload Codecov report (unit tests)
       if: contains(matrix.os, 'ubuntu-latest')
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         flags: unittests
 
@@ -259,7 +283,7 @@ jobs:
     - name: Upload integration test results
       id: integration_test_artifact_upload
       if: steps.integration_test.outcome == 'failure' || steps.integration_test_valgrind.outcome == 'failure'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ddnet-${{ matrix.name }}-integration-test-results
         path: headless/integration_*
@@ -289,7 +313,7 @@ jobs:
 
     - name: Upload Codecov report (integration tests)
       if: contains(matrix.os, 'ubuntu-latest')
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         flags: integrationtests
 
@@ -301,7 +325,7 @@ jobs:
         mv ${{ matrix.package-file }} artifacts
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ddnet-${{ matrix.name }}
         path: release/artifacts
@@ -311,12 +335,12 @@ jobs:
     env:
       CARGO_HTTP_MULTIPLEXING: false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
 
     - name: Validate Gradle Wrapper
-      uses: gradle/actions/wrapper-validation@v4
+      uses: gradle/actions/wrapper-validation@v5
 
     - name: Prepare Linux
       run: |
@@ -340,7 +364,7 @@ jobs:
         cache: true
 
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces: |
@@ -363,7 +387,7 @@ jobs:
         mv build-android/DDNet.apk artifacts
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ddnet-android
         path: artifacts
@@ -373,7 +397,7 @@ jobs:
     env:
       CARGO_HTTP_MULTIPLEXING: false
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
 
@@ -390,7 +414,7 @@ jobs:
         ./emsdk activate 4.0.22
 
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces: |
@@ -407,9 +431,16 @@ jobs:
 
     - name: Test headless Emscripten client
       run: |
-        export MOZ_HEADLESS=1
         source emsdk/emsdk_env.sh
-        emrun --browser firefox build-emscripten-headless/index.html -- "quit"
+        emrun \
+          --browser firefox \
+          --browser-args=-headless \
+          --port 8000 \
+          --silence_timeout=120 \
+          --timeout=300 \
+          --kill_start \
+          --kill_exit \
+          build-emscripten-headless/index.html -- "quit" "#__emrun_autostart__"
 
     - name: Build Emscripten client in release mode
       run: |
@@ -423,7 +454,63 @@ jobs:
         mv build-emscripten-release/*-Emscripten.tar.xz artifacts
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
         name: ddnet-emscripten
+        path: artifacts
+
+  build-ios:
+    runs-on: macos-26
+    env:
+      CARGO_HTTP_MULTIPLEXING: false
+    steps:
+    - uses: actions/checkout@v5
+      with:
+        submodules: recursive
+
+    - name: Prepare macOS
+      run: |
+        sudo xcode-select -s "/Applications/Xcode_26.2.app/Contents/Developer"
+        xcodebuild -version
+        rustup target add aarch64-apple-ios
+        rustup target add aarch64-apple-ios-sim
+
+    - name: Cache Rust dependencies
+      uses: Swatinem/rust-cache@v2.9.2
+      with:
+          cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
+          workspaces: ./
+
+    - name: Build iOS simulator app in debug mode
+      run: scripts/ios/cmake_ios.sh sim-arm64 DDNet org.ddnet.client Debug build-ios-sim
+
+    - name: Smoke test iOS simulator app in debug mode
+      timeout-minutes: 15
+      run: |
+        UDID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; print(next(device["udid"] for devices in json.load(sys.stdin)["devices"].values() for device in devices if "iPhone" in device["name"]))')
+        xcrun simctl bootstatus "$UDID" -b
+        xcrun simctl install "$UDID" build-ios-sim/Debug-iphonesimulator/DDNet.app
+        xcrun simctl launch --console-pty "$UDID" org.ddnet.client quit > simulator-console.log 2>&1
+        cat simulator-console.log
+        grep -q "config: saved to settings_ddnet.cfg" simulator-console.log
+
+    - name: Build iOS device app in release mode
+      run: scripts/ios/cmake_ios.sh device DDNet org.ddnet.client Release build-ios-device
+
+    - name: Package
+      run: |
+        mkdir artifacts
+        # Zip the app bundles, as the artifact upload does not keep the executable bit.
+        cd build-ios-sim/Debug-iphonesimulator
+        zip -qry ../../artifacts/DDNet-simulator.zip DDNet.app
+        cd ../..
+        # The app is unsigned, so it has to be signed before it can be installed.
+        mkdir Payload
+        mv build-ios-device/Release-iphoneos/DDNet.app Payload
+        zip -qry artifacts/DDNet.ipa Payload
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v6
+      with:
+        name: ddnet-ios
         path: artifacts

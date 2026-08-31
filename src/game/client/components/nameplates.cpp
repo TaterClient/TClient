@@ -31,7 +31,7 @@ public:
 	bool m_InGame;
 	ColorRGBA m_Color;
 	bool m_ShowName;
-	char m_aName[std::max<size_t>(MAX_NAME_LENGTH, protocol7::MAX_NAME_ARRAY_SIZE)];
+	char m_aName[std::max((size_t)MAX_NAME_LENGTH, (size_t)protocol7::MAX_NAME_ARRAY_SIZE)];
 	bool m_ShowFriendMark;
 	bool m_ShowClientId;
 	int m_ClientId;
@@ -39,7 +39,7 @@ public:
 	bool m_ClientIdSeparateLine;
 	float m_FontSize;
 	bool m_ShowClan;
-	char m_aClan[std::max<size_t>(MAX_CLAN_LENGTH, protocol7::MAX_CLAN_ARRAY_SIZE)];
+	char m_aClan[std::max((size_t)MAX_CLAN_LENGTH, (size_t)protocol7::MAX_CLAN_ARRAY_SIZE)];
 	float m_FontSizeClan;
 	bool m_ShowDirection;
 	bool m_DirLeft;
@@ -110,12 +110,11 @@ public:
 		if(Data.m_InGame)
 		{
 			// Create text at standard zoom
-			float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-			This.Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+			CScreenRect ScreenRect = This.Graphics()->GetScreen();
 			This.Graphics()->MapScreenToInterface(This.m_Camera.m_Center.x, This.m_Camera.m_Center.y);
 			This.TextRender()->DeleteTextContainer(m_TextContainerIndex);
 			UpdateText(This, Data);
-			This.Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
+			This.Graphics()->MapScreen(ScreenRect);
 		}
 		else
 		{
@@ -343,7 +342,7 @@ public:
 class CNamePlatePartName : public CNamePlatePartText
 {
 private:
-	char m_aText[std::max<size_t>(MAX_NAME_LENGTH, protocol7::MAX_NAME_ARRAY_SIZE)] = "";
+	char m_aText[std::max((size_t)MAX_NAME_LENGTH, (size_t)protocol7::MAX_NAME_ARRAY_SIZE)] = "";
 	float m_FontSize = -INFINITY;
 
 protected:
@@ -380,7 +379,7 @@ public:
 class CNamePlatePartClan : public CNamePlatePartText
 {
 private:
-	char m_aText[std::max<size_t>(MAX_CLAN_LENGTH, protocol7::MAX_CLAN_ARRAY_SIZE)] = "";
+	char m_aText[std::max((size_t)MAX_CLAN_LENGTH, (size_t)protocol7::MAX_CLAN_ARRAY_SIZE)] = "";
 	float m_FontSize = -INFINITY;
 
 protected:
@@ -845,14 +844,13 @@ public:
 void CNamePlates::RenderNamePlateGame(vec2 Position, const CNetObj_PlayerInfo *pPlayerInfo, float Alpha)
 {
 	// Get screen edges to avoid rendering offscreen
-	float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-	Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+	CScreenRect ScreenRect = Graphics()->GetScreen();
 
 	// Assume that the name plate fits into a 800x800 box placed directly above the tee
-	ScreenX0 -= 400;
-	ScreenX1 += 400;
-	ScreenY1 += 800;
-	if(!(in_range(Position.x, ScreenX0, ScreenX1) && in_range(Position.y, ScreenY0, ScreenY1)))
+	ScreenRect.m_TopLeft.x -= 400;
+	ScreenRect.m_BottomRight.x += 400;
+	ScreenRect.m_BottomRight.y += 800;
+	if(!ScreenRect.Inside(Position))
 		return;
 
 	CNamePlateData Data;
@@ -1068,7 +1066,7 @@ void CNamePlates::RenderNamePlatePreview(vec2 Position, int Dummy)
 	const vec2 DeltaPosition = Ui()->MousePos() - Position;
 	const float Distance = length(DeltaPosition);
 	const float InteractionDistance = 20.0f;
-	const vec2 TeeDirection = Distance < InteractionDistance ? normalize(vec2(DeltaPosition.x, maximum(DeltaPosition.y, 0.5f))) : normalize(DeltaPosition);
+	const vec2 TeeDirection = Distance < InteractionDistance ? normalize(vec2(DeltaPosition.x, std::max(DeltaPosition.y, 0.5f))) : normalize(DeltaPosition);
 	const int TeeEmote = Distance < InteractionDistance ? EMOTE_HAPPY : (Dummy ? g_Config.m_ClDummyDefaultEyes : g_Config.m_ClPlayerDefaultEyes);
 	RenderTools()->RenderTee(CAnimState::GetIdle(), &TeeRenderInfo, TeeEmote, TeeDirection, Position);
 	Position.y -= (float)g_Config.m_ClNamePlatesOffset;
@@ -1092,7 +1090,7 @@ void CNamePlates::OnRender()
 	if(IVideo::Current())
 		ShowDirection = g_Config.m_ClVideoShowDirection;
 #endif
-	if(!g_Config.m_ClNamePlates && ShowDirection == 0)
+	if(!g_Config.m_ClNamePlates && !g_Config.m_ClNamePlatesOwn && ShowDirection == 0)
 		return;
 
 	for(int i = 0; i < MAX_CLIENTS; i++)

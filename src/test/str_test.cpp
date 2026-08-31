@@ -548,7 +548,7 @@ TEST(Str, HexDecode)
 	EXPECT_STREQ(aOut, "ABCD");
 }
 
-void StrBase64Str(char *pBuffer, int BufferSize, const char *pString)
+static void StrBase64Str(char *pBuffer, int BufferSize, const char *pString)
 {
 	str_base64(pBuffer, BufferSize, pString, str_length(pString));
 }
@@ -812,6 +812,17 @@ TEST(Str, Copy)
 	EXPECT_STREQ(aBuf, "DDNet最好了");
 	str_copy(aBuf, pStr);
 	EXPECT_STREQ(aBuf, "DDNet最好了");
+}
+
+TEST(Str, CopyArray)
+{
+	std::array<char, 512> aBuf;
+	str_copy(aBuf, "hello");
+	EXPECT_STREQ(aBuf.data(), "hello");
+
+	std::array<char, 8> aSmallBuf;
+	str_copy(aSmallBuf, "long string");
+	EXPECT_STREQ(aSmallBuf.data(), "long st");
 }
 
 TEST(Str, Append)
@@ -1201,6 +1212,12 @@ TEST(Str, CompFilename)
 	EXPECT_GT(str_comp_filenames("file1337.ext", "file42.ext"), 0);
 	EXPECT_GT(str_comp_filenames("file4414520", "file2055"), 0);
 	EXPECT_LT(str_comp_filenames("file4414520", "file205523151812419"), 0);
+	EXPECT_LT(str_comp_filenames("file1", "file1a"), 0);
+	EXPECT_GT(str_comp_filenames("file1a", "file1"), 0);
+	EXPECT_LT(str_comp_filenames("Kobra 1", "Kobra 1 v2"), 0);
+	EXPECT_GT(str_comp_filenames("Kobra 1 v2", "Kobra 1"), 0);
+	EXPECT_LT(str_comp_filenames("Kobra 1 v2", "Kobra 1 v3"), 0);
+	EXPECT_GT(str_comp_filenames("Kobra 1 v3", "Kobra 1 v2"), 0);
 }
 
 TEST(Str, RightChar)

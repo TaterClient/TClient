@@ -498,10 +498,14 @@ public:
 		SCommand_Update_Viewport() :
 			SCommand(CMD_UPDATE_VIEWPORT) {}
 
+		// Viewport rectangle, relative to the top left of the drawable area.
 		int m_X;
 		int m_Y;
 		int m_Width;
 		int m_Height;
+		// Size of the whole drawable area, which the viewport can be smaller than.
+		int m_DrawableWidth;
+		int m_DrawableHeight;
 		bool m_ByResize; // resized by an resize event.. a hint to make clear that the viewport update can be deferred if wanted
 	};
 
@@ -916,8 +920,8 @@ public:
 
 	const TTwGraphicsGpuList &GetGpus() const override;
 
-	void MapScreen(float TopLeftX, float TopLeftY, float BottomRightX, float BottomRightY) override;
-	void GetScreen(float *pTopLeftX, float *pTopLeftY, float *pBottomRightX, float *pBottomRightY) const override;
+	void MapScreen(const CScreenRect &ScreenRect) override;
+	CScreenRect GetScreen() const override;
 
 	void LinesBegin() override;
 	void LinesEnd() override;
@@ -938,7 +942,7 @@ public:
 	bool UnloadTextTextures(CTextureHandle &TextTexture, CTextureHandle &TextOutlineTexture) override;
 	bool UpdateTextTexture(CTextureHandle TextureId, int x, int y, size_t Width, size_t Height, uint8_t *pData, bool IsMovedPointer) override;
 
-	CTextureHandle LoadSpriteTexture(const CImageInfo &FromImageInfo, const struct CDataSprite *pSprite) override;
+	CTextureHandle LoadSpriteTexture(const CImageInfo &FromImageInfo, const std::optional<CImageInfo> &FallbackImageInfo, const struct CDataSprite *pSprite) override;
 
 	bool IsImageSubFullyTransparent(const CImageInfo &FromImageInfo, int x, int y, int w, int h) override;
 	bool IsSpriteTextureFullyTransparent(const CImageInfo &FromImageInfo, const struct CDataSprite *pSprite) override;

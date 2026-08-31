@@ -11,8 +11,6 @@
 class CLayerGroup : public CMapObject
 {
 public:
-	class CEditorMap *m_pMap;
-
 	std::vector<std::shared_ptr<CLayer>> m_vpLayers;
 
 	int m_OffsetX;
@@ -36,9 +34,9 @@ public:
 	void OnAttach(CEditorMap *pMap) override;
 
 	void Convert(CUIRect *pRect) const;
-	void Render();
+	void Render(const CEditorMap *pRenderMap);
 	void MapScreen();
-	void Mapping(float *pPoints) const;
+	CScreenRect Mapping() const;
 
 	void GetSize(float *pWidth, float *pHeight) const;
 

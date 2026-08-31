@@ -56,43 +56,33 @@ void CCollision::Init(class CLayers *pLayers)
 	m_Width = m_pLayers->GameLayer()->m_Width;
 	m_Height = m_pLayers->GameLayer()->m_Height;
 	m_pTiles = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->GameLayer()->m_Data));
+	m_HasHookTeleIns = false;
 
 	if(m_pLayers->TeleLayer())
 	{
-		unsigned int Size = m_pLayers->Map()->GetDataSize(m_pLayers->TeleLayer()->m_Tele);
-		if(Size >= (size_t)m_Width * m_Height * sizeof(CTeleTile))
-			m_pTele = static_cast<CTeleTile *>(m_pLayers->Map()->GetData(m_pLayers->TeleLayer()->m_Tele));
+		m_pTele = static_cast<CTeleTile *>(m_pLayers->Map()->GetData(m_pLayers->TeleLayer()->m_Tele));
 	}
 
 	if(m_pLayers->SpeedupLayer())
 	{
-		unsigned int Size = m_pLayers->Map()->GetDataSize(m_pLayers->SpeedupLayer()->m_Speedup);
-		if(Size >= (size_t)m_Width * m_Height * sizeof(CSpeedupTile))
-			m_pSpeedup = static_cast<CSpeedupTile *>(m_pLayers->Map()->GetData(m_pLayers->SpeedupLayer()->m_Speedup));
+		m_pSpeedup = static_cast<CSpeedupTile *>(m_pLayers->Map()->GetData(m_pLayers->SpeedupLayer()->m_Speedup));
 	}
 
 	if(m_pLayers->SwitchLayer())
 	{
-		unsigned int Size = m_pLayers->Map()->GetDataSize(m_pLayers->SwitchLayer()->m_Switch);
-		if(Size >= (size_t)m_Width * m_Height * sizeof(CSwitchTile))
-			m_pSwitch = static_cast<CSwitchTile *>(m_pLayers->Map()->GetData(m_pLayers->SwitchLayer()->m_Switch));
-
+		m_pSwitch = static_cast<CSwitchTile *>(m_pLayers->Map()->GetData(m_pLayers->SwitchLayer()->m_Switch));
 		m_pDoor = new CDoorTile[m_Width * m_Height];
 		mem_zero(m_pDoor, (size_t)m_Width * m_Height * sizeof(CDoorTile));
 	}
 
 	if(m_pLayers->TuneLayer())
 	{
-		unsigned int Size = m_pLayers->Map()->GetDataSize(m_pLayers->TuneLayer()->m_Tune);
-		if(Size >= (size_t)m_Width * m_Height * sizeof(CTuneTile))
-			m_pTune = static_cast<CTuneTile *>(m_pLayers->Map()->GetData(m_pLayers->TuneLayer()->m_Tune));
+		m_pTune = static_cast<CTuneTile *>(m_pLayers->Map()->GetData(m_pLayers->TuneLayer()->m_Tune));
 	}
 
 	if(m_pLayers->FrontLayer())
 	{
-		unsigned int Size = m_pLayers->Map()->GetDataSize(m_pLayers->FrontLayer()->m_Front);
-		if(Size >= (size_t)m_Width * m_Height * sizeof(CTile))
-			m_pFront = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->FrontLayer()->m_Front));
+		m_pFront = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->FrontLayer()->m_Front));
 	}
 
 	if(m_pSwitch)
@@ -147,6 +137,8 @@ void CCollision::Init(class CLayers *pLayers)
 				else
 				{
 					m_TeleOthers[Number - 1].push_back(TelePos);
+					if(Type == TILE_TELEINHOOK)
+						m_HasHookTeleIns = true;
 				}
 			}
 		}
@@ -779,7 +771,7 @@ int CCollision::GetSwitchNumber(int Index) const
 	if(Index < 0 || !m_pSwitch)
 		return 0;
 
-	if(m_pSwitch[Index].m_Type > 0 && m_pSwitch[Index].m_Number > 0)
+	if(m_pSwitch[Index].m_Type > 0 && m_pSwitch[Index].m_Number > 0 && m_pSwitch[Index].m_Number <= m_HighestSwitchNumber)
 		return m_pSwitch[Index].m_Number;
 
 	return 0;
@@ -836,6 +828,11 @@ int CCollision::MoverSpeed(int x, int y, vec2 *pSpeed) const
 	}
 	*pSpeed = Target;
 	return Index;
+}
+
+bool CCollision::HasHookTeleIns() const
+{
+	return m_HasHookTeleIns || (g_Config.m_SvOldTeleportHook && !m_TeleIns.empty());
 }
 
 int CCollision::GetPureMapIndex(float x, float y) const

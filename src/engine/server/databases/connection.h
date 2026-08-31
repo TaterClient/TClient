@@ -14,8 +14,6 @@ enum
 	MAX_NAME_LENGTH_SQL = MAX_NAME_LENGTH - 1,
 };
 
-class IConsole;
-
 // can hold one PreparedStatement with Results
 class IDbConnection
 {
@@ -23,7 +21,7 @@ public:
 	IDbConnection(const char *pPrefix);
 	virtual ~IDbConnection() = default;
 	IDbConnection &operator=(const IDbConnection &) = delete;
-	virtual void Print(IConsole *pConsole, const char *pMode) = 0;
+	virtual void Print(const char *pMode) = 0;
 
 	// returns the database prefix
 	const char *GetPrefix() const { return m_aPrefix; }
@@ -40,8 +38,6 @@ public:
 	virtual const char *InsertIgnore() const = 0;
 	// ORDER BY RANDOM()/RAND()
 	virtual const char *Random() const = 0;
-	// Get Median Map Time from l.Map
-	virtual const char *MedianMapTime(char *pBuffer, int BufferSize) const = 0;
 	virtual const char *False() const = 0;
 	virtual const char *True() const = 0;
 

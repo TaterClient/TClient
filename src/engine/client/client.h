@@ -17,10 +17,10 @@
 #include <engine/client/updater.h>
 #include <engine/editor.h>
 #include <engine/graphics.h>
+#include <engine/http.h>
 #include <engine/shared/config.h>
 #include <engine/shared/demo.h>
 #include <engine/shared/fifo.h>
-#include <engine/shared/http.h>
 #include <engine/shared/network.h>
 #include <engine/textrender.h>
 #include <engine/warning.h>
@@ -76,10 +76,6 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	IStorage *m_pStorage = nullptr;
 	IEngineTextRender *m_pTextRender = nullptr;
 	IUpdater *m_pUpdater = nullptr;
-
-	rust::Box<CSnapshotDelta> m_pSnapshotDelta;
-	rust::Box<CSnapshotDelta> m_pSnapshotDeltaSixup;
-	CSnapshotDelta *SnapshotDelta();
 
 	CNetClient m_aNetClient[NUM_CONNS];
 	CDemoPlayer m_DemoPlayer;
@@ -148,7 +144,7 @@ class CClient : public IClient, public CDemoPlayer::IListener
 
 	// map download
 	char m_aMapDownloadUrl[256] = "";
-	std::shared_ptr<CHttpRequest> m_pMapdownloadTask = nullptr;
+	std::shared_ptr<IHttpRequest> m_pMapdownloadTask = nullptr;
 	char m_aMapdownloadFilename[256] = "";
 	char m_aMapdownloadFilenameTemp[256] = "";
 	char m_aMapdownloadName[256] = "";
@@ -171,7 +167,7 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	std::optional<CMapDetails> m_MapDetails;
 
 	EInfoState m_InfoState = EInfoState::ERROR;
-	std::shared_ptr<CHttpRequest> m_pDDNetInfoTask = nullptr;
+	std::shared_ptr<IHttpRequest> m_pDDNetInfoTask = nullptr;
 
 	// time
 	CSmoothTime m_aGameTime[NUM_DUMMIES];
@@ -195,6 +191,9 @@ class CClient : public IClient, public CDemoPlayer::IListener
 	float m_LastDummyConnectTime = 0.0f;
 	bool m_DummyReconnectOnReload = false;
 	bool m_DummyDeactivateOnReconnect = false;
+#if defined(CONF_PLATFORM_IOS)
+	bool m_DummyReconnectOnResume = false;
+#endif
 
 	// graphs
 	CGraph m_aInputtimeMarginGraphs[NUM_DUMMIES];
@@ -211,6 +210,10 @@ class CClient : public IClient, public CDemoPlayer::IListener
 
 	CSnapshotStorage::CHolder m_aDemorecSnapshotHolders[NUM_SNAPSHOT_TYPES];
 	CSnapshotBuffer m_aaDemorecSnapshotData[NUM_SNAPSHOT_TYPES][2];
+
+	CSnapshotDelta m_SnapshotDelta;
+	CSnapshotDelta m_SnapshotDeltaSixup;
+	CSnapshotDelta *SnapshotDelta();
 
 	std::deque<std::shared_ptr<CDemoEdit>> m_EditJobs;
 
@@ -350,7 +353,7 @@ public:
 	bool DummyConnectingDelayed() const override;
 	bool DummyAllowed() const override;
 
-	void GetServerInfo(CServerInfo *pServerInfo) const override;
+	const CServerInfo &ServerInfo() const override;
 	void ServerInfoRequest();
 	void SetCurrentServerInfo(const CServerInfo &ServerInfo);
 
@@ -373,6 +376,9 @@ public:
 	void Restart() override;
 	void Quit() override;
 	void ResetSocket();
+#if defined(CONF_PLATFORM_IOS)
+	void RecreateBrokenSockets();
+#endif
 
 	const char *PlayerName() const override;
 	const char *DummyName() override;
@@ -383,7 +389,7 @@ public:
 
 	int TranslateSysMsg(int *pMsgId, bool System, CUnpacker *pUnpacker, CPacker *pPacker, CNetChunk *pPacket, bool *pIsExMsg);
 
-	void PreprocessConnlessPacket7(CNetChunk *pPacket);
+	bool PreprocessConnlessPacket7(CNetChunk *pPacket);
 	void ProcessConnlessPacket(CNetChunk *pPacket);
 	void ProcessServerInfo(int Type, NETADDR *pFrom, const void *pData, int DataSize);
 	void ProcessServerPacket(CNetChunk *pPacket, int Conn, bool Dummy);

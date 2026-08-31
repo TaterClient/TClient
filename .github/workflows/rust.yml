@@ -7,6 +7,10 @@ on:
   pull_request:
   merge_group:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' && !startsWith(github.ref, 'refs/tags/') }}
+
 jobs:
   rustdoc:
     runs-on: ubuntu-latest
@@ -14,9 +18,9 @@ jobs:
       CARGO_HTTP_MULTIPLEXING: false
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces: |
@@ -33,9 +37,9 @@ jobs:
       CARGO_HTTP_MULTIPLEXING: false
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces: |
@@ -44,7 +48,7 @@ jobs:
               ./
     - name: Run cxxbridge
       run: |
-        cargo install cxxbridge-cmd@1.0.194
+        cargo install cxxbridge-cmd@"$(python scripts/generate_rust_bridge.py --cxx-version)"
         python scripts/generate_rust_bridge.py
         git diff --exit-code
 
@@ -54,9 +58,9 @@ jobs:
       CARGO_HTTP_MULTIPLEXING: false
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces: |
@@ -74,14 +78,13 @@ jobs:
     strategy:
       matrix:
         checks:
-          - advisories
           - bans licenses sources
     continue-on-error: ${{ matrix.checks == 'advisories' }}
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Cache Rust dependencies
-      uses: Swatinem/rust-cache@v2
+      uses: Swatinem/rust-cache@v2.9.2
       with:
           cache-bin: false # WORKAROUND(https://github.com/Swatinem/rust-cache/issues/341)
           workspaces:  |

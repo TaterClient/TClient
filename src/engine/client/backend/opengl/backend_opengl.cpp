@@ -22,7 +22,12 @@
 #ifndef BACKEND_AS_OPENGL_ES
 #include <GL/glew.h>
 #else
+#if defined(CONF_PLATFORM_IOS)
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
+#else
 #include <GLES3/gl3.h>
+#endif
 #define GL_TEXTURE_2D_ARRAY_EXT GL_TEXTURE_2D_ARRAY
 // GLES doesn't support GL_QUADS, but the code is also never executed
 #define GL_QUADS GL_TRIANGLES
@@ -37,12 +42,16 @@
 // ------------ CCommandProcessorFragment_OpenGL
 void CCommandProcessorFragment_OpenGL::Cmd_Update_Viewport(const CCommandBuffer::SCommand_Update_Viewport *pCommand)
 {
+	// The viewport is given relative to the top left of the drawable area, whereas
+	// OpenGL places it relative to the bottom left.
+	m_ViewportX = pCommand->m_X;
+	m_ViewportY = pCommand->m_DrawableHeight - pCommand->m_Y - pCommand->m_Height;
 	if(pCommand->m_ByResize)
 	{
 		m_CanvasWidth = (uint32_t)pCommand->m_Width;
 		m_CanvasHeight = (uint32_t)pCommand->m_Height;
 	}
-	glViewport(pCommand->m_X, pCommand->m_Y, pCommand->m_Width, pCommand->m_Height);
+	glViewport(m_ViewportX, m_ViewportY, pCommand->m_Width, pCommand->m_Height);
 }
 
 size_t CCommandProcessorFragment_OpenGL::GLFormatToPixelSize(int GLFormat)
@@ -87,7 +96,9 @@ void CCommandProcessorFragment_OpenGL::SetState(const CCommandBuffer::SState &St
 	// clip
 	if(State.m_ClipEnable)
 	{
-		glScissor(State.m_ClipX, State.m_ClipY, State.m_ClipW, State.m_ClipH);
+		// The clip rectangle is relative to the viewport, whereas glScissor is
+		// relative to the drawable area.
+		glScissor(m_ViewportX + State.m_ClipX, m_ViewportY + State.m_ClipY, State.m_ClipW, State.m_ClipH);
 		glEnable(GL_SCISSOR_TEST);
 		m_LastClipEnable = true;
 	}
@@ -307,7 +318,7 @@ bool CCommandProcessorFragment_OpenGL::GetPresentedImageData(uint32_t &Width, ui
 		GLint Alignment;
 		glGetIntegerv(GL_PACK_ALIGNMENT, &Alignment);
 		glPixelStorei(GL_PACK_ALIGNMENT, 1);
-		glReadPixels(0, 0, m_CanvasWidth, m_CanvasHeight, GL_RGBA, GL_UNSIGNED_BYTE, vDstData.data());
+		glReadPixels(m_ViewportX, m_ViewportY, m_CanvasWidth, m_CanvasHeight, GL_RGBA, GL_UNSIGNED_BYTE, vDstData.data());
 		glPixelStorei(GL_PACK_ALIGNMENT, Alignment);
 
 		uint8_t *pTempRow = vDstData.data() + Width * Height * 4;
@@ -662,8 +673,8 @@ void CCommandProcessorFragment_OpenGL::TextureUpdate(int Slot, int X, int Y, int
 
 	if(m_vTextures[Slot].m_RescaleCount > 0)
 	{
-		int OldWidth = Width;
-		int OldHeight = Height;
+		const int OldWidth = Width;
+		const int OldHeight = Height;
 		for(int i = 0; i < m_vTextures[Slot].m_RescaleCount; ++i)
 		{
 			Width >>= 1;
@@ -758,23 +769,17 @@ void CCommandProcessorFragment_OpenGL::TextureCreate(int Slot, int Width, int He
 	int RescaleCount = 0;
 	if(GLFormat == GL_RGBA)
 	{
-		int OldWidth = Width;
-		int OldHeight = Height;
-		bool NeedsResize = false;
-
 		if(Width > m_MaxTexSize || Height > m_MaxTexSize)
 		{
+			const int OldWidth = Width;
+			const int OldHeight = Height;
 			do
 			{
 				Width >>= 1;
 				Height >>= 1;
 				++RescaleCount;
 			} while(Width > m_MaxTexSize || Height > m_MaxTexSize);
-			NeedsResize = true;
-		}
 
-		if(NeedsResize)
-		{
 			uint8_t *pTmpData = ResizeImage(pTexData, OldWidth, OldHeight, Width, Height, GLFormatToPixelSize(GLFormat));
 			free(pTexData);
 			pTexData = pTmpData;
@@ -887,8 +892,8 @@ void CCommandProcessorFragment_OpenGL::TextureCreate(int Slot, int Width, int He
 
 			if(ConvertWidth == 0 || (ConvertWidth % 16) != 0 || ConvertHeight == 0 || (ConvertHeight % 16) != 0)
 			{
-				int NewWidth = maximum<int>(HighestBit(ConvertWidth), 16);
-				int NewHeight = maximum<int>(HighestBit(ConvertHeight), 16);
+				int NewWidth = std::max(HighestBit(ConvertWidth), 16);
+				int NewHeight = std::max(HighestBit(ConvertHeight), 16);
 				uint8_t *pNewTexData = ResizeImage(pTexData, ConvertWidth, ConvertHeight, NewWidth, NewHeight, GLFormatToPixelSize(GLFormat));
 				log_debug("gfx/opengl", "3D/2D array texture was resized. Slot=%d Size=(%d, %d) Resized=(%d, %d)", Slot, ConvertWidth, ConvertHeight, NewWidth, NewHeight);
 
@@ -995,17 +1000,20 @@ void CCommandProcessorFragment_OpenGL::Cmd_Render(const CCommandBuffer::SCommand
 
 void CCommandProcessorFragment_OpenGL::Cmd_ReadPixel(const CCommandBuffer::SCommand_TrySwapAndReadPixel *pCommand)
 {
-	// get size of viewport
+	// get position and size of viewport
 	GLint aViewport[4] = {0, 0, 0, 0};
 	glGetIntegerv(GL_VIEWPORT, aViewport);
-	const int h = aViewport[3];
+	const int ViewportX = aViewport[0];
+	const int ViewportY = aViewport[1];
+	const int ViewportHeight = aViewport[3];
 
-	// fetch the pixel
+	// fetch the pixel. The position is relative to the top left of the viewport,
+	// whereas glReadPixels reads relative to the bottom left of the drawable area.
 	uint8_t aPixelData[3];
 	GLint Alignment;
 	glGetIntegerv(GL_PACK_ALIGNMENT, &Alignment);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(pCommand->m_Position.x, h - 1 - pCommand->m_Position.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, aPixelData);
+	glReadPixels(ViewportX + pCommand->m_Position.x, ViewportY + ViewportHeight - 1 - pCommand->m_Position.y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, aPixelData);
 	glPixelStorei(GL_PACK_ALIGNMENT, Alignment);
 
 	// fill in the information
@@ -1018,6 +1026,8 @@ void CCommandProcessorFragment_OpenGL::Cmd_Screenshot(const CCommandBuffer::SCom
 	GLint aViewport[4] = {0, 0, 0, 0};
 	glGetIntegerv(GL_VIEWPORT, aViewport);
 
+	const int ViewportX = aViewport[0];
+	const int ViewportY = aViewport[1];
 	int w = aViewport[2];
 	int h = aViewport[3];
 
@@ -1036,7 +1046,7 @@ void CCommandProcessorFragment_OpenGL::Cmd_Screenshot(const CCommandBuffer::SCom
 	GLint Alignment;
 	glGetIntegerv(GL_PACK_ALIGNMENT, &Alignment);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pPixelData);
+	glReadPixels(ViewportX, ViewportY, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pPixelData);
 	glPixelStorei(GL_PACK_ALIGNMENT, Alignment);
 
 	// flip the pixel because opengl works from bottom left corner
@@ -1170,7 +1180,9 @@ void CCommandProcessorFragment_OpenGL2::SetState(const CCommandBuffer::SState &S
 	// clip
 	if(State.m_ClipEnable)
 	{
-		glScissor(State.m_ClipX, State.m_ClipY, State.m_ClipW, State.m_ClipH);
+		// The clip rectangle is relative to the viewport, whereas glScissor is
+		// relative to the drawable area.
+		glScissor(m_ViewportX + State.m_ClipX, m_ViewportY + State.m_ClipY, State.m_ClipW, State.m_ClipH);
 		glEnable(GL_SCISSOR_TEST);
 		m_LastClipEnable = true;
 	}
@@ -1333,6 +1345,8 @@ bool CCommandProcessorFragment_OpenGL2::DoAnalyzeStep(size_t CheckCount, size_t 
 	GLint aViewport[4] = {0, 0, 0, 0};
 	glGetIntegerv(GL_VIEWPORT, aViewport);
 
+	const int ViewportX = aViewport[0];
+	const int ViewportY = aViewport[1];
 	int w = aViewport[2];
 	int h = aViewport[3];
 
@@ -1345,7 +1359,7 @@ bool CCommandProcessorFragment_OpenGL2::DoAnalyzeStep(size_t CheckCount, size_t 
 	GLint Alignment;
 	glGetIntegerv(GL_PACK_ALIGNMENT, &Alignment);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, pPixelData);
+	glReadPixels(ViewportX, ViewportY, w, h, GL_RGB, GL_UNSIGNED_BYTE, pPixelData);
 	glPixelStorei(GL_PACK_ALIGNMENT, Alignment);
 
 	// now analyse the image data
@@ -1618,6 +1632,7 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_2D_ARRAY);
 			else
 				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_3D);
+
 			{
 				CGLSL PrimitiveVertexShader;
 				CGLSL PrimitiveFragmentShader;
@@ -1634,10 +1649,6 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 				m_pPrimitive3DProgram->m_LocPos = m_pPrimitive3DProgram->GetUniformLoc("gPos");
 			}
 
-			if(pCommand->m_pCapabilities->m_2DArrayTextures)
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_2D_ARRAY);
-			else
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_3D);
 			{
 				CGLSL PrimitiveVertexShader;
 				CGLSL PrimitiveFragmentShader;
@@ -1658,10 +1669,7 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 				m_pPrimitive3DProgramTextured->m_LocPos = m_pPrimitive3DProgramTextured->GetUniformLoc("gPos");
 				m_pPrimitive3DProgramTextured->m_LocTextureSampler = m_pPrimitive3DProgramTextured->GetUniformLoc("gTextureSampler");
 			}
-			if(pCommand->m_pCapabilities->m_2DArrayTextures)
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_2D_ARRAY);
-			else
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_3D);
+
 			{
 				CGLSL VertexShader;
 				CGLSL FragmentShader;
@@ -1681,10 +1689,7 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 				m_pTileProgram->m_LocPos = m_pTileProgram->GetUniformLoc("gPos");
 				m_pTileProgram->m_LocColor = m_pTileProgram->GetUniformLoc("gVertColor");
 			}
-			if(pCommand->m_pCapabilities->m_2DArrayTextures)
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_2D_ARRAY);
-			else
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_3D);
+
 			{
 				CGLSL VertexShader;
 				CGLSL FragmentShader;
@@ -1699,8 +1704,8 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 				m_pTileProgramTextured->AddShader(&VertexShader);
 				m_pTileProgramTextured->AddShader(&FragmentShader);
 
-				glBindAttribLocation(m_pTileProgram->GetProgramId(), 0, "inVertex");
-				glBindAttribLocation(m_pTileProgram->GetProgramId(), 1, "inVertexTexCoord");
+				glBindAttribLocation(m_pTileProgramTextured->GetProgramId(), 0, "inVertex");
+				glBindAttribLocation(m_pTileProgramTextured->GetProgramId(), 1, "inVertexTexCoord");
 
 				m_pTileProgramTextured->LinkProgram();
 
@@ -1710,10 +1715,7 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 				m_pTileProgramTextured->m_LocTextureSampler = m_pTileProgramTextured->GetUniformLoc("gTextureSampler");
 				m_pTileProgramTextured->m_LocColor = m_pTileProgramTextured->GetUniformLoc("gVertColor");
 			}
-			if(pCommand->m_pCapabilities->m_2DArrayTextures)
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_2D_ARRAY);
-			else
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_3D);
+
 			{
 				CGLSL VertexShader;
 				CGLSL FragmentShader;
@@ -1736,10 +1738,7 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 				m_pBorderTileProgram->m_LocOffset = m_pBorderTileProgram->GetUniformLoc("gOffset");
 				m_pBorderTileProgram->m_LocScale = m_pBorderTileProgram->GetUniformLoc("gScale");
 			}
-			if(pCommand->m_pCapabilities->m_2DArrayTextures)
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_2D_ARRAY);
-			else
-				ShaderCompiler.SetTextureReplaceType(CGLSLCompiler::GLSL_COMPILER_TEXTURE_REPLACE_TYPE_3D);
+
 			{
 				CGLSL VertexShader;
 				CGLSL FragmentShader;
@@ -1799,13 +1798,35 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 
 void CCommandProcessorFragment_OpenGL2::Cmd_Shutdown(const SCommand_Shutdown *pCommand)
 {
-	// TODO: cleanup the OpenGL context too
+	if(m_HasShaders)
+	{
+		glUseProgram(0);
+	}
+
+	m_pTileProgram->DeleteProgram();
+	m_pTileProgramTextured->DeleteProgram();
+	m_pBorderTileProgram->DeleteProgram();
+	m_pBorderTileProgramTextured->DeleteProgram();
+	m_pPrimitive3DProgram->DeleteProgram();
+	m_pPrimitive3DProgramTextured->DeleteProgram();
+
 	delete m_pTileProgram;
 	delete m_pTileProgramTextured;
+	delete m_pBorderTileProgram;
+	delete m_pBorderTileProgramTextured;
 	delete m_pPrimitive3DProgram;
 	delete m_pPrimitive3DProgramTextured;
+
+	for(int i = 0; i < (int)m_vTextures.size(); ++i)
+	{
+		DestroyTexture(i);
+	}
+
 	for(auto &BufferObject : m_vBufferObjectIndices)
+	{
+		glDeleteBuffers(1, &BufferObject.m_BufferObjectId);
 		free(BufferObject.m_pData);
+	}
 }
 
 void CCommandProcessorFragment_OpenGL2::Cmd_RenderTex3D(const CCommandBuffer::SCommand_RenderTex3D *pCommand)

@@ -1,10 +1,11 @@
 #include "layer_group.h"
 
-#include <base/math.h>
-
+#include <engine/graphics.h>
 #include <engine/shared/config.h>
 
 #include <game/editor/editor.h>
+
+#include <algorithm>
 
 CLayerGroup::CLayerGroup(CEditorMap *pMap) :
 	CMapObject(pMap)
@@ -41,43 +42,39 @@ void CLayerGroup::Convert(CUIRect *pRect) const
 	pRect->y += m_OffsetY;
 }
 
-void CLayerGroup::Mapping(float *pPoints) const
+CScreenRect CLayerGroup::Mapping() const
 {
-	float NormalParallaxZoom = std::clamp((double)(maximum(m_ParallaxX, m_ParallaxY)), 0., 100.);
-	float ParallaxZoom = Editor()->m_PreviewZoom ? NormalParallaxZoom : 100.0f;
+	float NormalParallaxZoom = std::clamp((float)std::max(m_ParallaxX, m_ParallaxY), 0.0f, 100.0f);
+	float ParallaxZoom = Map()->m_PreviewZoom ? NormalParallaxZoom : 100.0f;
 
-	Graphics()->MapScreenToWorld(
+	CScreenRect ScreenRect = Graphics()->MapScreenToWorld(
 		Editor()->MapView()->GetWorldOffset().x, Editor()->MapView()->GetWorldOffset().y,
 		m_ParallaxX, m_ParallaxY, ParallaxZoom, m_OffsetX, m_OffsetY,
-		Graphics()->ScreenAspect(), Editor()->MapView()->GetWorldZoom(), pPoints);
+		Graphics()->ScreenAspect(), Editor()->MapView()->GetWorldZoom());
 
-	pPoints[0] += Editor()->MapView()->GetEditorOffset().x;
-	pPoints[1] += Editor()->MapView()->GetEditorOffset().y;
-	pPoints[2] += Editor()->MapView()->GetEditorOffset().x;
-	pPoints[3] += Editor()->MapView()->GetEditorOffset().y;
+	ScreenRect = ScreenRect.Move(Editor()->MapView()->GetEditorOffset());
+	return ScreenRect;
 }
 
 void CLayerGroup::MapScreen()
 {
-	float aPoints[4];
-	Mapping(aPoints);
-	Graphics()->MapScreen(aPoints[0], aPoints[1], aPoints[2], aPoints[3]);
+	CScreenRect ScreenRect = Mapping();
+	Graphics()->MapScreen(ScreenRect);
 }
 
-void CLayerGroup::Render()
+void CLayerGroup::Render(const CEditorMap *pRenderMap)
 {
 	MapScreen();
 
 	if(m_UseClipping)
 	{
-		float aPoints[4];
-		Map()->m_pGameGroup->Mapping(aPoints);
-		float ScreenWidth = aPoints[2] - aPoints[0];
-		float ScreenHeight = aPoints[3] - aPoints[1];
-		float Left = m_ClipX - aPoints[0];
-		float Top = m_ClipY - aPoints[1];
-		float Right = (m_ClipX + m_ClipW) - aPoints[0];
-		float Bottom = (m_ClipY + m_ClipH) - aPoints[1];
+		CScreenRect ScreenRect = Map()->m_pGameGroup->Mapping();
+		float ScreenWidth = ScreenRect.Width();
+		float ScreenHeight = ScreenRect.Height();
+		float Left = m_ClipX - ScreenRect.m_TopLeft.x;
+		float Top = m_ClipY - ScreenRect.m_TopLeft.y;
+		float Right = (m_ClipX + m_ClipW) - ScreenRect.m_TopLeft.x;
+		float Bottom = (m_ClipY + m_ClipH) - ScreenRect.m_TopLeft.y;
 
 		int ClipX = (int)std::round(Left * Graphics()->ScreenWidth() / ScreenWidth);
 		int ClipY = (int)std::round(Top * Graphics()->ScreenHeight() / ScreenHeight);
@@ -106,8 +103,8 @@ void CLayerGroup::Render()
 				if(pTiles->m_HasGame || pTiles->m_HasFront || pTiles->m_HasTele || pTiles->m_HasSpeedup || pTiles->m_HasTune || pTiles->m_HasSwitch)
 					continue;
 			}
-			if(Editor()->m_ShowDetail || !(pLayer->m_Flags & LAYERFLAG_DETAIL))
-				pLayer->Render();
+			if(pRenderMap->m_ShowDetail || !(pLayer->m_Flags & LAYERFLAG_DETAIL))
+				pLayer->Render(pRenderMap);
 		}
 	}
 
@@ -118,7 +115,7 @@ void CLayerGroup::Render()
 			std::shared_ptr<CLayerTiles> pTiles = std::static_pointer_cast<CLayerTiles>(pLayer);
 			if(pTiles->m_HasGame || pTiles->m_HasFront || pTiles->m_HasTele || pTiles->m_HasSpeedup || pTiles->m_HasTune || pTiles->m_HasSwitch)
 			{
-				pLayer->Render();
+				pLayer->Render(pRenderMap);
 			}
 		}
 	}
@@ -160,8 +157,8 @@ void CLayerGroup::GetSize(float *pWidth, float *pHeight) const
 	{
 		float LayerWidth, LayerHeight;
 		pLayer->GetSize(&LayerWidth, &LayerHeight);
-		*pWidth = maximum(*pWidth, LayerWidth);
-		*pHeight = maximum(*pHeight, LayerHeight);
+		*pWidth = std::max(*pWidth, LayerWidth);
+		*pHeight = std::max(*pHeight, LayerHeight);
 	}
 }
 

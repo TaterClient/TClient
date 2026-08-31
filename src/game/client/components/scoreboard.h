@@ -27,7 +27,7 @@ class CScoreboard : public CComponent
 	void RenderTitleBar(CUIRect TitleBar, int Team, const char *pTitle);
 	void RenderGoals(CUIRect Goals);
 	void RenderSpectators(CUIRect Spectators);
-	void RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart, int CountEnd, CScoreboardRenderState &State);
+	void RenderScoreboard(CUIRect Scoreboard, int Team, int CountStart, int CountEnd, CScoreboardRenderState &State, int NumPlayersForSize = -1);
 	void RenderRecordingNotification(float x);
 
 	static void ConKeyScoreboard(IConsole::IResult *pResult, void *pUserData);
@@ -78,8 +78,24 @@ class CScoreboard : public CComponent
 	public:
 		char m_PlayerButtonId;
 		char m_SpectatorSecondLineButtonId;
+
+		CCachedText m_Score;
+		CCachedText m_ScoreMillis;
+		CCachedText m_Name;
+		CCachedText m_ReadyMark;
+		CCachedText m_Clan;
+		CCachedText m_Ping;
 	};
 	CPlayerElement m_aPlayers[MAX_CLIENTS];
+
+	CCachedText m_TitleScore;
+	CCachedText m_TitleScoreMillis;
+	CCachedText m_HeadlineScore;
+	CCachedText m_HeadlineName;
+	CCachedText m_HeadlineClan;
+	CCachedText m_HeadlinePing;
+
+	void ResetTexts();
 
 public:
 	CScoreboard();
@@ -87,6 +103,8 @@ public:
 	void OnConsoleInit() override;
 	void OnInit() override;
 	void OnReset() override;
+	void OnShutdown() override;
+	void OnWindowResize() override;
 	void OnRender() override;
 	void OnRelease() override;
 	bool OnCursorMove(float x, float y, IInput::ECursorType CursorType) override;

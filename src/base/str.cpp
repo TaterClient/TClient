@@ -5,9 +5,9 @@
 
 #include "dbg.h"
 #include "detect.h"
-#include "math.h"
 #include "mem.h"
 
+#include <algorithm>
 #include <cctype>
 #include <charconv> // std::to_chars
 #include <cstdarg>
@@ -276,8 +276,10 @@ int str_comp_filenames(const char *a, const char *b)
 				return 1;
 			else if(str_isnum(*b))
 				return -1;
-			else if(result || *a == '\0' || *b == '\0')
+			else if(result)
 				return result;
+			else if(*a == '\0' || *b == '\0')
+				return *a - *b;
 		}
 
 		result = tolower(*a) - tolower(*b);
@@ -479,7 +481,7 @@ const char *str_find(const char *haystack, const char *needle)
 	return nullptr;
 }
 
-static const char *str_token_get(const char *str, const char *delim, int *length)
+static const char *str_token_get(const char *str, const char *delim, size_t *length)
 {
 	size_t len = strspn(str, delim);
 	if(len > 1)
@@ -493,11 +495,13 @@ static const char *str_token_get(const char *str, const char *delim, int *length
 	return str;
 }
 
-const char *str_next_token(const char *str, const char *delim, char *buffer, int buffer_size)
+const char *str_next_token(const char *str, const char *delim, char *buffer, size_t buffer_size)
 {
-	int len = 0;
+	dbg_assert(buffer_size > 0, "buffer size 0");
+
+	size_t len = 0;
 	const char *tok = str_token_get(str, delim, &len);
-	if(len < 0 || tok == nullptr)
+	if(tok == nullptr)
 	{
 		buffer[0] = '\0';
 		return nullptr;
@@ -513,7 +517,7 @@ const char *str_next_token(const char *str, const char *delim, char *buffer, int
 int str_in_list(const char *list, const char *delim, const char *needle)
 {
 	const char *tok = list;
-	int len = 0, notfound = 1, needlelen = str_length(needle);
+	size_t len = 0, notfound = 1, needlelen = str_length(needle);
 
 	while(notfound && (tok = str_token_get(tok, delim, &len)))
 	{
@@ -1359,10 +1363,11 @@ int str_utf32_dist_buffer(const int *a, int a_len, const int *b, int b_len, int 
 		for(i = 1; i <= a_len; i++)
 		{
 			int subst = (a[i - 1] != b[j - 1]);
-			B(i, j) = minimum(
+			B(i, j) = std::min({
 				B(i - 1, j) + 1,
 				B(i, j - 1) + 1,
-				B(i - 1, j - 1) + subst);
+				B(i - 1, j - 1) + subst,
+			});
 		}
 	}
 	return B(a_len, b_len);

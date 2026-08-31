@@ -2,7 +2,6 @@
 
 #include <base/color.h>
 #include <base/dbg.h>
-#include <base/math.h>
 #include <base/str.h>
 
 #include <engine/external/json-parser/json.h>
@@ -42,6 +41,7 @@ const CMenusIngameTouchControls::CBehaviorFactoryEditor CMenusIngameTouchControl
 	{CTouchControls::CUseActionTouchButtonBehavior::BEHAVIOR_ID, []() { return std::make_unique<CTouchControls::CUseActionTouchButtonBehavior>(); }},
 	{CTouchControls::CJoystickActionTouchButtonBehavior::BEHAVIOR_ID, []() { return std::make_unique<CTouchControls::CJoystickActionTouchButtonBehavior>(); }},
 	{CTouchControls::CJoystickAimTouchButtonBehavior::BEHAVIOR_ID, []() { return std::make_unique<CTouchControls::CJoystickAimTouchButtonBehavior>(); }},
+	{CTouchControls::CJoystickAimRelativeTouchButtonBehavior::BEHAVIOR_ID, []() { return std::make_unique<CTouchControls::CJoystickAimRelativeTouchButtonBehavior>(); }},
 	{CTouchControls::CJoystickFireTouchButtonBehavior::BEHAVIOR_ID, []() { return std::make_unique<CTouchControls::CJoystickFireTouchButtonBehavior>(); }},
 	{CTouchControls::CJoystickHookTouchButtonBehavior::BEHAVIOR_ID, []() { return std::make_unique<CTouchControls::CJoystickHookTouchButtonBehavior>(); }}};
 
@@ -945,7 +945,14 @@ void CMenusIngameTouchControls::RenderConfigSettings(CUIRect MainView)
 	Row.VSplitMid(&Label, &Button);
 	Ui()->DoLabel(&Label, Localize("Direct touch input while ingame"), FONTSIZE, TEXTALIGN_ML);
 
-	const char *apIngameTouchModes[(int)CTouchControls::EDirectTouchIngameMode::NUM_STATES] = {Localize("Disabled", "Direct touch input"), Localize("Active action", "Direct touch input"), Localize("Aim", "Direct touch input"), Localize("Fire", "Direct touch input"), Localize("Hook", "Direct touch input")};
+	const char *apIngameTouchModes[(int)CTouchControls::EDirectTouchIngameMode::NUM_STATES] = {
+		Localize("Disabled", "Direct touch input"),
+		Localize("Active action", "Direct touch input"),
+		Localize("Aim", "Direct touch input"),
+		Localize("Relative aim", "Direct touch input"),
+		Localize("Fire", "Direct touch input"),
+		Localize("Hook", "Direct touch input"),
+	};
 	const CTouchControls::EDirectTouchIngameMode OldDirectTouchIngame = GameClient()->m_TouchControls.DirectTouchIngame();
 	static CUi::SDropDownState s_DirectTouchIngameDropDownState;
 	static CScrollRegion s_DirectTouchIngameDropDownScrollRegion;
@@ -1261,9 +1268,9 @@ void CMenusIngameTouchControls::CacheAllSettingsFromTarget(CTouchControls::CTouc
 			auto *pTargetBehavior = static_cast<CTouchControls::CBindToggleTouchButtonBehavior *>(pTargetButton->m_pBehavior.get());
 			auto TargetCommands = pTargetBehavior->GetCommand();
 			// Can't use resize here :(
-			while(m_vBehaviorElements.size() > maximum<size_t>(TargetCommands.size(), 2))
+			while(m_vBehaviorElements.size() > std::max(TargetCommands.size(), (size_t)2))
 				m_vBehaviorElements.pop_back();
-			while(m_vBehaviorElements.size() < maximum<size_t>(TargetCommands.size(), 2))
+			while(m_vBehaviorElements.size() < std::max(TargetCommands.size(), (size_t)2))
 				m_vBehaviorElements.emplace_back(std::make_unique<CBehaviorElements>());
 			for(unsigned CommandIndex = 0; CommandIndex < TargetCommands.size(); CommandIndex++)
 			{
@@ -1540,7 +1547,7 @@ const char **CMenusIngameTouchControls::VisibilityNames() const
 
 const char **CMenusIngameTouchControls::PredefinedNames() const
 {
-	static const char *s_apPredefined[10];
+	static const char *s_apPredefined[11];
 	s_apPredefined[0] = Localize("Ingame Menu", "Predefined touch button behaviors");
 	s_apPredefined[1] = Localize("Extra Menu", "Predefined touch button behaviors");
 	s_apPredefined[2] = Localize("Emoticon", "Predefined touch button behaviors");
@@ -1549,8 +1556,9 @@ const char **CMenusIngameTouchControls::PredefinedNames() const
 	s_apPredefined[5] = Localize("Use Action", "Predefined touch button behaviors");
 	s_apPredefined[6] = Localize("Joystick Action", "Predefined touch button behaviors");
 	s_apPredefined[7] = Localize("Joystick Aim", "Predefined touch button behaviors");
-	s_apPredefined[8] = Localize("Joystick Fire", "Predefined touch button behaviors");
-	s_apPredefined[9] = Localize("Joystick Hook", "Predefined touch button behaviors");
+	s_apPredefined[8] = Localize("Joystick Relative Aim", "Predefined touch button behaviors");
+	s_apPredefined[9] = Localize("Joystick Fire", "Predefined touch button behaviors");
+	s_apPredefined[10] = Localize("Joystick Hook", "Predefined touch button behaviors");
 	static_assert(std::size(s_apPredefined) == std::size(BEHAVIOR_FACTORIES_EDITOR), "Insufficient predefined names");
 	return s_apPredefined;
 }
@@ -1579,11 +1587,12 @@ const char *CMenusIngameTouchControls::HelpMessageForPredefinedType(EPredefinedT
 	case EPredefinedType::USE_ACTION: return Localize("Uses the active action with the current aiming position."); break;
 	case EPredefinedType::JOYSTICK_ACTION: return Localize("Virtual joystick which uses the active action."); break;
 	case EPredefinedType::JOYSTICK_AIM: return Localize("Virtual joystick which only aims without using an action."); break;
+	case EPredefinedType::JOYSTICK_AIM_RELATIVE: return Localize("Virtual joystick which only aims and moves the mouse pointer relatively."); break;
 	case EPredefinedType::JOYSTICK_FIRE: return Localize("Virtual joystick which always uses fire."); break;
 	case EPredefinedType::JOYSTICK_HOOK: return Localize("Virtual joystick which always uses hook."); break;
 	default: dbg_assert_failed("Unknown behavior %d", (int)m_PredefinedBehaviorType);
 	}
-	static_assert((int)EPredefinedType::NUM_PREDEFINEDTYPES == 10, "Insufficient help messages");
+	static_assert((int)EPredefinedType::NUM_PREDEFINEDTYPES == 11, "Insufficient help messages");
 }
 
 const char *CMenusIngameTouchControls::HelpMessageForVisibilityType(CTouchControls::EButtonVisibility Type) const

@@ -7,7 +7,6 @@
 #include <base/dbg.h>
 #include <base/fs.h>
 #include <base/log.h>
-#include <base/math.h>
 #include <base/str.h>
 #include <base/time.h>
 #include <base/vmath.h>
@@ -307,66 +306,6 @@ int CMenus::DoButton_CheckBox_Common(const void *pId, const char *pText, const c
 	Ui()->DoLabel(&Label, pText, Box.h * CUi::ms_FontmodHeight, TEXTALIGN_ML);
 
 	return Ui()->DoButtonLogic(pId, 0, pRect, Flags);
-}
-
-void CMenus::DoLaserPreview(const CUIRect *pRect, const ColorHSLA LaserOutlineColor, const ColorHSLA LaserInnerColor, const int LaserType)
-{
-	CUIRect Section = *pRect;
-	vec2 From = vec2(Section.x + 30.0f, Section.y + Section.h / 2.0f);
-	vec2 Pos = vec2(Section.x + Section.w - 20.0f, Section.y + Section.h / 2.0f);
-
-	const ColorRGBA OuterColor = color_cast<ColorRGBA>(ColorHSLA(LaserOutlineColor));
-	const ColorRGBA InnerColor = color_cast<ColorRGBA>(ColorHSLA(LaserInnerColor));
-	const float TicksHead = Client()->GlobalTime() * Client()->GameTickSpeed();
-
-	// TicksBody = 4.0 for less laser width for weapon alignment
-	GameClient()->m_Items.RenderLaser(From, Pos, OuterColor, InnerColor, 4.0f, TicksHead, LaserType);
-
-	switch(LaserType)
-	{
-	case LASERTYPE_RIFLE:
-		Graphics()->TextureSet(GameClient()->m_GameSkin.m_SpriteWeaponLaser);
-		Graphics()->SelectSprite(SPRITE_WEAPON_LASER_BODY);
-		Graphics()->QuadsBegin();
-		Graphics()->QuadsSetSubset(0, 0, 1, 1);
-		Graphics()->DrawSprite(Section.x + 30.0f, Section.y + Section.h / 2.0f, 60.0f);
-		Graphics()->QuadsEnd();
-		break;
-	case LASERTYPE_SHOTGUN:
-		Graphics()->TextureSet(GameClient()->m_GameSkin.m_SpriteWeaponShotgun);
-		Graphics()->SelectSprite(SPRITE_WEAPON_SHOTGUN_BODY);
-		Graphics()->QuadsBegin();
-		Graphics()->QuadsSetSubset(0, 0, 1, 1);
-		Graphics()->DrawSprite(Section.x + 30.0f, Section.y + Section.h / 2.0f, 60.0f);
-		Graphics()->QuadsEnd();
-		break;
-	case LASERTYPE_DRAGGER:
-	{
-		CTeeRenderInfo TeeRenderInfo;
-		TeeRenderInfo.Apply(GameClient()->m_Skins.Find(g_Config.m_ClPlayerSkin));
-		TeeRenderInfo.ApplyColors(g_Config.m_ClPlayerUseCustomColor, g_Config.m_ClPlayerColorBody, g_Config.m_ClPlayerColorFeet);
-		TeeRenderInfo.m_Size = 64.0f;
-		RenderTools()->RenderTee(CAnimState::GetIdle(), &TeeRenderInfo, EMOTE_NORMAL, vec2(-1, 0), Pos);
-		break;
-	}
-	case LASERTYPE_FREEZE:
-	{
-		CTeeRenderInfo TeeRenderInfo;
-		if(g_Config.m_ClShowNinja)
-			TeeRenderInfo.Apply(GameClient()->m_Skins.Find("x_ninja"));
-		else
-			TeeRenderInfo.Apply(GameClient()->m_Skins.Find(g_Config.m_ClPlayerSkin));
-		TeeRenderInfo.m_TeeRenderFlags = TEE_EFFECT_FROZEN;
-		TeeRenderInfo.m_Size = 64.0f;
-		TeeRenderInfo.m_ColorBody = ColorRGBA(1, 1, 1);
-		TeeRenderInfo.m_ColorFeet = ColorRGBA(1, 1, 1);
-		RenderTools()->RenderTee(CAnimState::GetIdle(), &TeeRenderInfo, EMOTE_PAIN, vec2(1, 0), From);
-		GameClient()->m_Effects.FreezingFlakes(From, vec2(32, 32), 1.0f);
-		break;
-	}
-	default:
-		GameClient()->m_Items.RenderLaser(From, From, OuterColor, InnerColor, 4.0f, TicksHead, LaserType);
-	}
 }
 
 bool CMenus::DoLine_RadioMenu(CUIRect &View, const char *pLabel, std::vector<CButtonContainer> &vButtonContainers, const std::vector<const char *> &vLabels, const std::vector<int> &vValues, int &Value)
@@ -744,18 +683,20 @@ void CMenus::RenderMenubar(CUIRect Box, IClient::EClientState ClientState)
 	}
 }
 
-void CMenus::RenderLoading(const char *pCaption, const char *pContent, int IncreaseCounter)
+void CMenus::RenderLoadingDirect(const char *pCaption, const char *pContent, std::optional<float> Progress)
 {
 	// TODO: not supported right now due to separate render thread
 
-	const int CurLoadRenderCount = m_LoadingState.m_Current;
-	m_LoadingState.m_Current += IncreaseCounter;
-	dbg_assert(m_LoadingState.m_Current <= m_LoadingState.m_Total, "Invalid progress for RenderLoading");
-
 	// make sure that we don't render for each little thing we load
 	// because that will slow down loading if we have vsync
+	// make sure we otherwise update the progressbar if we have one for a smoother animation
 	const std::chrono::nanoseconds Now = time_get_nanoseconds();
-	if(Now - m_LoadingState.m_LastRender < std::chrono::nanoseconds(1s) / 60l)
+
+	/* Limit FPS to something reasonable. Ideally the values would just be stored and the rendering would be on a **consistent** timer with 60Hz
+	 * Waiting for calls of this function makes the rendering stutter, which you can notice with the background
+	 */
+	int RefreshRate = g_Config.m_GfxVsync || !Progress.has_value() ? 60 : (in_range(g_Config.m_GfxRefreshRate, 1, 300) ? g_Config.m_GfxRefreshRate : 300);
+	if(RefreshRate > 0 && Now - m_LoadingState.m_LastRender < std::chrono::nanoseconds(1s) / RefreshRate)
 		return;
 
 	// need up date this here to get correct
@@ -792,18 +733,28 @@ void CMenus::RenderLoading(const char *pCaption, const char *pContent, int Incre
 	Box.HSplitTop(24.0f, &Label, &Box);
 	Ui()->DoLabel(&Label, pContent, 20.0f, TEXTALIGN_MC);
 
-	if(m_LoadingState.m_Total > 0)
+	if(Progress.has_value())
 	{
 		CUIRect ProgressBar;
 		Box.HSplitBottom(30.0f, &Box, nullptr);
 		Box.HSplitBottom(25.0f, &Box, &ProgressBar);
 		ProgressBar.VMargin(20.0f, &ProgressBar);
-		Ui()->RenderProgressBar(ProgressBar, CurLoadRenderCount / (float)m_LoadingState.m_Total);
+		Ui()->RenderProgressBar(ProgressBar, std::clamp(Progress.value(), 0.0f, 1.0f));
 	}
 
 	Graphics()->SetColor(1.0, 1.0, 1.0, 1.0);
 
 	Client()->UpdateAndSwap();
+}
+
+void CMenus::RenderLoading(const char *pCaption, const char *pContent, int IncreaseCounter)
+{
+	// does not support multithreading
+
+	const int CurLoadRenderCount = m_LoadingState.m_Current;
+	m_LoadingState.m_Current += IncreaseCounter;
+	dbg_assert(m_LoadingState.m_Current <= m_LoadingState.m_Total, "Invalid progress for RenderLoading");
+	RenderLoadingDirect(pCaption, pContent, m_LoadingState.m_Total > 0 ? std::make_optional(CurLoadRenderCount / (float)m_LoadingState.m_Total) : std::nullopt);
 }
 
 void CMenus::FinishLoading()
@@ -953,6 +904,8 @@ void CMenus::UpdateMusicState()
 		GameClient()->m_Sounds.Enqueue(CSounds::CHN_MUSIC, SOUND_MENU);
 	else if(!ShouldPlay && GameClient()->m_Sounds.IsPlaying(SOUND_MENU))
 		GameClient()->m_Sounds.Stop(SOUND_MENU);
+	if(!ShouldPlay)
+		GameClient()->m_MapSounds.StopAll();
 }
 
 void CMenus::PopupMessage(const char *pTitle, const char *pMessage, const char *pButtonLabel, int NextPopup, FPopupButtonCallback pfnButtonCallback)
@@ -1779,6 +1732,7 @@ void CMenus::RenderPopupFullscreen(CUIRect Screen)
 		if(DoButton_Menu(&s_SkipTutorialButton, Localize("Skip Tutorial"), 0, &Skip) || Ui()->ConsumeHotkey(CUi::HOTKEY_ESCAPE))
 		{
 			Client()->RequestDDNetInfo();
+			m_JoinTutorial.m_Queued = false;
 			m_Popup = g_Config.m_BrIndicateFinished ? POPUP_POINTS : POPUP_NONE;
 		}
 
@@ -2208,7 +2162,7 @@ void CMenus::RenderPopupLoading(CUIRect Screen)
 
 		str_format(aLabel1, sizeof(aLabel1), Localize("%d/%d KiB (%.1f KiB/s)"), Client()->MapDownloadAmount() / 1024, Client()->MapDownloadTotalsize() / 1024, m_DownloadSpeed / 1024.0f);
 
-		const int SecondsLeft = maximum(1, m_DownloadSpeed > 0.0f ? static_cast<int>((Client()->MapDownloadTotalsize() - Client()->MapDownloadAmount()) / m_DownloadSpeed) : 1);
+		const int SecondsLeft = std::max(1, m_DownloadSpeed > 0.0f ? static_cast<int>((Client()->MapDownloadTotalsize() - Client()->MapDownloadAmount()) / m_DownloadSpeed) : 1);
 		const int MinutesLeft = SecondsLeft / 60;
 		if(MinutesLeft > 0)
 		{
@@ -2312,78 +2266,6 @@ void CMenus::PopupConfirmDemoReplaceVideo()
 	}
 }
 #endif
-
-void CMenus::RenderThemeSelection(CUIRect MainView)
-{
-	const std::vector<CTheme> &vThemes = GameClient()->m_MenuBackground.GetThemes();
-
-	int SelectedTheme = -1;
-	for(int i = 0; i < (int)vThemes.size(); i++)
-	{
-		if(str_comp(vThemes[i].m_Name.c_str(), g_Config.m_ClMenuMap) == 0)
-		{
-			SelectedTheme = i;
-			break;
-		}
-	}
-	const int OldSelected = SelectedTheme;
-
-	static CListBox s_ListBox;
-	s_ListBox.DoHeader(&MainView, Localize("Theme"), 20.0f);
-	s_ListBox.DoStart(20.0f, vThemes.size(), 1, 3, SelectedTheme);
-
-	for(int i = 0; i < (int)vThemes.size(); i++)
-	{
-		const CTheme &Theme = vThemes[i];
-		const CListboxItem Item = s_ListBox.DoNextItem(&Theme.m_Name, i == SelectedTheme);
-
-		if(!Item.m_Visible)
-			continue;
-
-		CUIRect Icon, Label;
-		Item.m_Rect.VSplitLeft(Item.m_Rect.h * 2.0f, &Icon, &Label);
-
-		// draw icon if it exists
-		if(Theme.m_IconTexture.IsValid())
-		{
-			Icon.VMargin(6.0f, &Icon);
-			Icon.HMargin(3.0f, &Icon);
-			Graphics()->TextureSet(Theme.m_IconTexture);
-			Graphics()->QuadsBegin();
-			Graphics()->SetColor(1.0f, 1.0f, 1.0f, 1.0f);
-			IGraphics::CQuadItem QuadItem(Icon.x, Icon.y, Icon.w, Icon.h);
-			Graphics()->QuadsDrawTL(&QuadItem, 1);
-			Graphics()->QuadsEnd();
-		}
-
-		char aName[128];
-		if(Theme.m_Name.empty())
-			str_copy(aName, "(none)");
-		else if(str_comp(Theme.m_Name.c_str(), "auto") == 0)
-			str_copy(aName, "(seasons)");
-		else if(str_comp(Theme.m_Name.c_str(), "rand") == 0)
-			str_copy(aName, "(random)");
-		else if(Theme.m_HasDay && Theme.m_HasNight)
-			str_copy(aName, Theme.m_Name.c_str());
-		else if(Theme.m_HasDay && !Theme.m_HasNight)
-			str_format(aName, sizeof(aName), "%s (day)", Theme.m_Name.c_str());
-		else if(!Theme.m_HasDay && Theme.m_HasNight)
-			str_format(aName, sizeof(aName), "%s (night)", Theme.m_Name.c_str());
-		else // generic
-			str_copy(aName, Theme.m_Name.c_str());
-
-		Ui()->DoLabel(&Label, aName, 16.0f * CUi::ms_FontmodHeight, TEXTALIGN_ML);
-	}
-
-	SelectedTheme = s_ListBox.DoEnd();
-
-	if(OldSelected != SelectedTheme)
-	{
-		const CTheme &Theme = vThemes[SelectedTheme];
-		str_copy(g_Config.m_ClMenuMap, Theme.m_Name.c_str());
-		GameClient()->m_MenuBackground.LoadMenuBackground(Theme.m_HasDay, Theme.m_HasNight);
-	}
-}
 
 void CMenus::SetActive(bool Active)
 {
@@ -2575,7 +2457,7 @@ void CMenus::RenderBackground()
 {
 	const float ScreenHeight = 300.0f;
 	const float ScreenWidth = ScreenHeight * Graphics()->ScreenAspect();
-	Graphics()->MapScreen(0.0f, 0.0f, ScreenWidth, ScreenHeight);
+	Graphics()->MapScreenToSize(ScreenWidth, ScreenHeight);
 
 	// render background color
 	Graphics()->TextureClear();
@@ -2653,17 +2535,13 @@ int CMenus::MenuImageScan(const char *pName, int IsDir, int DirType, void *pUser
 	CImageInfo Info;
 	if(!pSelf->Graphics()->LoadPng(Info, aPath, DirType))
 	{
-		char aError[IO_MAX_PATH_LENGTH + 64];
-		str_format(aError, sizeof(aError), "Failed to load menu image from '%s'", aPath);
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "menus", aError);
+		log_error("menus", "Failed to load menu image from '%s'", aPath);
 		return 0;
 	}
 	if(Info.m_Format != CImageInfo::FORMAT_RGBA)
 	{
 		Info.Free();
-		char aError[IO_MAX_PATH_LENGTH + 64];
-		str_format(aError, sizeof(aError), "Failed to load menu image from '%s': must be an RGBA image", aPath);
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "menus", aError);
+		log_error("menus", "Failed to load menu image from '%s': must be an RGBA image", aPath);
 		return 0;
 	}
 

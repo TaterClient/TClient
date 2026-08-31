@@ -11,12 +11,15 @@
 #include <base/time.h>
 
 #include <engine/shared/config.h>
+#include <engine/shared/protocol.h>
 
 #include <game/mapitems.h>
 #include <game/server/entities/character.h>
 #include <game/server/gamecontext.h>
 #include <game/server/interactions.h>
 #include <game/team_state.h>
+
+#include <bitset>
 
 CGameTeams::CGameTeams(CGameContext *pGameContext) :
 	m_pGameContext(pGameContext)
@@ -27,6 +30,7 @@ CGameTeams::CGameTeams(CGameContext *pGameContext) :
 void CGameTeams::Reset()
 {
 	m_Core.Reset();
+	UpdateLegacyTeamMap();
 	for(int i = 0; i < MAX_CLIENTS; ++i)
 	{
 		m_aTeeStarted[i] = false;
@@ -259,7 +263,7 @@ void CGameTeams::Tick()
 
 	int Frequency = Server()->TickSpeed() * 60;
 	int Remainder = Server()->TickSpeed() * 30;
-	uint64_t TeamHasWantedStartTime = 0;
+	std::bitset<NUM_DDRACE_TEAMS> TeamHasWantedStartTime;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		CCharacter *pChar = GameServer()->m_apPlayers[i] ? GameServer()->m_apPlayers[i]->GetCharacter() : nullptr;
@@ -270,17 +274,17 @@ void CGameTeams::Tick()
 		}
 		if((Now - pChar->m_StartTime) % Frequency == Remainder)
 		{
-			TeamHasWantedStartTime |= ((uint64_t)1) << m_Core.Team(i);
+			TeamHasWantedStartTime.set(m_Core.Team(i));
 		}
 	}
-	TeamHasWantedStartTime &= ~(uint64_t)1;
-	if(!TeamHasWantedStartTime)
+	TeamHasWantedStartTime.reset(TEAM_FLOCK);
+	if(TeamHasWantedStartTime.none())
 	{
 		return;
 	}
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(((TeamHasWantedStartTime >> i) & 1) == 0)
+		if(!TeamHasWantedStartTime.test(i))
 		{
 			continue;
 		}
@@ -477,6 +481,7 @@ void CGameTeams::SetForceCharacterTeam(int ClientId, int Team)
 	}
 
 	m_Core.Team(ClientId, Team);
+	UpdateLegacyTeamMap();
 
 	if(OldTeam != Team)
 	{
@@ -538,11 +543,23 @@ void CGameTeams::KillTeam(int Team, int NewStrongId, int ExceptId)
 		}
 	}
 
-	// send the team kill message
+	// send the team kill message, the team number can differ per client
 	CNetMsg_Sv_KillMsgTeam Msg;
 	Msg.m_Team = Team;
 	Msg.m_First = NewStrongId;
-	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+
+	// pack one with the real team and id for the recording only, the per client messages are not recorded
+	CMsgPacker Packer(&Msg);
+	Msg.Pack(&Packer);
+	Server()->SendMsg(&Packer, MSGFLAG_NOSEND, SERVER_DEMO_CLIENT);
+
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!Server()->ClientIngame(i))
+			continue;
+		Msg.m_Team = TeamForClient(Team, i);
+		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
+	}
 }
 
 bool CGameTeams::TeamFinished(int Team)
@@ -568,9 +585,9 @@ CClientMask CGameTeams::TeamMask(int Team, int ExceptId, int Asker, int VersionF
 
 	CPlayer *pAsker = GetPlayer(Asker);
 	CInteractions Interact;
-	Interact.Init(Asker, pAsker->GetUniqueCid());
+	Interact.Init(Asker, pAsker ? pAsker->GetUniqueCid() : 0);
 	Interact.FillOwnerConnected(
-		pAsker->GetCharacter() && pAsker->GetCharacter()->IsAlive(),
+		pAsker && pAsker->GetCharacter() && pAsker->GetCharacter()->IsAlive(),
 		m_Core.Team(Asker),
 		m_Core.GetSolo(Asker),
 		false,
@@ -605,18 +622,102 @@ void CGameTeams::SendTeamsState(int ClientId)
 	CMsgPacker Msg(NETMSGTYPE_SV_TEAMSSTATE);
 	CMsgPacker MsgLegacy(NETMSGTYPE_SV_TEAMSSTATELEGACY);
 
+	bool PlayerMappingRequired = !Server()->ClientSupportsServerMaxClients(ClientId);
+
 	for(unsigned i = 0; i < MAX_CLIENTS; i++)
 	{
-		Msg.AddInt(m_Core.Team(i));
-		MsgLegacy.AddInt(m_Core.Team(i));
+		if(PlayerMappingRequired)
+		{
+			if(i >= (unsigned)Server()->GetMaxClients(ClientId))
+				break;
+
+			// see others selector
+			CPlayerMapping::ESeeOthersInd Indicator = GameServer()->m_PlayerMapping.SeeOthersInd(ClientId, i);
+			if(Indicator != CPlayerMapping::ESeeOthersInd::NONE)
+			{
+				// Team colors (49 and 28) are random and used for see-others feature (+spectate) to cycle the player map
+				int Team = -1;
+				if(Indicator == CPlayerMapping::ESeeOthersInd::BUTTON)
+					Team = 49;
+				else if(Indicator == CPlayerMapping::ESeeOthersInd::PLAYER)
+					Team = 28;
+
+				if(Team != -1)
+				{
+					Msg.AddInt(Team);
+					MsgLegacy.AddInt(Team);
+					continue;
+				}
+			}
+		}
+
+		int Team = 0;
+		int TranslatedId = i;
+		if(Server()->ReverseTranslate(TranslatedId, ClientId))
+		{
+			// TeamForClient is also used for the switch state snap and Sv_KillMsgTeam, which have to agree with the teams state
+			Team = TeamForClient(m_Core.Team(TranslatedId), ClientId);
+		}
+		Msg.AddInt(Team);
+		MsgLegacy.AddInt(Team);
 	}
 
+	int ClientVersion = GameServer()->GetClientVersion(ClientId);
 	Server()->SendMsg(&Msg, MSGFLAG_VITAL, ClientId);
-	int ClientVersion = m_pGameContext->m_apPlayers[ClientId]->GetClientVersion();
 	if(!Server()->IsSixup(ClientId) && VERSION_DDRACE < ClientVersion && ClientVersion < VERSION_DDNET_MSG_LEGACY)
 	{
 		Server()->SendMsg(&MsgLegacy, MSGFLAG_VITAL, ClientId);
 	}
+}
+
+void CGameTeams::UpdateLegacyTeamMap()
+{
+	// Clients before VERSION_DDNET_128_TEAMS only know team numbers up to LEGACY_TEAM_SUPER. Only whether
+	// two team numbers are equal matters to a client, so the teams that such a client cannot represent are
+	// renumbered into the team numbers that are currently unused. This keeps collision and hook prediction
+	// correct, at the cost of showing a different team number than the one the player joined.
+	bool aTeamOccupied[NUM_DDRACE_TEAMS] = {};
+	for(int i = 0; i < MAX_CLIENTS; i++)
+		aTeamOccupied[m_Core.Team(i)] = true;
+
+	// teams that the client can represent keep their own number
+	for(int Team = TEAM_FLOCK; Team < LEGACY_TEAM_SUPER; Team++)
+		m_aLegacyTeamMap[Team] = Team;
+	for(int Team = LEGACY_TEAM_SUPER; Team < TEAM_SUPER; Team++)
+		m_aLegacyTeamMap[Team] = TEAM_FLOCK;
+	m_aLegacyTeamMap[TEAM_SUPER] = LEGACY_TEAM_SUPER;
+
+	// the teams that are left get the numbers that no team is currently using
+	int NextNumber = TEAM_FLOCK + 1;
+	for(int Team = LEGACY_TEAM_SUPER; Team < TEAM_SUPER; Team++)
+	{
+		if(!aTeamOccupied[Team])
+			continue;
+
+		while(NextNumber < LEGACY_TEAM_SUPER && aTeamOccupied[NextNumber])
+			NextNumber++;
+		if(NextNumber == LEGACY_TEAM_SUPER)
+			break; // more teams than the client can represent, the rest stays TEAM_FLOCK
+
+		m_aLegacyTeamMap[Team] = NextNumber;
+		NextNumber++;
+	}
+}
+
+int CGameTeams::TeamForClient(int Team, int ClientId) const
+{
+	if(ClientSupportsServerNumTeams(ClientId))
+		return Team;
+	// If the team's slots are not reserved, dont highlight it. Causes mismatch between dummy and main when playermapping is active.
+	if(!Server()->ClientSupportsServerMaxClients(ClientId) && !GameServer()->m_PlayerMapping.ReserveTeamSlots(Team, ClientId))
+		return TEAM_FLOCK;
+	return m_aLegacyTeamMap[Team];
+}
+
+bool CGameTeams::ClientSupportsServerNumTeams(int ClientId) const
+{
+	const int ClientVersion = GameServer()->GetClientVersion(ClientId);
+	return ClientVersion >= VERSION_DDNET_128_TEAMS;
 }
 
 ERaceState CGameTeams::GetDDRaceState(const CPlayer *Player) const
@@ -858,7 +959,12 @@ const CGameContext *CGameTeams::GameServer() const
 	return m_pGameContext;
 }
 
-class IServer *CGameTeams::Server()
+IServer *CGameTeams::Server()
+{
+	return m_pGameContext->Server();
+}
+
+const IServer *CGameTeams::Server() const
 {
 	return m_pGameContext->Server();
 }
@@ -1073,10 +1179,14 @@ void CGameTeams::ProcessSaveTeam()
 		{
 			if(GameServer()->TeeHistorianActive())
 			{
-				GameServer()->TeeHistorian()->RecordTeamSaveSuccess(
-					Team,
-					m_apSaveTeamResult[Team]->m_SaveId,
-					m_apSaveTeamResult[Team]->m_SavedTeam.GetString());
+				const char *pSaveState = m_apSaveTeamResult[Team]->m_SavedTeam.GetString();
+				if(pSaveState)
+				{
+					GameServer()->TeeHistorian()->RecordTeamSaveSuccess(
+						Team,
+						m_apSaveTeamResult[Team]->m_SaveId,
+						pSaveState);
+				}
 			}
 			for(int i = 0; i < Size; i++)
 			{
@@ -1106,10 +1216,14 @@ void CGameTeams::ProcessSaveTeam()
 		{
 			if(GameServer()->TeeHistorianActive())
 			{
-				GameServer()->TeeHistorian()->RecordTeamLoadSuccess(
-					Team,
-					m_apSaveTeamResult[Team]->m_SaveId,
-					m_apSaveTeamResult[Team]->m_SavedTeam.GetString());
+				const char *pSaveState = m_apSaveTeamResult[Team]->m_SavedTeam.GetString();
+				if(pSaveState)
+				{
+					GameServer()->TeeHistorian()->RecordTeamLoadSuccess(
+						Team,
+						m_apSaveTeamResult[Team]->m_SaveId,
+						pSaveState);
+				}
 			}
 
 			bool TeamValid = false;

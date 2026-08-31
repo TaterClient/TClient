@@ -10,6 +10,7 @@
 #include <base/dbg.h>
 #include <base/io.h>
 #include <base/log.h>
+#include <base/log_color.h>
 #include <base/math.h>
 #include <base/mem.h>
 #include <base/str.h>
@@ -35,7 +36,8 @@ CConsole::CResult::CResult(int ClientId) :
 }
 
 CConsole::CResult::CResult(const CResult &Other) :
-	IResult(Other)
+	IResult(Other),
+	m_vVictims(Other.m_vVictims)
 {
 	mem_copy(m_aStringStorage, Other.m_aStringStorage, sizeof(m_aStringStorage));
 	m_pArgsStart = m_aStringStorage + (Other.m_pArgsStart - Other.m_aStringStorage);
@@ -86,6 +88,17 @@ ColorHSLA CConsole::CResult::GetColor(unsigned Index, float DarkestLighting) con
 	if(Index >= m_NumArgs)
 		return ColorHSLA(0, 0, 0);
 	return ColorParse(m_apArgs[Index], DarkestLighting).value_or(ColorHSLA(0, 0, 0));
+}
+
+bool CConsole::CCommand::TakesClientId() const
+{
+	const char *pFormat = m_pParams;
+	for(char Param = *pFormat; Param != '\0'; Param = NextParam(pFormat))
+	{
+		if(Param == 'v')
+			return true;
+	}
+	return false;
 }
 
 void CConsole::CCommand::SetAccessLevel(EAccessLevel AccessLevel)
@@ -188,7 +201,7 @@ int CConsole::ParseArgs(CResult *pResult, const char *pFormat)
 	char *pStr = pResult->m_pArgsStart;
 	bool Optional = false;
 
-	pResult->ResetVictim();
+	pResult->m_vVictims.clear();
 
 	for(char Command = *pFormat; Command != '\0'; Command = NextParam(pFormat))
 	{
@@ -211,7 +224,7 @@ int CConsole::ParseArgs(CResult *pResult, const char *pFormat)
 			{
 				if(Command == 'v')
 				{
-					pResult->SetVictim("me");
+					pResult->AddVictim("me");
 					break;
 				}
 				Command = NextParam(pFormat);
@@ -263,42 +276,47 @@ int CConsole::ParseArgs(CResult *pResult, const char *pFormat)
 				pStr[0] = '\0';
 				pStr++;
 			}
-
-			// validate arguments
-			if(Command == 'v')
-			{
-				pResult->SetVictim(pResult->GetString(pResult->NumArguments() - 1));
-			}
-			else if(Command == 'i')
-			{
-				int Value;
-				if(!str_toint(pResult->GetString(pResult->NumArguments() - 1), &Value) ||
-					Value == std::numeric_limits<int>::max() ||
-					Value == std::numeric_limits<int>::min())
-				{
-					return PARSEARGS_INVALID_INTEGER;
-				}
-			}
-			else if(Command == 'c')
-			{
-				auto Color = ColorParse(pResult->GetString(pResult->NumArguments() - 1), 0.0f);
-				if(!Color.has_value())
-				{
-					return PARSEARGS_INVALID_COLOR;
-				}
-			}
-			else if(Command == 'f')
-			{
-				float Value;
-				if(!str_tofloat(pResult->GetString(pResult->NumArguments() - 1), &Value) ||
-					Value == std::numeric_limits<float>::max() ||
-					Value == std::numeric_limits<float>::min())
-				{
-					return PARSEARGS_INVALID_FLOAT;
-				}
-			}
-			// 's' and unknown commands are handled as strings
 		}
+
+		// validate arguments
+		if(Command == 'v')
+		{
+			const char *pVictim = pResult->GetString(pResult->NumArguments() - 1);
+			if(pVictim[0] == '\0')
+			{
+				return PARSEARGS_MISSING_VALUE;
+			}
+			pResult->AddVictim(pVictim);
+		}
+		else if(Command == 'i')
+		{
+			int Value;
+			if(!str_toint(pResult->GetString(pResult->NumArguments() - 1), &Value) ||
+				Value == std::numeric_limits<int>::max() ||
+				Value == std::numeric_limits<int>::min())
+			{
+				return PARSEARGS_INVALID_INTEGER;
+			}
+		}
+		else if(Command == 'c')
+		{
+			auto Color = ColorParse(pResult->GetString(pResult->NumArguments() - 1), 0.0f);
+			if(!Color.has_value())
+			{
+				return PARSEARGS_INVALID_COLOR;
+			}
+		}
+		else if(Command == 'f')
+		{
+			float Value;
+			if(!str_tofloat(pResult->GetString(pResult->NumArguments() - 1), &Value) ||
+				Value == std::numeric_limits<float>::max() ||
+				Value == std::numeric_limits<float>::min())
+			{
+				return PARSEARGS_INVALID_FLOAT;
+			}
+		}
+		// 's' and unknown commands are handled as strings
 	}
 
 	return PARSEARGS_OK;
@@ -354,21 +372,13 @@ int IConsole::ToLogLevelFilter(int Level)
 	return Level + 2;
 }
 
-static LOG_COLOR ColorToLogColor(ColorRGBA Color)
-{
-	return LOG_COLOR{
-		(uint8_t)(Color.r * 255.0),
-		(uint8_t)(Color.g * 255.0),
-		(uint8_t)(Color.b * 255.0)};
-}
-
 void CConsole::Print(int Level, const char *pFrom, const char *pStr, ColorRGBA PrintColor) const
 {
 	LEVEL LogLevel = IConsole::ToLogLevel(Level);
 	// if console colors are not enabled or if the color is pure white, use default terminal color
 	if(g_Config.m_ConsoleEnableColors && PrintColor != CONSOLE_DEFAULT_COLOR)
 	{
-		log_log_color(LogLevel, ColorToLogColor(PrintColor), pFrom, "%s", pStr);
+		log_log_color(LogLevel, color_cast<LOG_COLOR>(PrintColor), pFrom, "%s", pStr);
 	}
 	else
 	{
@@ -605,32 +615,45 @@ void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientId, bo
 							m_pfnTeeHistorianCommandCallback(ClientId, m_FlagMask, pCommand->m_pName, &Result, m_pTeeHistorianCommandUserdata);
 						}
 
-						if(Result.m_aSpecialVictim[0])
+						int FanOutSlot = -1;
+						std::vector<int> vFanOutIds;
+						for(unsigned Slot = 0; Slot < Result.m_vVictims.size(); Slot++)
 						{
+							if(!Result.m_vVictims[Slot].m_aSpecialVictim[0])
+								continue;
 							std::optional<std::vector<int>> Victims;
 							if(m_pfnGetVictimsCommandCallback)
-							{
-								Victims = m_pfnGetVictimsCommandCallback(ClientId, Result.m_aSpecialVictim, m_pGetVictimsCommandUserData);
-							}
-							else
-							{
-								Victims = std::nullopt;
-							}
-
+								Victims = m_pfnGetVictimsCommandCallback(ClientId, Result.m_vVictims[Slot].m_aSpecialVictim, m_pGetVictimsCommandUserData);
 							if(!Victims.has_value())
 							{
-								log_error("console", "Invalid victim '%s'", Result.m_aSpecialVictim);
+								log_error("console", "Invalid victim '%s'", Result.m_vVictims[Slot].m_aSpecialVictim);
 								return;
 							}
-							for(const int VictimId : Victims.value())
+							if(Victims->size() != 1 && FanOutSlot >= 0)
 							{
-								Result.SetVictim(VictimId);
-								pCommand->m_pfnCallback(&Result, pCommand->m_pUserData);
+								log_error("console", "Only one parameter may target multiple clients");
+								return;
 							}
+							if(Victims->size() == 1)
+								Result.SetVictim(Slot, Victims->front());
+							else
+							{
+								FanOutSlot = Slot;
+								vFanOutIds = std::move(Victims.value());
+							}
+						}
+
+						if(FanOutSlot < 0)
+						{
+							pCommand->m_pfnCallback(&Result, pCommand->m_pUserData);
 						}
 						else
 						{
-							pCommand->m_pfnCallback(&Result, pCommand->m_pUserData);
+							for(const int VictimId : vFanOutIds)
+							{
+								Result.SetVictim(FanOutSlot, VictimId);
+								pCommand->m_pfnCallback(&Result, pCommand->m_pUserData);
+							}
 						}
 
 						if(pCommand->m_Flags & CMDFLAG_TEST)
@@ -741,11 +764,9 @@ bool CConsole::ExecuteFile(const char *pFilename, int ClientId, bool LogFailure,
 	// exec the file
 	CLineReader LineReader;
 	bool Success = false;
-	char aBuf[32 + IO_MAX_PATH_LENGTH];
 	if(LineReader.OpenFile(m_pStorage->OpenFile(pFilename, IOFLAG_READ, StorageType)))
 	{
-		str_format(aBuf, sizeof(aBuf), "executing '%s'", pFilename);
-		Print(IConsole::OUTPUT_LEVEL_STANDARD, "console", aBuf);
+		log_info("console", "executing '%s'", pFilename);
 
 		while(const char *pLine = LineReader.Get())
 		{
@@ -756,8 +777,7 @@ bool CConsole::ExecuteFile(const char *pFilename, int ClientId, bool LogFailure,
 	}
 	else if(LogFailure)
 	{
-		str_format(aBuf, sizeof(aBuf), "failed to open '%s'", pFilename);
-		Print(IConsole::OUTPUT_LEVEL_STANDARD, "console", aBuf);
+		log_error("console", "failed to open '%s'", pFilename);
 	}
 
 	m_pFirstExec = pPrev;
@@ -766,7 +786,7 @@ bool CConsole::ExecuteFile(const char *pFilename, int ClientId, bool LogFailure,
 
 void CConsole::Con_Echo(IResult *pResult, void *pUserData)
 {
-	((CConsole *)pUserData)->Print(IConsole::OUTPUT_LEVEL_STANDARD, "console", pResult->GetString(0));
+	log_info("console", "%s", pResult->GetString(0));
 }
 
 void CConsole::Con_Exec(IResult *pResult, void *pUserData)
@@ -1107,18 +1127,10 @@ void CConsole::Con_Chain(IResult *pResult, void *pUserData)
 void CConsole::Chain(const char *pName, FChainCommandCallback pfnChainFunc, void *pUser)
 {
 	CCommand *pCommand = FindCommand(pName, m_FlagMask);
-
-	if(!pCommand)
-	{
-		char aBuf[256];
-		str_format(aBuf, sizeof(aBuf), "failed to chain '%s'", pName);
-		Print(IConsole::OUTPUT_LEVEL_DEBUG, "console", aBuf);
-		return;
-	}
-
-	CChain *pChainInfo = new CChain();
+	dbg_assert(pCommand != nullptr, "Invalid command to chain: '%s'", pName);
 
 	// store info
+	CChain *pChainInfo = new CChain();
 	pChainInfo->m_pfnChainCallback = pfnChainFunc;
 	pChainInfo->m_pUserData = pUser;
 	pChainInfo->m_pfnCallback = pCommand->m_pfnCallback;
@@ -1158,34 +1170,29 @@ const IConsole::ICommandInfo *CConsole::GetCommandInfo(const char *pName, int Fl
 
 std::unique_ptr<IConsole> CreateConsole(int FlagMask) { return std::make_unique<CConsole>(FlagMask); }
 
-int CConsole::CResult::GetVictim() const
+int CConsole::CResult::GetVictim(unsigned Slot) const
 {
-	dbg_assert(m_VictimId.has_value(), "m_VictimId has no value");
-	return m_VictimId.value();
+	dbg_assert(Slot < m_vVictims.size(), "victim slot %u out of range", Slot);
+	dbg_assert(m_vVictims[Slot].m_Id.has_value(), "victim %u has no value", Slot);
+	return m_vVictims[Slot].m_Id.value();
 }
 
-void CConsole::CResult::ResetVictim()
+void CConsole::CResult::SetVictim(unsigned Slot, int Victim)
 {
-	m_VictimId = std::nullopt;
-	m_aSpecialVictim[0] = '\0';
-}
-
-void CConsole::CResult::SetVictim(int Victim)
-{
+	dbg_assert(Slot < m_vVictims.size(), "victim slot %u out of range", Slot);
 	dbg_assert(in_range(Victim, 0, MAX_CLIENTS - 1), "Victim ID %d out of range [0, %d]", Victim, MAX_CLIENTS - 1);
-	m_VictimId = Victim;
+	m_vVictims[Slot].m_Id = Victim;
 }
 
-void CConsole::CResult::SetVictim(const char *pVictim)
+void CConsole::CResult::AddVictim(const char *pVictim)
 {
+	CVictim Victim;
 	int Value;
-	if(!str_toint(pVictim, &Value) || !in_range(Value, 0, MAX_CLIENTS - 1))
-	{
-		str_copy(m_aSpecialVictim, pVictim);
-		return;
-	}
-
-	SetVictim(Value);
+	if(str_toint(pVictim, &Value) && in_range(Value, 0, MAX_CLIENTS - 1))
+		Victim.m_Id = Value;
+	else
+		str_copy(Victim.m_aSpecialVictim, pVictim);
+	m_vVictims.push_back(Victim);
 }
 
 std::optional<ColorHSLA> CConsole::ColorParse(const char *pStr, float DarkestLighting)

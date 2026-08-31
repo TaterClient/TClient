@@ -1,6 +1,7 @@
 #include "menu_background.h"
 
 #include <base/dbg.h>
+#include <base/log.h>
 #include <base/str.h>
 #include <base/time.h>
 
@@ -41,6 +42,7 @@ std::array<vec2, CMenuBackground::NUM_POS> GenerateMenuBackgroundPositions()
 	Positions[CMenuBackground::POS_SETTINGS_SOUND] = vec2(1000.0f, 1000.0f);
 	Positions[CMenuBackground::POS_SETTINGS_DDNET] = vec2(1200.0f, 200.0f);
 	Positions[CMenuBackground::POS_SETTINGS_ASSETS] = vec2(500.0f, 500.0f);
+	Positions[CMenuBackground::POS_SETTINGS_CREDITS] = vec2(1100.0f, 1000.0f);
 	for(int i = 0; i < CMenuBackground::POS_BROWSER_CUSTOM_NUM; ++i)
 		Positions[CMenuBackground::POS_BROWSER_CUSTOM0 + i] = vec2(500.0f + (75.0f * (float)i), 650.0f - (75.0f * (float)i));
 	for(int i = 0; i < CMenuBackground::POS_SETTINGS_RESERVED_NUM; ++i)
@@ -100,13 +102,14 @@ void CMenuBackground::LoadThemeIcon(CTheme &Theme)
 	char aIconPath[IO_MAX_PATH_LENGTH];
 	str_format(aIconPath, sizeof(aIconPath), "themes/%s.png", Theme.m_Name.empty() ? "none" : Theme.m_Name.c_str());
 	Theme.m_IconTexture = Graphics()->LoadTexture(aIconPath, IStorage::TYPE_ALL);
-
-	char aBuf[32 + IO_MAX_PATH_LENGTH];
 	if(Theme.m_IconTexture.IsNullTexture())
-		str_format(aBuf, sizeof(aBuf), "failed to load theme icon '%s'", aIconPath);
+	{
+		log_error("menuthemes", "failed to load theme icon '%s'", aIconPath);
+	}
 	else
-		str_format(aBuf, sizeof(aBuf), "loaded theme icon '%s'", aIconPath);
-	Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "menuthemes", aBuf);
+	{
+		log_trace("menuthemes", "loaded theme icon '%s'", aIconPath);
+	}
 }
 
 int CMenuBackground::ThemeScan(const char *pName, int IsDir, int DirType, void *pUser)
@@ -151,9 +154,7 @@ int CMenuBackground::ThemeScan(const char *pName, int IsDir, int DirType, void *
 	}
 
 	// make new theme
-	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf), "added theme '%s' from 'themes/%s'", aThemeName, pName);
-	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, "menuthemes", aBuf);
+	log_trace("menuthemes", "added theme '%s' from 'themes/%s'", aThemeName, pName);
 	pSelf->m_vThemes.emplace_back(aThemeName, IsDay, IsNight);
 	pSelf->LoadThemeIcon(pSelf->m_vThemes.back());
 
@@ -265,30 +266,20 @@ void CMenuBackground::LoadMenuBackground(bool HasDayHint, bool HasNightHint)
 			CMapLayers::OnMapLoad();
 
 			// look for custom positions
-			CMapItemLayerTilemap *pTLayer = m_pLayers->GameLayer();
-			if(pTLayer)
+			CMapItemLayerTilemap *pGameLayer = m_pLayers->GameLayer();
+			const CTile *pTiles = static_cast<const CTile *>(m_pLayers->Map()->GetData(pGameLayer->m_Data));
+			for(int y = 0; y < pGameLayer->m_Height; ++y)
 			{
-				int DataIndex = pTLayer->m_Data;
-				unsigned int Size = m_pLayers->Map()->GetDataSize(DataIndex);
-				void *pTiles = m_pLayers->Map()->GetData(DataIndex);
-				unsigned int TileSize = sizeof(CTile);
-
-				if(Size >= pTLayer->m_Width * pTLayer->m_Height * TileSize)
+				for(int x = 0; x < pGameLayer->m_Width; ++x)
 				{
-					for(int y = 0; y < pTLayer->m_Height; ++y)
+					unsigned char Index = pTiles[y * pGameLayer->m_Width + x].m_Index;
+					if(Index >= TILE_TIME_CHECKPOINT_FIRST && Index <= TILE_TIME_CHECKPOINT_LAST)
 					{
-						for(int x = 0; x < pTLayer->m_Width; ++x)
-						{
-							unsigned char Index = ((CTile *)pTiles)[y * pTLayer->m_Width + x].m_Index;
-							if(Index >= TILE_TIME_CHECKPOINT_FIRST && Index <= TILE_TIME_CHECKPOINT_LAST)
-							{
-								int ArrayIndex = std::clamp<int>((Index - TILE_TIME_CHECKPOINT_FIRST), 0, NUM_POS);
-								m_aPositions[ArrayIndex] = vec2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
-							}
-
-							x += ((CTile *)pTiles)[y * pTLayer->m_Width + x].m_Skip;
-						}
+						int ArrayIndex = std::clamp<int>((Index - TILE_TIME_CHECKPOINT_FIRST), 0, NUM_POS);
+						m_aPositions[ArrayIndex] = vec2(x * 32.0f + 16.0f, y * 32.0f + 16.0f);
 					}
+
+					x += pTiles[y * pGameLayer->m_Width + x].m_Skip;
 				}
 			}
 		}

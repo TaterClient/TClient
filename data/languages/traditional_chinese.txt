@@ -2650,16 +2650,45 @@ Hook collision line tip
 == 鉤索輔助線頭
 
 Refresh the demo list
-== 
+== 重新整理回放列表
 
 Open the selected folder
-== 
+== 打開所選資料夾
 
 Play the selected demo
-== 
+== 播放所選回放
 
 Prediction margin
-== 
+== 預測容差
 
 Predict events (experimental)
+== 預測事件（實驗性）
+
+[Direct touch input]
+Relative aim
+== 
+
+[Predefined touch button behaviors]
+Joystick Relative Aim
+== 
+
+Virtual joystick which only aims and moves the mouse pointer relatively.
+== 
+
+[AntiPing: predict other players]
+Off
+== 
+
+[AntiPing: predict other players]
+All
+== 
+
+[AntiPing: predict other players]
+Interact
+== 
+
+Always predict frozen players
+== 
+
+No country flags match your filter criteria
 == 

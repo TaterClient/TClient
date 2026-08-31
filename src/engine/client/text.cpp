@@ -493,7 +493,7 @@ private:
 						{
 							int Index = GetY * w + GetX;
 							float Mask = 1.f - std::clamp(length(vec2(sx, sy)) - OutlineCount, 0.f, 1.f);
-							c = maximum(c, int(pIn[Index] * Mask));
+							c = std::max(c, (int)(pIn[Index] * Mask));
 						}
 					}
 				}
@@ -1583,12 +1583,11 @@ public:
 		TextContainerIndex.Reset();
 		TextContainerIndex.m_Index = GetFreeTextContainerIndex();
 
-		float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-		Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+		CScreenRect ScreenRect = Graphics()->GetScreen();
 
 		STextContainer &TextContainer = GetTextContainer(TextContainerIndex);
 		TextContainer.m_SingleTimeUse = (m_RenderFlags & TEXT_RENDER_FLAG_ONE_TIME_USE) != 0;
-		const vec2 FakeToScreen = vec2(Graphics()->ScreenWidth() / (ScreenX1 - ScreenX0), Graphics()->ScreenHeight() / (ScreenY1 - ScreenY0));
+		const vec2 FakeToScreen = Graphics()->ScreenSize() / ScreenRect.Size();
 		TextContainer.m_AlignedStartX = round_to_int(pCursor->m_X * FakeToScreen.x) / FakeToScreen.x;
 		TextContainer.m_AlignedStartY = round_to_int(pCursor->m_Y * FakeToScreen.y) / FakeToScreen.y;
 		TextContainer.m_X = pCursor->m_X;
@@ -1633,10 +1632,9 @@ public:
 		STextContainer &TextContainer = GetTextContainer(TextContainerIndex);
 		str_append(TextContainer.m_aDebugText, pText);
 
-		float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-		Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+		CScreenRect ScreenRect = Graphics()->GetScreen();
 
-		const vec2 FakeToScreen = vec2(Graphics()->ScreenWidth() / (ScreenX1 - ScreenX0), Graphics()->ScreenHeight() / (ScreenY1 - ScreenY0));
+		const vec2 FakeToScreen = Graphics()->ScreenSize() / ScreenRect.Size();
 		const float CursorX = round_to_int(pCursor->m_X * FakeToScreen.x) / FakeToScreen.x;
 		const float CursorY = round_to_int(pCursor->m_Y * FakeToScreen.y) / FakeToScreen.y;
 		const int ActualSize = round_truncate(pCursor->m_FontSize * FakeToScreen.y);
@@ -1647,26 +1645,18 @@ public:
 		if(Length < 0)
 			Length = str_length(pText);
 		else
-			Length = minimum(Length, str_length(pText));
+			Length = std::min(Length, str_length(pText));
 
 		const char *pCurrent = pText;
 		const char *pEnd = pCurrent + Length;
 		const char *pPrevBatchEnd = nullptr;
 		const char *pEllipsis = "…";
 		const SGlyph *pEllipsisGlyph = nullptr;
-		if(pCursor->m_Flags & TEXTFLAG_ELLIPSIS_AT_END)
-		{
-			if(pCursor->m_LineWidth > 0.0f && pCursor->m_LineWidth < TextWidth(pCursor->m_FontSize, pText))
-			{
-				pEllipsisGlyph = m_pGlyphMap->GetGlyph(0x2026, ActualSize); // …
-				if(pEllipsisGlyph == nullptr)
-				{
-					// no ellipsis char in font, just stop at end instead
-					pCursor->m_Flags &= ~TEXTFLAG_ELLIPSIS_AT_END;
-					pCursor->m_Flags |= TEXTFLAG_STOP_AT_END;
-				}
-			}
-		}
+		// Only text that does not fit as a whole is ellipsized. Both the ellipsis glyph and
+		// the width of the whole text are only determined once the line width is nearly
+		// exhausted, so text that stays well within it is never measured a second time.
+		bool EllipsisGlyphResolved = false;
+		bool EllipsisFitResolved = false;
 
 		const unsigned RenderFlags = TextContainer.m_RenderFlags;
 
@@ -1686,7 +1676,7 @@ public:
 
 		const bool IsRendered = (pCursor->m_Flags & TEXTFLAG_RENDER) != 0;
 
-		const float CursorInnerWidth = ((ScreenX1 - ScreenX0) / Graphics()->ScreenWidth()) * 2;
+		const float CursorInnerWidth = (ScreenRect.Width() / Graphics()->ScreenWidth()) * 2;
 		const float CursorOuterWidth = CursorInnerWidth * 2;
 		const float CursorOuterInnerDiff = (CursorOuterWidth - CursorInnerWidth) / 2;
 
@@ -1781,7 +1771,7 @@ public:
 			const char *pBatchEnd = pEnd;
 			if(pCursor->m_LineWidth > 0.0f && !(pCursor->m_Flags & TEXTFLAG_STOP_AT_END) && !(pCursor->m_Flags & TEXTFLAG_ELLIPSIS_AT_END))
 			{
-				int Wlen = minimum(WordLength(pCurrent), (int)(pEnd - pCurrent));
+				int Wlen = std::min(WordLength(pCurrent), (int)(pEnd - pCurrent));
 				CTextCursor Compare = *pCursor;
 				Compare.m_CalculateSelectionMode = TEXT_CURSOR_SELECTION_MODE_NONE;
 				Compare.m_CursorMode = TEXT_CURSOR_CURSOR_MODE_NONE;
@@ -1869,22 +1859,44 @@ public:
 						CharKerning = m_pGlyphMap->Kerning(pLastGlyph, pGlyph).x * Scale * pCursor->m_AlignedFontSize;
 					pLastGlyph = pGlyph;
 
-					if(pEllipsisGlyph != nullptr && pCursor->m_Flags & TEXTFLAG_ELLIPSIS_AT_END && pCurrent < pBatchEnd && pCurrent != pEllipsis)
+					if((pCursor->m_Flags & TEXTFLAG_ELLIPSIS_AT_END) != 0 && pCursor->m_LineWidth > 0.0f && pCurrent < pBatchEnd && pCurrent != pEllipsis)
 					{
-						float AdvanceEllipsis = (((RenderFlags & TEXT_RENDER_FLAG_ONLY_ADVANCE_WIDTH) != 0) ? (pEllipsisGlyph->m_Width) : (pEllipsisGlyph->m_AdvanceX + ((!ApplyBearingX) ? (-pEllipsisGlyph->m_OffsetX) : 0.f))) * Scale * pCursor->m_AlignedFontSize;
-						float CharKerningEllipsis = 0.0f;
-						if((RenderFlags & TEXT_RENDER_FLAG_KERNING) != 0)
+						if(!EllipsisGlyphResolved)
 						{
-							CharKerningEllipsis = m_pGlyphMap->Kerning(pGlyph, pEllipsisGlyph).x * Scale * pCursor->m_AlignedFontSize;
+							EllipsisGlyphResolved = true;
+							pEllipsisGlyph = m_pGlyphMap->GetGlyph(0x2026, ActualSize); // …
+							if(pEllipsisGlyph == nullptr)
+							{
+								// no ellipsis char in font, just stop at end instead
+								pCursor->m_Flags &= ~TEXTFLAG_ELLIPSIS_AT_END;
+								pCursor->m_Flags |= TEXTFLAG_STOP_AT_END;
+							}
 						}
-						if(pCursor->m_LineWidth > 0.0f &&
-							DrawX + CharKerning + Advance + CharKerningEllipsis + AdvanceEllipsis - pCursor->m_StartX > pCursor->m_LineWidth)
+						if(pEllipsisGlyph != nullptr)
 						{
-							// we hit the end, only render ellipsis and finish
-							pTmp = pEllipsis;
-							NextCharacter = 0x2026;
-							pCursor->m_Truncated = true;
-							continue;
+							float AdvanceEllipsis = (((RenderFlags & TEXT_RENDER_FLAG_ONLY_ADVANCE_WIDTH) != 0) ? (pEllipsisGlyph->m_Width) : (pEllipsisGlyph->m_AdvanceX + ((!ApplyBearingX) ? (-pEllipsisGlyph->m_OffsetX) : 0.f))) * Scale * pCursor->m_AlignedFontSize;
+							float CharKerningEllipsis = 0.0f;
+							if((RenderFlags & TEXT_RENDER_FLAG_KERNING) != 0)
+							{
+								CharKerningEllipsis = m_pGlyphMap->Kerning(pGlyph, pEllipsisGlyph).x * Scale * pCursor->m_AlignedFontSize;
+							}
+							if(DrawX + CharKerning + Advance + CharKerningEllipsis + AdvanceEllipsis - pCursor->m_StartX > pCursor->m_LineWidth)
+							{
+								if(!EllipsisFitResolved)
+								{
+									EllipsisFitResolved = true;
+									if(pCursor->m_LineWidth >= TextWidth(pCursor->m_FontSize, pText))
+										pEllipsisGlyph = nullptr;
+								}
+								if(pEllipsisGlyph != nullptr)
+								{
+									// we hit the end, only render ellipsis and finish
+									pTmp = pEllipsis;
+									NextCharacter = 0x2026;
+									pCursor->m_Truncated = true;
+									continue;
+								}
+							}
 						}
 					}
 
@@ -1982,7 +1994,7 @@ public:
 					}
 
 					// calculate the full width from the last selection point to the end of this selection draw on screen
-					const float SelWidth = (CharX + maximum(Advance, CharWidth - OutLineRealDiff / 2)) - (LastSelX + LastSelWidth);
+					const float SelWidth = (CharX + std::max(Advance, CharWidth - OutLineRealDiff / 2)) - (LastSelX + LastSelWidth);
 					const float SelX = (LastSelX + LastSelWidth);
 
 					if(pCursor->m_CursorMode == TEXT_CURSOR_CURSOR_MODE_CALCULATE)
@@ -2034,7 +2046,7 @@ public:
 						}
 					}
 
-					pCursor->m_MaxCharacterHeight = maximum(pCursor->m_MaxCharacterHeight, CharHeight + BearingY);
+					pCursor->m_MaxCharacterHeight = std::max(pCursor->m_MaxCharacterHeight, CharHeight + BearingY);
 
 					if(NextCharacter == 0 && (RenderFlags & TEXT_RENDER_FLAG_NO_LAST_CHARACTER_ADVANCE) != 0 && Character != ' ')
 						DrawX += BearingX + CharKerning + CharWidth;
@@ -2065,7 +2077,7 @@ public:
 					LastCharWidth = CharWidth;
 				}
 
-				pCursor->m_LongestLineWidth = maximum(pCursor->m_LongestLineWidth, DrawX - pCursor->m_StartX);
+				pCursor->m_LongestLineWidth = std::max(pCursor->m_LongestLineWidth, DrawX - pCursor->m_StartX);
 			}
 
 			if(NewLine)
@@ -2202,6 +2214,7 @@ public:
 	{
 		STextContainer &TextContainer = GetTextContainer(TextContainerIndex);
 		TextContainer.m_StringInfo.m_vCharacterQuads.clear();
+		TextContainer.m_aDebugText[0] = '\0';
 		// the text buffer gets then recreated by the appended quads
 		AppendTextContainer(TextContainerIndex, pCursor, pText, Length);
 	}
@@ -2329,12 +2342,11 @@ public:
 		STextContainer &TextContainer = GetTextContainer(TextContainerIndex);
 
 		// remap the current screen, after render revert the change again
-		float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-		Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
+		CScreenRect ScreenRect = Graphics()->GetScreen();
 
 		if((TextContainer.m_RenderFlags & TEXT_RENDER_FLAG_NO_PIXEL_ALIGNMENT) == 0)
 		{
-			const vec2 FakeToScreen = vec2(Graphics()->ScreenWidth() / (ScreenX1 - ScreenX0), Graphics()->ScreenHeight() / (ScreenY1 - ScreenY0));
+			const vec2 FakeToScreen = Graphics()->ScreenSize() / ScreenRect.Size();
 			const float AlignedX = round_to_int((TextContainer.m_X + X) * FakeToScreen.x) / FakeToScreen.x;
 			const float AlignedY = round_to_int((TextContainer.m_Y + Y) * FakeToScreen.y) / FakeToScreen.y;
 			X = AlignedX - TextContainer.m_AlignedStartX;
@@ -2344,9 +2356,9 @@ public:
 		TextContainer.m_BoundingBox.m_X = X;
 		TextContainer.m_BoundingBox.m_Y = Y;
 
-		Graphics()->MapScreen(ScreenX0 - X, ScreenY0 - Y, ScreenX1 - X, ScreenY1 - Y);
+		Graphics()->MapScreen(ScreenRect.Move(vec2(-X, -Y)));
 		RenderTextContainer(TextContainerIndex, TextColor, TextOutlineColor);
-		Graphics()->MapScreen(ScreenX0, ScreenY0, ScreenX1, ScreenY1);
+		Graphics()->MapScreen(ScreenRect);
 	}
 
 	STextBoundingBox GetBoundingBoxTextContainer(STextContainerIndex TextContainerIndex) override

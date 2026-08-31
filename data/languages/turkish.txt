@@ -2650,16 +2650,45 @@ Hook collision line tip
 == Kanca çizgisi ucu
 
 Refresh the demo list
-== 
+== Demo listesini yenile
 
 Open the selected folder
-== 
+== Seçili dosyayı aç
 
 Play the selected demo
-== 
+== Seçili demoyu oynat
 
 Prediction margin
-== 
+== Tahmin etme payı
 
 Predict events (experimental)
+== Olayları tahmin et (deneysel)
+
+[Direct touch input]
+Relative aim
+== 
+
+[Predefined touch button behaviors]
+Joystick Relative Aim
+== 
+
+Virtual joystick which only aims and moves the mouse pointer relatively.
+== 
+
+[AntiPing: predict other players]
+Off
+== 
+
+[AntiPing: predict other players]
+All
+== 
+
+[AntiPing: predict other players]
+Interact
+== 
+
+Always predict frozen players
+== 
+
+No country flags match your filter criteria
 == 

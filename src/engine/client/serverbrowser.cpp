@@ -86,6 +86,11 @@ CServerBrowser::~CServerBrowser()
 	m_pPingCache = nullptr;
 }
 
+void CServerBrowser::Shutdown()
+{
+	m_pHttp->Shutdown();
+}
+
 void CServerBrowser::SetBaseInfo(class CNetClient *pClient, const char *pNetVersion)
 {
 	m_pNetClient = pClient;
@@ -486,9 +491,9 @@ void CServerBrowser::Filter()
 			{
 				Filtered = true;
 				// match against player country
-				for(int p = 0; p < minimum(Info.m_NumClients, (int)MAX_CLIENTS); p++)
+				for(const auto &Client : Info.m_vClients)
 				{
-					if(Info.m_aClients[p].m_Country == g_Config.m_BrFilterCountryIndex)
+					if(Client.m_Country == g_Config.m_BrFilterCountryIndex)
 					{
 						Filtered = false;
 						break;
@@ -527,14 +532,14 @@ void CServerBrowser::Filter()
 					}
 
 					// match against players
-					for(int p = 0; p < minimum(Info.m_NumClients, (int)MAX_CLIENTS); p++)
+					for(const auto &Client : Info.m_vClients)
 					{
-						if(MatchesFn(Info.m_aClients[p].m_aName, aFilterStrTrimmed) ||
-							MatchesFn(Info.m_aClients[p].m_aClan, aFilterStrTrimmed))
+						if(MatchesFn(Client.m_aName, aFilterStrTrimmed) ||
+							MatchesFn(Client.m_aClan, aFilterStrTrimmed))
 						{
 							if(g_Config.m_BrFilterConnectingPlayers &&
-								str_comp(Info.m_aClients[p].m_aName, "(connecting)") == 0 &&
-								Info.m_aClients[p].m_aClan[0] == '\0')
+								str_comp(Client.m_aName, "(connecting)") == 0 &&
+								Client.m_aClan[0] == '\0')
 							{
 								continue;
 							}
@@ -810,7 +815,7 @@ void CServerBrowser::SetInfo(CServerEntry *pEntry, const CServerInfo &Info) cons
 		}
 	};
 
-	std::sort(pEntry->m_Info.m_aClients, pEntry->m_Info.m_aClients + Info.m_NumReceivedClients, CPlayerScoreNameLess(pEntry->m_Info.m_ClientScoreKind));
+	std::sort(pEntry->m_Info.m_vClients.begin(), pEntry->m_Info.m_vClients.end(), CPlayerScoreNameLess(pEntry->m_Info.m_ClientScoreKind));
 
 	pEntry->m_GotInfo = 1;
 }
@@ -854,8 +859,7 @@ void CServerBrowser::SetLatency(NETADDR Addr, int Latency)
 CServerBrowser::CServerEntry *CServerBrowser::Add(const NETADDR *pAddrs, int NumAddrs)
 {
 	// create new pEntry
-	CServerEntry *pEntry = m_ServerlistHeap.Allocate<CServerEntry>();
-	*pEntry = {};
+	CServerEntry *pEntry = &m_ServerlistStorage.emplace_back();
 
 	// set the info
 	mem_copy(pEntry->m_Info.m_aAddresses, pAddrs, NumAddrs * sizeof(pAddrs[0]));
@@ -984,7 +988,7 @@ void CServerBrowser::OnServerInfoUpdate(const NETADDR &Addr, int Token, const CS
 	if(m_ServerlistType == IServerBrowser::TYPE_LAN)
 	{
 		SetInfo(pEntry, *pInfo);
-		pEntry->m_Info.m_Latency = minimum(static_cast<int>((time_get() - m_BroadcastTime) * 1000 / time_freq()), 999);
+		pEntry->m_Info.m_Latency = std::min(static_cast<int>((time_get() - m_BroadcastTime) * 1000 / time_freq()), 999);
 	}
 	else if(pEntry->m_RequestTime > 0)
 	{
@@ -993,7 +997,7 @@ void CServerBrowser::OnServerInfoUpdate(const NETADDR &Addr, int Token, const CS
 			SetInfo(pEntry, *pInfo);
 		}
 
-		int Latency = minimum(static_cast<int>((time_get() - pEntry->m_RequestTime) * 1000 / time_freq()), 999);
+		int Latency = std::min(static_cast<int>((time_get() - pEntry->m_RequestTime) * 1000 / time_freq()), 999);
 		if(!pEntry->m_RequestIgnoreInfo)
 		{
 			pEntry->m_Info.m_Latency = Latency;
@@ -1163,25 +1167,12 @@ void CServerBrowser::RequestCurrentServerWithRandomToken(const NETADDR &Addr, in
 
 void CServerBrowser::SetCurrentServerPing(const NETADDR &Addr, int Ping)
 {
-	SetLatency(Addr, minimum(Ping, 999));
+	SetLatency(Addr, std::min(Ping, 999));
 }
 
 void CServerBrowser::UpdateFromHttp()
 {
-	int OwnLocation;
-	if(str_comp(g_Config.m_BrLocation, "auto") == 0)
-	{
-		OwnLocation = m_OwnLocation;
-	}
-	else
-	{
-		if(CServerInfo::ParseLocation(&OwnLocation, g_Config.m_BrLocation))
-		{
-			char aBuf[64];
-			str_format(aBuf, sizeof(aBuf), "cannot parse br_location: '%s'", g_Config.m_BrLocation);
-			m_pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "serverbrowser", aBuf);
-		}
-	}
+	const int OwnLocation = DetermineOwnLocation();
 
 	int NumServers = m_pHttp->NumServers();
 	m_vpServerlist.reserve(NumServers);
@@ -1228,16 +1219,7 @@ void CServerBrowser::UpdateFromHttp()
 		{
 			continue;
 		}
-		int Ping = m_pPingCache->GetPing(Info.m_aAddresses, Info.m_NumAddresses);
-		Info.m_LatencyIsEstimated = Ping == -1;
-		if(Info.m_LatencyIsEstimated)
-		{
-			Info.m_Latency = CServerInfo::EstimateLatency(OwnLocation, Info.m_Location);
-		}
-		else
-		{
-			Info.m_Latency = Ping;
-		}
+		UpdateServerLatency(&Info, OwnLocation);
 		CServerEntry *pEntry = Add(Info.m_aAddresses, Info.m_NumAddresses);
 		SetInfo(pEntry, Info);
 		pEntry->m_RequestIgnoreInfo = true;
@@ -1280,7 +1262,7 @@ void CServerBrowser::CleanUp()
 	// clear out everything
 	m_vSortedServerlist.clear();
 	m_vpServerlist.clear();
-	m_ServerlistHeap.Reset();
+	m_ServerlistStorage.clear();
 	m_NumSortedPlayers = 0;
 	m_ByAddr.clear();
 	m_pFirstReqServer = nullptr;
@@ -1386,12 +1368,19 @@ void CServerBrowser::Update()
 const json_value *CServerBrowser::LoadDDNetInfo()
 {
 	LoadDDNetInfoJson();
+	const int PreviousOwnLocation = DetermineOwnLocation();
 	LoadDDNetLocation();
+	const int OwnLocation = DetermineOwnLocation();
+	const bool UpdateLatency = PreviousOwnLocation != OwnLocation;
 	LoadDDNetServers();
 	for(CServerEntry *pEntry : m_vpServerlist)
 	{
 		UpdateServerCommunity(&pEntry->m_Info);
 		UpdateServerRank(&pEntry->m_Info);
+		if(UpdateLatency)
+		{
+			UpdateServerLatency(&pEntry->m_Info, OwnLocation);
+		}
 	}
 	ValidateServerlistType();
 	RequestResort();
@@ -1467,6 +1456,11 @@ bool CServerBrowser::ParseCommunityServers(CCommunity *pCommunity, const json_va
 		if(str_has_cc(Name.u.string.ptr))
 		{
 			log_error("serverbrowser", "invalid community country name (ServerIndex=%u)", ServerIndex);
+			return false;
+		}
+		if(!in_range(FlagId.u.integer, (int64_t)CountryCode::MINIMUM, (int64_t)CountryCode::MAXIMUM))
+		{
+			log_error("serverbrowser", "invalid community country code (ServerIndex=%u)", ServerIndex);
 			return false;
 		}
 		pCommunity->m_vCountries.emplace_back(Name.u.string.ptr, FlagId.u.integer);
@@ -1649,7 +1643,7 @@ void CServerBrowser::LoadDDNetServers()
 	// Add default none community
 	{
 		CCommunity NoneCommunity(COMMUNITY_NONE, "None", std::nullopt, "");
-		NoneCommunity.m_vCountries.emplace_back(COMMUNITY_COUNTRY_NONE, -1);
+		NoneCommunity.m_vCountries.emplace_back(COMMUNITY_COUNTRY_NONE, CountryCode::DEFAULT);
 		NoneCommunity.m_vTypes.emplace_back(COMMUNITY_TYPE_NONE);
 		m_vCommunities.push_back(std::move(NoneCommunity));
 	}
@@ -1663,7 +1657,7 @@ void CServerBrowser::UpdateServerFilteredPlayers(CServerInfo *pInfo) const
 	pInfo->m_NumFilteredPlayers = g_Config.m_BrFilterSpectators ? pInfo->m_NumPlayers : pInfo->m_NumClients;
 	if(g_Config.m_BrFilterConnectingPlayers)
 	{
-		for(const auto &Client : pInfo->m_aClients)
+		for(const auto &Client : pInfo->m_vClients)
 		{
 			if((!g_Config.m_BrFilterSpectators || Client.m_Player) && str_comp(Client.m_aName, "(connecting)") == 0 && Client.m_aClan[0] == '\0')
 				pInfo->m_NumFilteredPlayers--;
@@ -1675,11 +1669,11 @@ void CServerBrowser::UpdateServerFriends(CServerInfo *pInfo) const
 {
 	pInfo->m_FriendState = IFriends::FRIEND_NO;
 	pInfo->m_FriendNum = 0;
-	for(int ClientIndex = 0; ClientIndex < minimum(pInfo->m_NumReceivedClients, (int)MAX_CLIENTS); ClientIndex++)
+	for(auto &Client : pInfo->m_vClients)
 	{
-		pInfo->m_aClients[ClientIndex].m_FriendState = m_pFriends->GetFriendState(pInfo->m_aClients[ClientIndex].m_aName, pInfo->m_aClients[ClientIndex].m_aClan);
-		pInfo->m_FriendState = maximum(pInfo->m_FriendState, pInfo->m_aClients[ClientIndex].m_FriendState);
-		if(pInfo->m_aClients[ClientIndex].m_FriendState != IFriends::FRIEND_NO)
+		Client.m_FriendState = m_pFriends->GetFriendState(Client.m_aName, Client.m_aClan);
+		pInfo->m_FriendState = std::max(pInfo->m_FriendState, Client.m_FriendState);
+		if(Client.m_FriendState != IFriends::FRIEND_NO)
 			pInfo->m_FriendNum++;
 	}
 }
@@ -1706,6 +1700,35 @@ void CServerBrowser::UpdateServerRank(CServerInfo *pInfo) const
 {
 	const CCommunity *pCommunity = Community(pInfo->m_aCommunityId);
 	pInfo->m_HasRank = pCommunity == nullptr ? CServerInfo::RANK_UNAVAILABLE : pCommunity->HasRank(pInfo->m_aMap);
+}
+
+void CServerBrowser::UpdateServerLatency(CServerInfo *pInfo, int OwnLocation) const
+{
+	int Ping = m_pPingCache->GetPing(pInfo->m_aAddresses, pInfo->m_NumAddresses);
+	pInfo->m_LatencyIsEstimated = Ping == -1;
+	if(pInfo->m_LatencyIsEstimated)
+	{
+		pInfo->m_Latency = CServerInfo::EstimateLatency(OwnLocation, pInfo->m_Location);
+	}
+	else
+	{
+		pInfo->m_Latency = Ping;
+	}
+}
+
+int CServerBrowser::DetermineOwnLocation() const
+{
+	if(str_comp(g_Config.m_BrLocation, "auto") == 0)
+	{
+		return m_OwnLocation;
+	}
+
+	int OwnLocation;
+	if(CServerInfo::ParseLocation(&OwnLocation, g_Config.m_BrLocation))
+	{
+		log_error("serverbrowser", "Cannot parse br_location: '%s'", g_Config.m_BrLocation);
+	}
+	return OwnLocation;
 }
 
 void CServerBrowser::ValidateServerlistType()

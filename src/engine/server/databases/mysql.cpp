@@ -4,11 +4,10 @@
 
 #if defined(CONF_MYSQL)
 #include <base/dbg.h>
+#include <base/log.h>
 #include <base/mem.h>
 #include <base/sphore.h>
 #include <base/str.h>
-
-#include <engine/console.h>
 
 #include <mysql.h>
 
@@ -71,7 +70,7 @@ class CMysqlConnection : public IDbConnection
 public:
 	explicit CMysqlConnection(CMysqlConfig Config);
 	~CMysqlConnection() override;
-	void Print(IConsole *pConsole, const char *pMode) override;
+	void Print(const char *pMode) override;
 
 	const char *BinaryCollate() const override { return "utf8mb4_bin"; }
 	void ToUnixTimestamp(const char *pTimestamp, char *aBuf, unsigned int BufferSize) override;
@@ -79,7 +78,6 @@ public:
 	const char *CollateNocase() const override { return "CONVERT(? USING utf8mb4) COLLATE utf8mb4_general_ci"; }
 	const char *InsertIgnore() const override { return "INSERT IGNORE"; }
 	const char *Random() const override { return "RAND()"; }
-	const char *MedianMapTime(char *pBuffer, int BufferSize) const override;
 	const char *False() const override { return "FALSE"; }
 	const char *True() const override { return "TRUE"; }
 
@@ -191,13 +189,11 @@ bool CMysqlConnection::PrepareAndExecuteStatement(const char *pStmt)
 	return true;
 }
 
-void CMysqlConnection::Print(IConsole *pConsole, const char *pMode)
+void CMysqlConnection::Print(const char *pMode)
 {
-	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf),
+	log_info("server",
 		"MySQL-%s: DB: '%s' Prefix: '%s' User: '%s' IP: <{'%s'}> Port: %d",
 		pMode, m_Config.m_aDatabase, GetPrefix(), m_Config.m_aUser, m_Config.m_aIp, m_Config.m_Port);
-	pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "server", aBuf);
 }
 
 void CMysqlConnection::ToUnixTimestamp(const char *pTimestamp, char *aBuf, unsigned int BufferSize)
@@ -255,11 +251,56 @@ bool CMysqlConnection::ConnectImpl()
 		mysql_options(&m_Mysql, MYSQL_OPT_BIND, m_Config.m_aBindaddr);
 	}
 
-	if(!mysql_real_connect(&m_Mysql, m_Config.m_aIp, m_Config.m_aUser, m_Config.m_aPass, nullptr, m_Config.m_Port, nullptr, CLIENT_IGNORE_SIGPIPE))
+	// SSL support
+	int ClientFlags = CLIENT_IGNORE_SIGPIPE;
+	if(m_Config.m_UseSsl)
+	{
+		// Enable SSL, e.g. required by servers with require_secure_transport enabled.
+		// If no CA file is given, the server certificate is not verified.
+		if(m_Config.m_aSslKey[0])
+		{
+			mysql_options(&m_Mysql, MYSQL_OPT_SSL_KEY, m_Config.m_aSslKey);
+		}
+		if(m_Config.m_aSslCert[0])
+		{
+			mysql_options(&m_Mysql, MYSQL_OPT_SSL_CERT, m_Config.m_aSslCert);
+		}
+		if(m_Config.m_aSslCa[0])
+		{
+			mysql_options(&m_Mysql, MYSQL_OPT_SSL_CA, m_Config.m_aSslCa);
+#if defined(MARIADB_VERSION_ID)
+			my_bool OptVerifyServerCert = 1;
+			mysql_options(&m_Mysql, MYSQL_OPT_SSL_VERIFY_SERVER_CERT, &OptVerifyServerCert);
+#else
+			// MYSQL_OPT_SSL_VERIFY_SERVER_CERT is deprecated/removed in MySQL 8.0, use MYSQL_OPT_SSL_MODE instead
+			unsigned int OptSslMode = SSL_MODE_VERIFY_IDENTITY;
+			mysql_options(&m_Mysql, MYSQL_OPT_SSL_MODE, &OptSslMode);
+#endif
+		}
+		ClientFlags |= CLIENT_SSL;
+	}
+
+	if(!mysql_real_connect(&m_Mysql, m_Config.m_aIp, m_Config.m_aUser, m_Config.m_aPass, nullptr, m_Config.m_Port, nullptr, ClientFlags))
 	{
 		StoreErrorMysql("real_connect");
 		return false;
 	}
+
+	// Check SSL status
+	if(m_Config.m_UseSsl)
+	{
+		const char *pSslCipher = mysql_get_ssl_cipher(&m_Mysql);
+		if(!pSslCipher)
+		{
+			str_copy(m_aErrorDetail, "(ssl_cipher): connection not encrypted despite m_UseSsl (server ssl disabled?)", sizeof(m_aErrorDetail));
+			mysql_close(&m_Mysql);
+			mem_zero(&m_Mysql, sizeof(m_Mysql));
+			mysql_init(&m_Mysql);
+			return false;
+		}
+		dbg_msg("mysql", "using ssl cipher: %s", pSslCipher);
+	}
+
 	m_HaveConnection = true;
 
 	m_pStmt = std::unique_ptr<MYSQL_STMT, CStmtDeleter>(mysql_stmt_init(&m_Mysql));
@@ -646,18 +687,6 @@ int CMysqlConnection::GetBlob(int Col, unsigned char *pBuffer, int BufferSize)
 	dbg_assert(!IsNull, "Error in GetBlob(%d): NULL", Col + 1);
 	dbg_assert(!Error, "Error in GetBlob(%d): truncation occurred", Col + 1);
 	return Length;
-}
-
-const char *CMysqlConnection::MedianMapTime(char *pBuffer, int BufferSize) const
-{
-	str_format(pBuffer, BufferSize,
-		"SELECT MEDIAN(Time) "
-		"OVER (PARTITION BY Map) "
-		"FROM %s_race "
-		"WHERE Map = l.Map "
-		"LIMIT 1",
-		GetPrefix());
-	return pBuffer;
 }
 
 bool CMysqlConnection::AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize)

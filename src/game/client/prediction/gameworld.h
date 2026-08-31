@@ -84,6 +84,7 @@ public:
 		bool m_BugDDRaceInput;
 		bool m_NoWeakHookAndBounce;
 		bool m_PredictEvents;
+		bool m_OldLaser;
 	} m_WorldConfig;
 
 	bool m_IsValidCopy;
@@ -97,6 +98,7 @@ public:
 	void NetObjBegin(CTeamsCore Teams, int LocalClientId);
 	void NetCharAdd(int ObjId, CNetObj_Character *pChar, CNetObj_DDNetCharacter *pExtended, int GameTeam, bool IsLocal);
 	void NetObjAdd(int ObjId, int ObjType, const void *pObjData, const CNetObj_EntityEx *pDataEx);
+	void ResetDoorCollision();
 	void NetObjEnd();
 	void CopyWorld(CGameWorld *pFrom);
 	void CopyWorldClean(CGameWorld *pFrom); // TClient

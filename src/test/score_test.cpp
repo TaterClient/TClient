@@ -21,7 +21,7 @@ TEST(SQLite, Version)
 	ASSERT_GE(sqlite3_libversion_number(), 3025000) << "SQLite >= 3.25.0 required for Window functions";
 }
 
-struct Score : public testing::TestWithParam<IDbConnection *>
+struct Score : public testing::TestWithParam<IDbConnection *> // NOLINT(readability-identifier-naming)
 {
 	Score()
 	{
@@ -30,7 +30,7 @@ struct Score : public testing::TestWithParam<IDbConnection *>
 		InsertMap("Kobra 3", "Zerodin", "Novice", 5, 5);
 	}
 
-	~Score()
+	~Score() override
 	{
 		m_pConn->Disconnect();
 	}
@@ -55,9 +55,9 @@ struct Score : public testing::TestWithParam<IDbConnection *>
 
 	void LoadBestTime()
 	{
-		CSqlLoadBestTimeRequest loadBestTimeReq(std::make_shared<CScoreLoadBestTimeResult>());
-		str_copy(loadBestTimeReq.m_aMap, "Kobra 3");
-		ASSERT_TRUE(CScoreWorker::LoadBestTime(m_pConn, &loadBestTimeReq, m_aError, sizeof(m_aError))) << m_aError;
+		CSqlLoadBestTimeRequest LoadBestTimeReq(std::make_shared<CScoreLoadBestTimeResult>());
+		str_copy(LoadBestTimeReq.m_aMap, "Kobra 3");
+		ASSERT_TRUE(CScoreWorker::LoadBestTime(m_pConn, &LoadBestTimeReq, m_aError, sizeof(m_aError))) << m_aError;
 	}
 
 	void InsertMap(const char *pName, const char *pMapper, const char *pServer, int Points, int Stars)
@@ -76,13 +76,13 @@ struct Score : public testing::TestWithParam<IDbConnection *>
 		ASSERT_EQ(NumInserted, 1);
 	}
 
-	void InsertRank(float Time = 100.0, bool WithTimeCheckPoints = false)
+	void InsertRank(float Time = 100.0, bool WithTimeCheckPoints = false, const char *pName = "nameless tee")
 	{
 		str_copy(g_Config.m_SvSqlServerName, "USA");
 		CSqlScoreData ScoreData(std::make_shared<CScorePlayerResult>());
 		str_copy(ScoreData.m_aMap, "Kobra 3");
 		str_copy(ScoreData.m_aGameUuid, "8d300ecf-5873-4297-bee5-95668fdff320");
-		str_copy(ScoreData.m_aName, "nameless tee");
+		str_copy(ScoreData.m_aName, pName);
 		ScoreData.m_ClientId = 0;
 		ScoreData.m_Time = Time;
 		str_copy(ScoreData.m_aTimestamp, "2021-11-24 19:24:08");
@@ -115,7 +115,7 @@ struct Score : public testing::TestWithParam<IDbConnection *>
 	CSqlPlayerRequest m_PlayerRequest{m_pPlayerResult};
 };
 
-struct SingleScore : public Score
+struct SingleScore : public Score // NOLINT(readability-identifier-naming)
 {
 	SingleScore()
 	{
@@ -201,6 +201,17 @@ TEST_P(SingleScore, RankServer)
 	ExpectLines(m_pPlayerResult, {"nameless tee - 01:40.00 - better than 100% - requested by brainless tee", "Global rank 1"}, true);
 }
 
+TEST_P(SingleScore, RankPercent)
+{
+	g_Config.m_SvRegionalRankings = false;
+	InsertRank(200.0, false, "second tee");
+	InsertRank(300.0, false, "third tee");
+	InsertRank(400.0, false, "fourth tee");
+	str_copy(m_PlayerRequest.m_aName, "third tee");
+	ASSERT_TRUE(CScoreWorker::ShowRank(m_pConn, &m_PlayerRequest, m_aError, sizeof(m_aError))) << m_aError;
+	ExpectLines(m_pPlayerResult, {"third tee - 05:00.00 - better than 33% - requested by brainless tee", "Global rank 3"}, true);
+}
+
 TEST_P(SingleScore, LoadPlayerData)
 {
 	InsertRank(120.0, true);
@@ -263,7 +274,7 @@ TEST_P(SingleScore, TimesDoesntExist)
 	ExpectLines(m_pPlayerResult, {"There are no times in the specified range"});
 }
 
-struct TeamScore : public Score
+struct TeamScore : public Score // NOLINT(readability-identifier-naming)
 {
 	void SetUp() override
 	{
@@ -273,22 +284,21 @@ struct TeamScore : public Score
 	void InsertTeamRank(float Time = 100.0)
 	{
 		str_copy(g_Config.m_SvSqlServerName, "USA");
-		CSqlTeamScoreData teamScoreData;
+		CSqlTeamScoreData TeamScoreData;
 		CSqlScoreData ScoreData(std::make_shared<CScorePlayerResult>());
-		str_copy(teamScoreData.m_aMap, "Kobra 3");
+		str_copy(TeamScoreData.m_aMap, "Kobra 3");
 		str_copy(ScoreData.m_aMap, "Kobra 3");
-		str_copy(teamScoreData.m_aGameUuid, "8d300ecf-5873-4297-bee5-95668fdff320");
+		str_copy(TeamScoreData.m_aGameUuid, "8d300ecf-5873-4297-bee5-95668fdff320");
 		str_copy(ScoreData.m_aGameUuid, "8d300ecf-5873-4297-bee5-95668fdff320");
-		teamScoreData.m_Size = 2;
-		str_copy(teamScoreData.m_aaNames[0], "nameless tee");
-		str_copy(teamScoreData.m_aaNames[1], "brainless tee");
-		teamScoreData.m_Time = Time;
+		TeamScoreData.m_Size = 2;
+		str_copy(TeamScoreData.m_aaNames[0], "nameless tee");
+		str_copy(TeamScoreData.m_aaNames[1], "brainless tee");
+		TeamScoreData.m_Time = Time;
 		ScoreData.m_Time = Time;
-		str_copy(teamScoreData.m_aTimestamp, "2021-11-24 19:24:08");
+		str_copy(TeamScoreData.m_aTimestamp, "2021-11-24 19:24:08");
 		str_copy(ScoreData.m_aTimestamp, "2021-11-24 19:24:08");
-		for(int i = 0; i < NUM_CHECKPOINTS; i++)
-			ScoreData.m_aCurrentTimeCp[i] = 0;
-		ASSERT_TRUE(CScoreWorker::SaveTeamScore(m_pConn, &teamScoreData, Write::NORMAL, m_aError, sizeof(m_aError))) << m_aError;
+		std::fill(std::begin(ScoreData.m_aCurrentTimeCp), std::end(ScoreData.m_aCurrentTimeCp), 0);
+		ASSERT_TRUE(CScoreWorker::SaveTeamScore(m_pConn, &TeamScoreData, Write::NORMAL, m_aError, sizeof(m_aError))) << m_aError;
 
 		str_copy(m_PlayerRequest.m_aMap, "Kobra 3");
 		str_copy(m_PlayerRequest.m_aRequestingPlayer, "brainless tee");
@@ -354,7 +364,97 @@ TEST_P(TeamScore, RankUpdates)
 			"---------------------------------"});
 }
 
-struct MapInfo : public Score
+// A team of MAX_CLIENTS players with names of maximum length, which is the
+// worst case for the chat messages that show team ranks.
+struct BigTeamScore : public Score // NOLINT(readability-identifier-naming)
+{
+	void SetUp() override
+	{
+		str_copy(g_Config.m_SvSqlServerName, "USA");
+		CSqlTeamScoreData TeamScoreData;
+		str_copy(TeamScoreData.m_aMap, "Kobra 3");
+		str_copy(TeamScoreData.m_aGameUuid, "8d300ecf-5873-4297-bee5-95668fdff320");
+		TeamScoreData.m_Size = MAX_CLIENTS;
+		TeamScoreData.m_Time = 100.0f;
+		str_copy(TeamScoreData.m_aTimestamp, "2021-11-24 19:24:08");
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			str_format(TeamScoreData.m_aaNames[i], sizeof(TeamScoreData.m_aaNames[i]), "playertee12_%03d", i);
+			ASSERT_EQ(str_length(TeamScoreData.m_aaNames[i]), MAX_NAME_LENGTH - 1);
+		}
+		ASSERT_TRUE(CScoreWorker::SaveTeamScore(m_pConn, &TeamScoreData, Write::NORMAL, m_aError, sizeof(m_aError))) << m_aError;
+
+		CSqlScoreData ScoreData(std::make_shared<CScorePlayerResult>());
+		str_copy(ScoreData.m_aMap, "Kobra 3");
+		str_copy(ScoreData.m_aGameUuid, "8d300ecf-5873-4297-bee5-95668fdff320");
+		ScoreData.m_Time = 100.0f;
+		str_copy(ScoreData.m_aTimestamp, "2021-11-24 19:24:08");
+		std::fill(std::begin(ScoreData.m_aCurrentTimeCp), std::end(ScoreData.m_aCurrentTimeCp), 0);
+		str_copy(ScoreData.m_aRequestingPlayer, TeamScoreData.m_aaNames[0]);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			str_copy(ScoreData.m_aName, TeamScoreData.m_aaNames[i]);
+			ScoreData.m_ClientId = i;
+			ASSERT_TRUE(CScoreWorker::SaveScore(m_pConn, &ScoreData, Write::NORMAL, m_aError, sizeof(m_aError))) << m_aError;
+		}
+
+		str_copy(m_PlayerRequest.m_aMap, "Kobra 3");
+		str_copy(m_PlayerRequest.m_aRequestingPlayer, TeamScoreData.m_aaNames[0]);
+		str_copy(m_PlayerRequest.m_aName, TeamScoreData.m_aaNames[0]);
+		str_copy(m_PlayerRequest.m_aServer, "USA");
+		m_PlayerRequest.m_Offset = 0;
+	}
+
+	// Messages longer than this are truncated before they reach the client.
+	void ExpectMessagesFitIntoChat()
+	{
+		for(const auto &aMessage : m_pPlayerResult->m_Data.m_aaMessages)
+		{
+			EXPECT_LT(str_length(aMessage), MAX_CHAT_LENGTH) << aMessage;
+		}
+	}
+};
+
+TEST_P(BigTeamScore, TeamRankShortensNames)
+{
+	ASSERT_TRUE(CScoreWorker::ShowTeamRank(m_pConn, &m_PlayerRequest, m_aError, sizeof(m_aError))) << m_aError;
+	ExpectMessagesFitIntoChat();
+
+	// The names that don't fit into the chat message are summarized.
+	EXPECT_STREQ(m_pPlayerResult->m_Data.m_aaMessages[0],
+		"1. playertee12_000, playertee12_001, playertee12_002, playertee12_003, "
+		"playertee12_004, playertee12_005, playertee12_006, playertee12_007, "
+		"playertee12_008, playertee12_009 & 118 more Team time: 01:40.00, "
+		"better than 100%, requested by playertee12_000");
+}
+
+TEST_P(BigTeamScore, TeamTop5ShortensNames)
+{
+	g_Config.m_SvRegionalRankings = false;
+	ASSERT_TRUE(CScoreWorker::ShowTeamTop5(m_pConn, &m_PlayerRequest, m_aError, sizeof(m_aError))) << m_aError;
+	ExpectMessagesFitIntoChat();
+
+	// Five teams can't be wrapped, so the names that don't fit are summarized.
+	EXPECT_STREQ(m_pPlayerResult->m_Data.m_aaMessages[1],
+		"1. playertee12_000, playertee12_001, playertee12_002, playertee12_003, "
+		"playertee12_004, playertee12_005, playertee12_006, playertee12_007, "
+		"playertee12_008, playertee12_009, playertee12_010, playertee12_011, "
+		"playertee12_012 & 115 more Team Time: 01:40.00");
+}
+
+TEST_P(BigTeamScore, PlayerTeamTop5ShortensNames)
+{
+	ASSERT_TRUE(CScoreWorker::ShowPlayerTeamTop5(m_pConn, &m_PlayerRequest, m_aError, sizeof(m_aError))) << m_aError;
+	ExpectMessagesFitIntoChat();
+
+	EXPECT_STREQ(m_pPlayerResult->m_Data.m_aaMessages[1],
+		"1. playertee12_000, playertee12_001, playertee12_002, playertee12_003, "
+		"playertee12_004, playertee12_005, playertee12_006, playertee12_007, "
+		"playertee12_008, playertee12_009, playertee12_010, playertee12_011, "
+		"playertee12_012 & 115 more Team Time: 01:40.00");
+}
+
+struct MapInfo : public Score // NOLINT(readability-identifier-naming)
 {
 	MapInfo()
 	{
@@ -377,12 +477,13 @@ TEST_P(MapInfo, ExactNoFinish)
 
 TEST_P(MapInfo, ExactFinish)
 {
-	InsertRank();
+	InsertRank(42.87f);
+	str_copy(m_PlayerRequest.m_aRequestingPlayer, "nameless tee");
 	str_copy(m_PlayerRequest.m_aName, "Kobra 3");
 	ASSERT_TRUE(CScoreWorker::MapInfo(m_pConn, &m_PlayerRequest, m_aError, sizeof(m_aError))) << m_aError;
 
 	EXPECT_EQ(m_pPlayerResult->m_MessageKind, CScorePlayerResult::DIRECT);
-	EXPECT_THAT(m_pPlayerResult->m_Data.m_aaMessages[0], testing::MatchesRegex("\"Kobra 3\" by Zerodin on Novice, ★★★★★, 5 points, released .* ago, 1 finish by 1 tee in 01:40 median"));
+	EXPECT_THAT(m_pPlayerResult->m_Data.m_aaMessages[0], testing::MatchesRegex("\"Kobra 3\" by Zerodin on Novice, ★★★★★, 5 points, released .* ago, 1 finish by 1 tee in 00:42 median, your time: 42\\.87"));
 	for(int i = 1; i < CScorePlayerResult::MAX_MESSAGES; i++)
 	{
 		EXPECT_STREQ(m_pPlayerResult->m_Data.m_aaMessages[i], "");
@@ -425,7 +526,7 @@ TEST_P(MapInfo, DoesntExit)
 	ExpectLines(m_pPlayerResult, {"No map like \"f\" found."});
 }
 
-struct MapVote : public Score
+struct MapVote : public Score // NOLINT(readability-identifier-naming)
 {
 	MapVote()
 	{
@@ -472,7 +573,7 @@ TEST_P(MapVote, DoesntExist)
 	ExpectLines(m_pPlayerResult, {"No map like \"f\" found. Try adding a '%' at the start if you don't know the first character. Example: /map %castle for \"Out of Castle\""});
 }
 
-struct Points : public Score
+struct Points : public Score // NOLINT(readability-identifier-naming)
 {
 	Points()
 	{
@@ -554,7 +655,7 @@ TEST_P(Points, EqualPointsTop)
 			"-------------------------------"});
 }
 
-struct RandomMap : public Score
+struct RandomMap : public Score // NOLINT(readability-identifier-naming)
 {
 	std::shared_ptr<CScoreRandomMapResult> m_pRandomMapResult{std::make_shared<CScoreRandomMapResult>(0)};
 	CSqlRandomMapRequest m_RandomMapRequest{m_pRandomMapResult};
@@ -626,7 +727,7 @@ TEST_P(RandomMap, UnfinishedDoesntExist)
 	EXPECT_STREQ(m_pRandomMapResult->m_aMessage, "nameless tee has no more unfinished maps on this server!");
 }
 
-auto g_pSqliteConn = CreateSqliteConnection(":memory:", true);
+static auto g_pSqliteConn = CreateSqliteConnection(":memory:", true);
 #if defined(CONF_TEST_MYSQL)
 CMysqlConfig gMysqlConfig{
 	"ddnet", // database
@@ -638,10 +739,10 @@ CMysqlConfig gMysqlConfig{
 	3306, // port
 	true, // setup
 };
-auto g_pMysqlConn = CreateMysqlConnection(gMysqlConfig);
+static auto g_pMysqlConn = CreateMysqlConnection(gMysqlConfig);
 #endif
 
-auto g_TestValues{
+static auto g_TestValues{
 	testing::Values(
 #if defined(CONF_TEST_MYSQL)
 		g_pMysqlConn.get(),
@@ -661,6 +762,7 @@ auto g_TestValues{
 
 INSTANTIATE(SingleScore);
 INSTANTIATE(TeamScore);
+INSTANTIATE(BigTeamScore);
 INSTANTIATE(MapInfo);
 INSTANTIATE(MapVote);
 INSTANTIATE(Points);

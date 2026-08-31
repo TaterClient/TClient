@@ -2,6 +2,10 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "broadcast.h"
 
+#include <base/color.h>
+#include <base/log.h>
+#include <base/log_color.h>
+
 #include <engine/graphics.h>
 #include <engine/shared/config.h>
 #include <engine/textrender.h>
@@ -53,7 +57,7 @@ void CBroadcast::RenderServerBroadcast()
 
 	const float Height = 300.0f;
 	const float Width = Height * Graphics()->ScreenAspect();
-	Graphics()->MapScreen(0.0f, 0.0f, Width, Height);
+	Graphics()->MapScreenToSize(Width, Height);
 
 	if(m_BroadcastRenderOffset < 0.0f)
 		m_BroadcastRenderOffset = Width / 2.0f - TextRender()->TextWidth(12.0f, m_aBroadcastText, -1, Width) / 2.0f;
@@ -95,12 +99,13 @@ void CBroadcast::DoBroadcast(const char *pText)
 
 	if(g_Config.m_ClPrintBroadcasts)
 	{
+		const LOG_COLOR LogColor = color_cast<LOG_COLOR>(color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageHighlightColor)));
 		char aLine[sizeof(m_aBroadcastText)];
 		while((pText = str_next_token(pText, "\n", aLine, sizeof(aLine))))
 		{
 			if(aLine[0] != '\0')
 			{
-				GameClient()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "broadcast", aLine, color_cast<ColorRGBA>(ColorHSLA(g_Config.m_ClMessageHighlightColor)));
+				log_info_color(LogColor, "broadcast", "%s", aLine);
 			}
 		}
 	}

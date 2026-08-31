@@ -49,6 +49,16 @@ CCharacter::CCharacter(CGameWorld *pWorld, CNetObj_PlayerInput LastInput) :
 	{
 		CurrentTimeCp = 0.0f;
 	}
+
+	for(auto &Id : m_aUntranslatedId)
+		Id = Server()->SnapNewId();
+}
+
+CCharacter::~CCharacter()
+{
+	for(auto Id : m_aUntranslatedId)
+		if(Id)
+			Server()->SnapFreeId(*Id);
 }
 
 void CCharacter::Reset()
@@ -899,23 +909,28 @@ void CCharacter::TickDeferred()
 		int Events = m_Core.m_TriggeredEvents;
 		int CID = m_pPlayer->GetCid();
 
-		// Some sounds are triggered client-side for the acting player (or for all players on Sixup)
-		// so we need to avoid duplicating them
-		CClientMask TeamMaskExceptSelfAndSixup = Teams()->TeamMask(Team(), CID, CID, CGameContext::FLAG_SIX);
-		// Some are triggered client-side but only on Sixup
-		CClientMask TeamMaskExceptSixup = Teams()->TeamMask(Team(), -1, CID, CGameContext::FLAG_SIX);
+		const int SoundEvents = COREEVENT_GROUND_JUMP | COREEVENT_HOOK_ATTACH_PLAYER |
+					COREEVENT_HOOK_ATTACH_GROUND | COREEVENT_HOOK_HIT_NOHOOK;
+		if(Events & SoundEvents)
+		{
+			// Some sounds are triggered client-side for the acting player (or for all players on Sixup)
+			// so we need to avoid duplicating them
+			CClientMask TeamMaskExceptSelfAndSixup = Teams()->TeamMask(Team(), CID, CID, CGameContext::FLAG_SIX);
+			// Some are triggered client-side but only on Sixup
+			CClientMask TeamMaskExceptSixup = Teams()->TeamMask(Team(), -1, CID, CGameContext::FLAG_SIX);
 
-		if(Events & COREEVENT_GROUND_JUMP)
-			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, TeamMaskExceptSelfAndSixup);
+			if(Events & COREEVENT_GROUND_JUMP)
+				GameServer()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, TeamMaskExceptSelfAndSixup);
 
-		if(Events & COREEVENT_HOOK_ATTACH_PLAYER)
-			GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_PLAYER, TeamMaskExceptSixup);
+			if(Events & COREEVENT_HOOK_ATTACH_PLAYER)
+				GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_PLAYER, TeamMaskExceptSixup);
 
-		if(Events & COREEVENT_HOOK_ATTACH_GROUND)
-			GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_GROUND, TeamMaskExceptSelfAndSixup);
+			if(Events & COREEVENT_HOOK_ATTACH_GROUND)
+				GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_GROUND, TeamMaskExceptSelfAndSixup);
 
-		if(Events & COREEVENT_HOOK_HIT_NOHOOK)
-			GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, TeamMaskExceptSelfAndSixup);
+			if(Events & COREEVENT_HOOK_HIT_NOHOOK)
+				GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, TeamMaskExceptSelfAndSixup);
+		}
 
 		if(Events & COREEVENT_GROUND_JUMP)
 			m_TriggeredEvents7 |= protocol7::COREEVENTFLAG_GROUND_JUMP;
@@ -1069,7 +1084,7 @@ void CCharacter::CancelSwapRequests()
 	GetPlayer()->m_SwapTargetsClientId = -1;
 }
 
-void CCharacter::SnapCharacter(int SnappingClient, int Id)
+void CCharacter::SnapCharacter(int SnappingClient, int MapId)
 {
 	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
 	CCharacterCore *pCore;
@@ -1142,11 +1157,8 @@ void CCharacter::SnapCharacter(int SnappingClient, int Id)
 		Character.m_Tick = Tick;
 		Character.m_Emote = Emote;
 
-		if(Character.m_HookedPlayer != -1)
-		{
-			if(!Server()->Translate(Character.m_HookedPlayer, SnappingClient))
-				Character.m_HookedPlayer = -1;
-		}
+		if(!Server()->Translate(Character.m_HookedPlayer, SnappingClient))
+			Character.m_HookedPlayer = -1;
 
 		Character.m_AttackTick = m_AttackTick;
 		Character.m_Direction = m_Input.m_Direction;
@@ -1156,7 +1168,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int Id)
 		Character.m_Armor = Armor;
 		Character.m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
-		Server()->SnapNewItem(Id, Character);
+		Server()->SnapNewItem(MapId, Character);
 	}
 	else
 	{
@@ -1168,9 +1180,12 @@ void CCharacter::SnapCharacter(int SnappingClient, int Id)
 			Character.m_Angle -= (int)(2.0f * pi * 256.0f);
 		}
 
+		if(!Server()->Translate(Character.m_HookedPlayer, SnappingClient))
+			Character.m_HookedPlayer = -1;
+
 		// m_HookTick can be negative when using the hook_duration tune, which 0.7 clients
 		// will consider invalid. https://github.com/ddnet/ddnet/issues/3915
-		Character.m_HookTick = maximum(0, Character.m_HookTick);
+		Character.m_HookTick = std::max(0, Character.m_HookTick);
 
 		Character.m_Tick = Tick;
 		Character.m_Emote = Emote;
@@ -1188,7 +1203,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int Id)
 		Character.m_Armor = Armor;
 		Character.m_TriggeredEvents = m_TriggeredEvents7;
 
-		Server()->SnapNewItem(Id, Character);
+		Server()->SnapNewItem(MapId, Character);
 	}
 }
 
@@ -1215,8 +1230,6 @@ bool CCharacter::CanSnapCharacter(int SnappingClient)
 
 bool CCharacter::IsSnappingCharacterInView(int SnappingClientId)
 {
-	int Id = m_pPlayer->GetCid();
-
 	// A player may not be clipped away if their hook or a hook attached to them is in the field of view
 	bool PlayerAndHookNotInView = NetworkClippedLine(SnappingClientId, m_Pos, m_Core.m_HookPos);
 	bool AttachedHookInView = false;
@@ -1225,7 +1238,7 @@ bool CCharacter::IsSnappingCharacterInView(int SnappingClientId)
 		for(const auto &AttachedPlayerId : m_Core.m_AttachedPlayers)
 		{
 			const CCharacter *pOtherPlayer = GameServer()->GetPlayerChar(AttachedPlayerId);
-			if(pOtherPlayer && pOtherPlayer->m_Core.HookedPlayer() == Id)
+			if(pOtherPlayer && pOtherPlayer->m_Core.HookedPlayer() == m_pPlayer->GetCid())
 			{
 				if(!NetworkClippedLine(SnappingClientId, m_Pos, pOtherPlayer->m_Pos))
 				{
@@ -1244,24 +1257,43 @@ bool CCharacter::IsSnappingCharacterInView(int SnappingClientId)
 
 void CCharacter::Snap(int SnappingClient)
 {
-	int Id = m_pPlayer->GetCid();
-
-	if(!Server()->Translate(Id, SnappingClient))
-		return;
-
 	if(!CanSnapCharacter(SnappingClient))
 	{
 		return;
 	}
 
 	// always snap the snapping client, even if it is not in view
-	if(!IsSnappingCharacterInView(SnappingClient) && Id != SnappingClient)
+	if(!IsSnappingCharacterInView(SnappingClient) && m_pPlayer->GetCid() != SnappingClient)
 		return;
 
-	SnapCharacter(SnappingClient, Id);
+	int SnappingClientVersion = GameServer()->GetClientVersion(SnappingClient);
+
+	// Translate id, if we are not in the map of the other person display us as weapon and our hook as a laser.
+	// This shouldn't happen but is realistically impossible to avoid as soon as you zoom out a little or simply
+	// more than 62 tees are around you. A bug might also occur in the playermapping algorithm, so best practice is to never let
+	// a player be confused by why they got hooked or why some projectiles randomly appear by showing the player as weapon.
+	int TranslatedId = m_pPlayer->GetCid();
+	if(SnappingClient > -1 && !Server()->Translate(TranslatedId, SnappingClient))
+	{
+		CSnapContext SnapContext = CSnapContext(SnappingClientVersion, Server()->IsSixup(SnappingClient), SnappingClient);
+
+		int Subtype = GetActiveWeapon();
+		int Type = Subtype == WEAPON_NINJA ? POWERUP_NINJA : POWERUP_WEAPON;
+		if(m_aUntranslatedId[EUntranslatedMap::ID_WEAPON])
+			GameServer()->SnapPickup(SnapContext, *m_aUntranslatedId[EUntranslatedMap::ID_WEAPON], m_Pos, Type, Subtype, 0, PICKUPFLAG_NO_PREDICT);
+
+		if(m_Core.m_HookState != HOOK_IDLE && m_Core.m_HookState != HOOK_RETRACTED && m_aUntranslatedId[EUntranslatedMap::ID_HOOK])
+		{
+			int StartTick = Server()->Tick() - 3;
+			GameServer()->SnapLaserObject(SnapContext, *m_aUntranslatedId[EUntranslatedMap::ID_HOOK], m_Core.m_HookPos, m_Pos, StartTick, -1, LASERTYPE_RIFLE);
+		}
+		return;
+	}
+
+	// otherwise show our normal tee and send ddnet character stuff
+	SnapCharacter(SnappingClient, TranslatedId);
 
 	CNetObj_DDNetCharacter DDNetCharacter = {};
-
 	DDNetCharacter.m_Flags = 0;
 	if(m_Core.m_Solo)
 		DDNetCharacter.m_Flags |= CHARACTERFLAG_SOLO;
@@ -1311,7 +1343,11 @@ void CCharacter::Snap(int SnappingClient)
 	DDNetCharacter.m_FreezeEnd = m_Core.m_DeepFrozen ? -1 : (m_FreezeTime == 0 ? 0 : Server()->Tick() + m_FreezeTime);
 	DDNetCharacter.m_Jumps = m_Core.m_Jumps;
 	DDNetCharacter.m_TeleCheckpoint = m_TeleCheckpoint;
-	DDNetCharacter.m_StrongWeakId = m_StrongWeakId;
+
+	int StrongWeakId = m_StrongWeakId;
+	if(!Server()->ClientSupportsServerMaxClients(SnappingClient) && SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient])
+		StrongWeakId = GameServer()->m_apPlayers[SnappingClient]->m_aStrongWeakId[TranslatedId];
+	DDNetCharacter.m_StrongWeakId = StrongWeakId;
 
 	// Display Information
 	DDNetCharacter.m_JumpedTotal = m_Core.m_JumpedTotal;
@@ -1339,7 +1375,7 @@ void CCharacter::Snap(int SnappingClient)
 	// OVERRIDE_NONE is the default value, the object is zeroed, so it would incorrectly become 0
 	DDNetCharacter.m_TuneZoneOverride = TuneZone::OVERRIDE_NONE;
 
-	Server()->SnapNewItem(Id, DDNetCharacter);
+	Server()->SnapNewItem(TranslatedId, DDNetCharacter);
 }
 
 void CCharacter::PostGlobalSnap()
@@ -1541,8 +1577,8 @@ void CCharacter::HandleSkippableTiles(int Index)
 			constexpr float MaxSpeedScale = 5.0f;
 			if(MaxSpeed == 0)
 			{
-				float MaxRampSpeed = GetTuning(m_TuneZone)->m_VelrampRange / (50 * log(maximum((float)GetTuning(m_TuneZone)->m_VelrampCurvature, 1.01f)));
-				MaxSpeed = maximum(MaxRampSpeed, GetTuning(m_TuneZone)->m_VelrampStart / 50) * MaxSpeedScale;
+				float MaxRampSpeed = GetTuning(m_TuneZone)->m_VelrampRange / (50 * log(std::max((float)GetTuning(m_TuneZone)->m_VelrampCurvature, 1.01f)));
+				MaxSpeed = std::max(MaxRampSpeed, GetTuning(m_TuneZone)->m_VelrampStart / 50) * MaxSpeedScale;
 			}
 
 			// (signed) length of projection
@@ -2501,7 +2537,7 @@ void CCharacter::DDRaceInit()
 	}
 }
 
-void CCharacter::Rescue()
+bool CCharacter::Rescue()
 {
 	if(m_SetSavePos[GetPlayer()->m_RescueMode] && !m_Core.m_Super && !m_Core.m_Invincible)
 	{
@@ -2510,16 +2546,18 @@ void CCharacter::Rescue()
 			char aBuf[256];
 			str_format(aBuf, sizeof(aBuf), "You have to wait %d seconds until you can rescue yourself", (int)((m_LastRescue + (int64_t)g_Config.m_SvRescueDelay * Server()->TickSpeed() - Server()->Tick()) / Server()->TickSpeed()));
 			GameServer()->SendChatTarget(GetPlayer()->GetCid(), aBuf);
-			return;
+			return false;
 		}
 
 		m_LastRescue = Server()->Tick();
 		int StartTime = m_StartTime;
+		ERaceState DDRaceState = m_DDRaceState;
 		m_RescueTee[GetPlayer()->m_RescueMode].Load(this);
 		// Don't load these from saved tee:
 		m_Core.m_Vel = vec2(0, 0);
 		m_Core.m_HookState = HOOK_IDLE;
 		m_StartTime = StartTime;
+		m_DDRaceState = DDRaceState;
 		m_SavedInput.m_Direction = 0;
 		m_SavedInput.m_Jump = 0;
 		// simulate releasing the fire button
@@ -2528,7 +2566,9 @@ void CCharacter::Rescue()
 		m_SavedInput.m_Fire &= INPUT_STATE_MASK;
 		m_SavedInput.m_Hook = 0;
 		m_pPlayer->Pause(CPlayer::PAUSE_NONE, true);
+		return true;
 	}
+	return false;
 }
 
 CClientMask CCharacter::TeamMask()
