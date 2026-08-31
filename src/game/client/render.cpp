@@ -256,22 +256,28 @@ void CRenderTools::GetRenderTeeOffsetToRenderedTee(const CAnimState *pAnim, cons
 	TeeOffsetToMid.y = -MidOfRendered;
 }
 
-void CRenderTools::RenderTee(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, float Alpha) const
+void CRenderTools::RenderTee(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, float Alpha, bool IsLocal) const
 {
 	if(pInfo->m_aSixup[g_Config.m_ClDummy].PartTexture(protocol7::SKINPART_BODY).IsValid())
-		RenderTee7(pAnim, pInfo, Emote, Dir, Pos, Alpha);
+		RenderTee7(pAnim, pInfo, Emote, Dir, Pos, Alpha, IsLocal);
 	else
-		RenderTee6(pAnim, pInfo, Emote, Dir, Pos, Alpha);
+		RenderTee6(pAnim, pInfo, Emote, Dir, Pos, Alpha, IsLocal);
 
 	Graphics()->SetColor(1.f, 1.f, 1.f, 1.f);
 	Graphics()->QuadsSetRotation(0);
 }
 
-void CRenderTools::RenderTee7(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, float Alpha) const
+void CRenderTools::RenderTee7(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, float Alpha, bool IsLocal) const
 {
 	vec2 Direction = Dir;
 	vec2 Position = Pos;
 	const bool IsBot = pInfo->m_aSixup[g_Config.m_ClDummy].m_BotTexture.IsValid();
+
+	// TClient
+	const float TinyBodyScale = 0.7f;
+	const float TinyFeetScale = 0.85f;
+	float SizeMultiplier = (g_Config.m_TcTinyTeeSize / 100.0f);
+	bool TinyTee = g_Config.m_TcTinyTees && (IsLocal || g_Config.m_TcTinyTeesOthers);
 
 	// first pass we draw the outline
 	// second pass we draw the filling
@@ -283,6 +289,11 @@ void CRenderTools::RenderTee7(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 		{
 			float AnimScale = pInfo->m_Size * 1.0f / 64.0f;
 			float BaseSize = pInfo->m_Size;
+			if(TinyTee) // TClient
+			{
+				BaseSize *= TinyBodyScale * SizeMultiplier;
+				AnimScale *= TinyBodyScale * SizeMultiplier;
+			}
 			if(Filling == 1)
 			{
 				vec2 BodyPos = Position + vec2(pAnim->GetBody()->m_X, pAnim->GetBody()->m_Y) * AnimScale;
@@ -450,6 +461,12 @@ void CRenderTools::RenderTee7(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 				}
 			}
 
+			if(TinyTee) // TClient
+			{
+				BaseSize /= TinyBodyScale * SizeMultiplier;
+				AnimScale /= TinyBodyScale * SizeMultiplier;
+			}
+
 			// draw feet
 			Graphics()->TextureSet(pInfo->m_aSixup[g_Config.m_ClDummy].PartTexture(protocol7::SKINPART_FEET));
 			Graphics()->QuadsBegin();
@@ -457,6 +474,12 @@ void CRenderTools::RenderTee7(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 
 			float w = BaseSize / 2.1f;
 			float h = w;
+
+			if(TinyTee) // TClient
+			{
+				w *= TinyFeetScale * SizeMultiplier;
+				h *= TinyFeetScale * SizeMultiplier;
+			}
 
 			Graphics()->QuadsSetRotation(pFoot->m_Angle * pi * 2);
 
@@ -486,7 +509,7 @@ void CRenderTools::RenderTee7(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 	}
 }
 
-void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, float Alpha) const
+void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, float Alpha, bool IsLocal) const
 {
 	vec2 Direction = Dir;
 	vec2 Position = Pos;
@@ -494,9 +517,7 @@ void CRenderTools::RenderTee6(const CAnimState *pAnim, const CTeeRenderInfo *pIn
 	const float TinyBodyScale = 0.7f;
 	const float TinyFeetScale = 0.85f;
 	float SizeMultiplier = (g_Config.m_TcTinyTeeSize / 100.0f);
-	bool TinyTee = g_Config.m_TcTinyTees;
-	// if(!m_LocalTeeRender && !g_Config.m_TcTinyTeesOthers)
-	// 	TinyTee = false;
+	bool TinyTee = g_Config.m_TcTinyTees && (IsLocal || g_Config.m_TcTinyTeesOthers);
 
 	const CSkin::CSkinTextures *pSkinTextures = pInfo->m_CustomColoredSkin ? &pInfo->m_ColorableRenderSkin : &pInfo->m_OriginalRenderSkin;
 
