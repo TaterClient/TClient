@@ -818,17 +818,15 @@ void CTClient::RenderCenterLines()
 
 	Graphics()->TextureClear();
 
-	float X0, Y0, X1, Y1;
-	Graphics()->GetScreen(&X0, &Y0, &X1, &Y1);
-	const float XMid = (X0 + X1) / 2.0f;
-	const float YMid = (Y0 + Y1) / 2.0f;
+	const CScreenRect ScreenRect = Graphics()->GetScreen();
+	const auto ScreenMid = (ScreenRect.m_BottomRight + ScreenRect.m_TopLeft) / 2.0f;
 
 	if(g_Config.m_TcShowCenterWidth == 0)
 	{
 		Graphics()->LinesBegin();
 		IGraphics::CLineItem aLines[2] = {
-			{XMid, Y0, XMid, Y1},
-			{X0, YMid, X1, YMid}};
+			{ScreenMid.x, ScreenRect.m_TopLeft.y, ScreenMid.x, ScreenRect.m_BottomRight.y},
+			{ScreenRect.m_TopLeft.x, ScreenMid.y, ScreenRect.m_BottomRight.x, ScreenMid.y}};
 		Graphics()->SetColor(color_cast<ColorRGBA>(ColorHSLA(g_Config.m_TcShowCenterColor, true)));
 		Graphics()->LinesDraw(aLines, std::size(aLines));
 		Graphics()->LinesEnd();
@@ -836,11 +834,15 @@ void CTClient::RenderCenterLines()
 	else
 	{
 		const float W = g_Config.m_TcShowCenterWidth;
+		const float X0 = ScreenRect.m_TopLeft.x;
+		const float Y0 = ScreenRect.m_TopLeft.y;
+		const float X1 = ScreenRect.m_BottomRight.x;
+		const float Y1 = ScreenRect.m_BottomRight.y;
 		Graphics()->QuadsBegin();
 		IGraphics::CQuadItem aQuads[3] = {
-			{XMid, mix(Y0, Y1, 0.25f) - W / 4.0f, W, (Y1 - Y0 - W) / 2.0f},
-			{XMid, mix(Y0, Y1, 0.75f) + W / 4.0f, W, (Y1 - Y0 - W) / 2.0f},
-			{XMid, YMid, X1 - X0, W}};
+			{ScreenMid.x, mix(Y0, Y1, 0.25f) - W / 4.0f, W, (Y1 - Y0 - W) / 2.0f},
+			{ScreenMid.x, mix(Y0, Y1, 0.75f) + W / 4.0f, W, (Y1 - Y0 - W) / 2.0f},
+			{ScreenMid.x, ScreenMid.y, X1 - X0, W}};
 		Graphics()->SetColor(color_cast<ColorRGBA>(ColorHSLA(g_Config.m_TcShowCenterColor, true)));
 		Graphics()->QuadsDraw(aQuads, std::size(aQuads));
 		Graphics()->QuadsEnd();

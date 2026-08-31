@@ -72,8 +72,8 @@ protected:
 		pGet->FailOnErrorStatus(false);
 		pGet->Timeout(CTimeout{10000, 0, 500, 10});
 
-		m_pHttpRequest = pGet;
-		Http.Run(pGet);
+		m_pHttpRequest = std::move(pGet);
+		Http.Run(m_pHttpRequest);
 	}
 
 	// Same as CreateHttpRequest, but POSTs pBody as a

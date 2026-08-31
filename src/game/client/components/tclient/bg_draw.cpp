@@ -1,5 +1,6 @@
 #include "bg_draw.h"
 
+#include <base/dbg.h>
 #include <base/io.h>
 
 #include <engine/client.h>

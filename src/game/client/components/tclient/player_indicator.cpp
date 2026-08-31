@@ -52,9 +52,8 @@ void CPlayerIndicator::OnRender()
 					continue;
 
 				// Hide tees on our screen if the config is set to do so
-				float ScreenX0, ScreenY0, ScreenX1, ScreenY1;
-				Graphics()->GetScreen(&ScreenX0, &ScreenY0, &ScreenX1, &ScreenY1);
-				if(g_Config.m_TcIndicatorHideVisible && in_range(GameClient()->m_aClients[i].m_RenderPos.x, ScreenX0, ScreenX1) && in_range(GameClient()->m_aClients[i].m_RenderPos.y, ScreenY0, ScreenY1))
+				const CScreenRect ScreenRect = Graphics()->GetScreen();
+				if(g_Config.m_TcIndicatorHideVisible && ScreenRect.Inside(GameClient()->m_aClients[i].m_RenderPos))
 					continue;
 
 				vec2 Norm = NormalizedDirection(GameClient()->m_aClients[i].m_RenderPos, GameClient()->m_aClients[GameClient()->m_Snap.m_LocalClientId].m_RenderPos) * (-1);
