@@ -276,6 +276,8 @@ bool CChat::OnInput(const IInput::CEvent &Event)
 			; // Do nothing as bindchat was executed
 		else if(GameClient()->m_TClient.ChatDoSpecId(m_Input.GetString()))
 			; // Do nothing as specid was executed
+		else if(GameClient()->m_Translate.ChatDoTranslateOutgoing(m_Mode == MODE_TEAM ? 1 : 0, m_Input.GetString()))
+			; // Do nothing as outgoing translate was queued
 		else
 			SendChatQueued(m_Input.GetString());
 		m_pHistoryEntry = nullptr;

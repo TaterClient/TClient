@@ -1091,6 +1091,110 @@ void CMenus::RenderSettingsTClientSettings(CUIRect MainView)
 	Ui()->DoEditBox(&s_FinishName, &Button, EditBoxFontSize);
 	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
 
+	// ***** Translate ***** //
+	Column.HSplitTop(MarginBetweenSections, nullptr, &Column);
+	s_SectionBoxes.push_back(Column);
+	Column.HSplitTop(HeadlineHeight, &Label, &Column);
+	Ui()->DoLabel(&Label, TCLocalize("Translate"), HeadlineFontSize, TEXTALIGN_ML);
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	// Current backend's language table -- Google and LibreTranslate genuinely
+	// support different language sets (see translate.h/.cpp's
+	// g_aTranslateBackends), so the dropdowns below are backend-scoped
+	// rather than one shared list.
+	int CurrentBackendIndex = 0;
+	for(size_t i = 0; i < g_aTranslateBackends.size(); i++)
+	{
+		if(str_comp_nocase(g_Config.m_TcTranslateBackend, g_aTranslateBackends[i].m_pValue) == 0)
+			CurrentBackendIndex = (int)i;
+	}
+	const STranslateBackendInfo &CurrentBackend = g_aTranslateBackends[CurrentBackendIndex];
+
+	{
+		static std::vector<const char *> s_TranslateBackendNames;
+		s_TranslateBackendNames.clear();
+		for(const STranslateBackendInfo &Backend : g_aTranslateBackends)
+			s_TranslateBackendNames.push_back(Backend.m_pName);
+
+		static CUi::SDropDownState s_TranslateBackendDropDownState;
+		static CScrollRegion s_TranslateBackendDropDownScrollRegion;
+		s_TranslateBackendDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_TranslateBackendDropDownScrollRegion;
+		CUIRect BackendDropDownRect;
+		Column.HSplitTop(LineSize, &BackendDropDownRect, &Column);
+		BackendDropDownRect.VSplitLeft(120.0f, &Label, &BackendDropDownRect);
+		Ui()->DoLabel(&Label, TCLocalize("Backend: "), FontSize, TEXTALIGN_ML);
+		const int BackendSelectedNew = Ui()->DoDropDown(&BackendDropDownRect, CurrentBackendIndex, s_TranslateBackendNames.data(), s_TranslateBackendNames.size(), s_TranslateBackendDropDownState);
+		if(BackendSelectedNew != CurrentBackendIndex)
+			str_copy(g_Config.m_TcTranslateBackend, g_aTranslateBackends[BackendSelectedNew].m_pValue);
+	}
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcTranslateAuto, TCLocalize("Automatically translate incoming messages"), &g_Config.m_TcTranslateAuto, &Column, LineSize);
+	CUIRect IncomingTargetBox;
+	Column.HSplitTop(LineSize + MarginExtraSmall, &IncomingTargetBox, &Column);
+	if(g_Config.m_TcTranslateAuto)
+	{
+		IncomingTargetBox.HSplitTop(MarginExtraSmall, nullptr, &IncomingTargetBox);
+		IncomingTargetBox.VSplitMid(&Label, &IncomingTargetBox);
+		Ui()->DoLabel(&Label, TCLocalize("Translate incoming to:"), FontSize, TEXTALIGN_ML);
+		static CUi::SDropDownState s_IncomingLangDropDownState;
+		static CScrollRegion s_IncomingLangDropDownScrollRegion;
+		s_IncomingLangDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_IncomingLangDropDownScrollRegion;
+		static std::vector<const char *> s_IncomingLangNames;
+		s_IncomingLangNames.clear();
+		for(const STranslateLanguage &Language : CurrentBackend.m_vLanguages)
+			s_IncomingLangNames.push_back(Language.m_pName);
+		const int IncomingLangOld = TranslateLanguageIndex(CurrentBackend.m_vLanguages, g_Config.m_TcTranslateTarget);
+		const int IncomingLangNew = Ui()->DoDropDown(&IncomingTargetBox, IncomingLangOld, s_IncomingLangNames.data(), s_IncomingLangNames.size(), s_IncomingLangDropDownState);
+		if(IncomingLangOld != IncomingLangNew)
+			str_copy(g_Config.m_TcTranslateTarget, CurrentBackend.m_vLanguages[IncomingLangNew].m_pCode);
+	}
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	DoButton_CheckBoxAutoVMarginAndSet(&g_Config.m_TcTranslateOutgoing, TCLocalize("Translate your outgoing messages"), &g_Config.m_TcTranslateOutgoing, &Column, LineSize);
+	CUIRect OutgoingTargetBox;
+	Column.HSplitTop(LineSize + MarginExtraSmall, &OutgoingTargetBox, &Column);
+	if(g_Config.m_TcTranslateOutgoing)
+	{
+		OutgoingTargetBox.HSplitTop(MarginExtraSmall, nullptr, &OutgoingTargetBox);
+		OutgoingTargetBox.VSplitMid(&Label, &OutgoingTargetBox);
+		Ui()->DoLabel(&Label, TCLocalize("Translate outgoing to:"), FontSize, TEXTALIGN_ML);
+		static CUi::SDropDownState s_OutgoingLangDropDownState;
+		static CScrollRegion s_OutgoingLangDropDownScrollRegion;
+		s_OutgoingLangDropDownState.m_SelectionPopupContext.m_pScrollRegion = &s_OutgoingLangDropDownScrollRegion;
+		static std::vector<const char *> s_OutgoingLangNames;
+		s_OutgoingLangNames.clear();
+		for(const STranslateLanguage &Language : CurrentBackend.m_vLanguages)
+			s_OutgoingLangNames.push_back(Language.m_pName);
+		const int OutgoingLangOld = TranslateLanguageIndex(CurrentBackend.m_vLanguages, g_Config.m_TcTranslateOutgoingTarget);
+		const int OutgoingLangNew = Ui()->DoDropDown(&OutgoingTargetBox, OutgoingLangOld, s_OutgoingLangNames.data(), s_OutgoingLangNames.size(), s_OutgoingLangDropDownState);
+		if(OutgoingLangOld != OutgoingLangNew)
+			str_copy(g_Config.m_TcTranslateOutgoingTarget, CurrentBackend.m_vLanguages[OutgoingLangNew].m_pCode);
+	}
+	Column.HSplitTop(MarginSmall, nullptr, &Column);
+
+	if(CurrentBackend.m_NeedsEndpointConfig)
+	{
+		CUIRect EndpointBox;
+		Column.HSplitTop(LineSize + MarginExtraSmall, &EndpointBox, &Column);
+		EndpointBox.VSplitMid(&Label, &EndpointBox);
+		Ui()->DoLabel(&Label, TCLocalize("LibreTranslate endpoint:"), FontSize, TEXTALIGN_ML);
+		static CLineInput s_TranslateEndpoint(g_Config.m_TcTranslateEndpoint, sizeof(g_Config.m_TcTranslateEndpoint));
+		s_TranslateEndpoint.SetEmptyText("localhost:5000/translate");
+		Ui()->DoEditBox(&s_TranslateEndpoint, &EndpointBox, EditBoxFontSize);
+		Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+
+		CUIRect KeyBox;
+		Column.HSplitTop(LineSize + MarginExtraSmall, &KeyBox, &Column);
+		KeyBox.VSplitMid(&Label, &KeyBox);
+		Ui()->DoLabel(&Label, TCLocalize("LibreTranslate API key:"), FontSize, TEXTALIGN_ML);
+		static CLineInput s_TranslateKey(g_Config.m_TcTranslateKey, sizeof(g_Config.m_TcTranslateKey));
+		s_TranslateKey.SetEmptyText(TCLocalize("Optional"));
+		Ui()->DoEditBox(&s_TranslateKey, &KeyBox, EditBoxFontSize);
+	}
+	Column.HSplitTop(MarginExtraSmall, nullptr, &Column);
+	s_SectionBoxes.back().h = Column.y - s_SectionBoxes.back().y;
+
 	// ***** END OF PAGE 1 SETTINGS ***** //
 	RightView = Column;
 
