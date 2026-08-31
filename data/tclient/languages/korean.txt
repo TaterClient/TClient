@@ -8,17 +8,17 @@ Translated text hidden due to streamer mode
 == 
 
 TClient
-== 
+== TClient
 
 (On Latest)
-== 
+== (최신)
 
 (Fetching Update Info)
 == 
 
 [bgdraw]
 Failed to create bgdraw folder
-== 
+== bgdraw 폴더 만들기에 실패했습니다.
 
 [bgdraw]
 No items to write
@@ -63,52 +63,52 @@ Lenny:
 == 
 
 Warlist
-== 
+== 워리스트
 
 Add war name:
-== 
+== 워 이름 추가
 
 Add war clan:
-== 
+== 워 클랜 추가
 
 Add team name:
-== 
+== 팀 이름 추가
 
 Add team clan:
-== 
+== 팀 클랜 추가
 
 Remove war name:
-== 
+== 워 이름 제거
 
 Remove war clan:
-== 
+== 워 클랜 제거
 
 Remove team name:
-== 
+== 팀 이름 제거
 
 Remove team clan:
-== 
+== 팀 클랜 제거
 
 Add [group] [name] [reason]:
-== 
+== [그룹] [이름] [사유] 추가
 
 Add [group] [clan] [reason]:
-== 
+== [그룹] [클랜] [사유] 추가
 
 Remove [group] [name]:
-== 
+== [그룹] [이름] 제거
 
 Remove [group] [clan]:
-== 
+== [그룹] [클랜] 제거
 
 Other
 == 
 
 Translate:
-== 
+== 번역:
 
 Translate ID:
-== 
+== 번역 ID:
 
 Mute:
 == 
@@ -117,22 +117,22 @@ Unmute:
 == 
 
 Settings
-== 
+== 설정
 
 Bind Wheel
-== 
+== 바인드 휠
 
 War List
-== 
+== 워 리스트
 
 Chat Binds
-== 
+== 채팅 바인드
 
 Status Bar
 == 
 
 Info
-== 
+== 정보
 
 Visual
 == 
@@ -153,10 +153,10 @@ Rotate with cursor like gun
 == 
 
 Hammer Mode: 
-== 
+== 망치 모드:
 
 Ingame cursor scale
-== 
+== 인게임 커서 크기
 
 Wheel animate
 == 
@@ -168,10 +168,10 @@ Show country flags in nameplates
 == 
 
 Hide nameplates in spec
-== 
+== 관전 상태일 때 이름표 숨기기
 
 Show skin names in nameplate
-== 
+== 이름표에 스킨 이름 표시하기
 
 Freeze stars
 == 
@@ -192,22 +192,22 @@ Tiny Tee Size
 == 
 
 Fake CTF flags
-== 
+== 가짜 CTF 깃발
 
 Input
-== 
+== 입력
 
 Fast Inputs (-20ms visual delay)
-== 
+== 빠른 입력 (-20ms 시각 지연 감소)
 
 Extra tick other tees (increases other tees latency, \nmakes dragging slightly easier when using fast input)
-== 
+== 다른 Tee 추가 틱 처리 (다른 Tee의 지연이 증가하지만, 빠른 입력 사용 시 드래그가 약간 더 쉬워집니다)
 
 Anti Latency Tools
 == 
 
 Prediction Margin
-== 
+== 예측 허용 범위
 
 Remove prediction & antiping in freeze
 == 
@@ -216,10 +216,10 @@ Amount
 == 
 
 Delay
-== 
+== 딜레이
 
 Dont predict other players if you are frozen
-== 
+== 본인이 동결 상태일 때 다른 플레이어를 예측하지 않음
 
 Adjust your prediction margin while frozen
 == 
@@ -246,76 +246,76 @@ Auto execute
 == 
 
 Voting
-== 
+== 투표
 
 Auto vote no to map changes when far
-== 
+== 맵을 오랫동안 진행 중일 때 맵 변경 투표에 자동으로 반대
 
 Minimum Time
-== 
+== 최소 시간
 
 Message to send in chat:
-== 
+== 채팅에 보낼 메세지:
 
 Leave empty to disable
 == 
 
 Auto Reply
-== 
+== 자동 응답
 
 Auto reply to muted players
-== 
+== 뮤트된 플레이어에게 자동 응답
 
 Auto reply when tabbed out
-== 
+== 최소화 되어 있을 때 자동 응답
 
 Player Indicator
-== 
+== 플레이어 표시기
 
 Show any enabled Indicators
 == 
 
 Hide indicator for tees on your screen
-== 
+== 화면에 보이는 Tee를 표시기에서 숨기기
 
 Show only freeze Players
-== 
+== 동결된 플레이어만 표시하기
 
 Only show after joining a team
-== 
+== 팀에 있을 때만 표시하기
 
 Render tiny tees instead of circles
-== 
+== 원 대신 작은 Tee로 표시하기
 
 Use warlist groups for indicator
 == 
 
 Indicator size
-== 
+== 표시기 크기
 
 Indicator opacity
-== 
+== 표시기 불투명도
 
 Change indicator offset based on distance to other tees
-== 
+== 다른 Tee와의 거리에 따라 표시기 간격 변경
 
 Indicator min offset
-== 
+== 표시기 최소 간격
 
 Indicator max offset
-== 
+== 표시기 최대 간격
 
 Indicator max distance
-== 
+== 표시기 최대 거리
 
 Indicator offset
-== 
+== 표시기 간격
 
 Use warlist colors instead of regular colors
-== 
+== 일반 색상 대신 워리스트 색상 사용
 
 Show all warlist groups
-== 
+== 모든 워리스트 그룹 표시하기
 
 Indicator alive color
 == 
@@ -327,22 +327,22 @@ Indicator safe color
 == 
 
 Pet
-== 
+== 펫
 
 Show the pet
-== 
+== 펫 표시
 
 Pet size
-== 
+== 펫 크기
 
 Pet alpha
-== 
+== 펫 투명도
 
 Pet Skin:
-== 
+== 펫 스킨
 
 HUD
-== 
+== HUD
 
 Show mini vote HUD
 == 
@@ -354,13 +354,13 @@ Show your cursor when in free spectate
 == 
 
 Spectate cursor alpha
-== 
+== 관전 커서 투명도
 
 Show when you are the last alive
 == 
 
 Last!
-== 
+== Last!
 
 Horizontal Position
 == 
@@ -369,16 +369,16 @@ Vertical Position
 == 
 
 Font Size
-== 
+== 폰트 크기
 
 Show screen center lines
-== 
+== 화면 중앙에 선 표시하기
 
 Screen center line color
-== 
+== 화면 중앙 선 색상
 
 Screen center line width
-== 
+== 화면 중앙 선 너비
 
 Frozen Tee Display
 == 
@@ -393,7 +393,7 @@ Max Rows
 == 
 
 Tee Size
-== 
+== Tee 크기
 
 Tees left alive text
 == 
@@ -493,16 +493,16 @@ Toggle ghosts key
 == 
 
 Rainbow
-== 
+== 무지개
 
 Rainbow Tees
-== 
+== 무지개 Tee
 
 Rainbow weapons
-== 
+== 무지개 무기
 
 Rainbow hook
-== 
+== 무지개 갈고리
 
 Rainbow others
 == 
@@ -511,22 +511,22 @@ Pulse
 == 
 
 Black
-== 
+== 검정
 
 Random
-== 
+== 랜덤
 
 Rainbow speed
-== 
+== 무지개 속도
 
 Tee Trails
-== 
+== Tee 트레일
 
 Enable tee trails
-== 
+== Tee 트레일 켜기
 
 Show other tees' trails
-== 
+== 다른 Tee 트레일 켜기
 
 Fade trail alpha
 == 
@@ -538,28 +538,28 @@ Solid
 == 
 
 Tee
-== 
+== Tee
 
 Speed
-== 
+== 속도
 
 Tee trail color
-== 
+== Tee 트레일 색상
 
 Trail width
-== 
+== 트레일 너비
 
 Trail length
-== 
+== 트레일 길이
 
 Trail alpha
-== 
+== 트레일 투명도
 
 Background Draw
 == 
 
 Color
-== 
+== 색상
 
 Time until strokes disappear
 == 
@@ -571,25 +571,25 @@ Time until strokes disappear
 == 
 
 Width
-== 
+== 너비
 
 Draw where mouse is
 == 
 
 Finish Name
-== 
+== 도착 이름
 
 Attempt to change your name when near finish
-== 
+== 도착 지점 근처에서 설정한 이름으로 변경
 
 Finish Name:
-== 
+== 도착 이름: 
 
 Name:
-== 
+== 이름:
 
 Name
-== 
+== 이름
 
 Command:
 == 
@@ -598,19 +598,19 @@ Command
 == 
 
 Override Selected
-== 
+== 선택 항목 덮어쓰기
 
 Add Bind
-== 
+== 바인드 추가
 
 Remove Bind
-== 
+== 바인드 제거
 
 The command is ran in console not chat
 == 
 
 Use left mouse to select
-== 
+== 왼쪽 마우스를 눌러 선택
 
 Use right mouse to swap with selected
 == 
@@ -619,7 +619,7 @@ Use middle mouse select without copy
 == 
 
 Bind Wheel Key
-== 
+== 바인드 휠 키
 
 Reset position of mouse when opening bindwheel
 == 
@@ -631,10 +631,10 @@ Edit Entry
 == 
 
 Clan
-== 
+== 클랜
 
 Reason
-== 
+== 사유
 
 Override Entry
 == 
@@ -664,25 +664,25 @@ War Groups
 == 
 
 Are you sure that you want to remove '%s' from your war groups?
-== 
+== '%s'를 워 그룹에서 삭제하시겠습니까?
 
 Remove War Group
-== 
+== 워 그룹 삭제
 
 Yes
-== 
+== 네
 
 No
-== 
+== 아니오
 
 Override Group
-== 
+== 그룹 덮어쓰기
 
 Add Group
-== 
+== 그룹 추가
 
 Online Players
-== 
+== 온라인 플레이어
 
 Show status bar
 == 
@@ -694,13 +694,13 @@ Status bar height
 == 
 
 Local Time
-== 
+== 로컬 시간
 
 Use 12 hour clock
-== 
+== 12시간제 사용
 
 Show seconds on clock
-== 
+== 시간에 초 표시
 
 Colors
 == 
@@ -709,7 +709,7 @@ Status bar color
 == 
 
 Text color
-== 
+== 글씨 색상
 
 Status bar alpha
 == 
@@ -721,76 +721,76 @@ Status Bar Codes:
 == 
 
 a = Angle
-== 
+== a = 각도
 
 p = Ping
-== 
+== p = 핑
 
 d = Prediction
-== 
+== d = 예측
 
 c = Position
-== 
+== c = 위치
 
 l = Local Time
-== 
+== l = 로컬 시간
 
 r = Race Time
-== 
+== r = 레이스 시간
 
 f = FPS
-== 
+== f = FPS
 
 v = Velocity
-== 
+== v = 속도
 
 z = Zoom
-== 
+== z = 줌
 
 _ or ' ' = Space
-== 
+== _ 또는 ' ' = 공백
 
 Apply
-== 
+== 적용
 
 Status Scheme:
 == 
 
 Add Item
-== 
+== 아이템 추가
 
 Remove Item
-== 
+== 아이템 제거
 
 TClient Links
-== 
+== TClient 링크
 
 Discord
-== 
+== 디스코드
 
 Website
-== 
+== 웹사이트
 
 Github
-== 
+== 깃허브
 
 Support ♥
-== 
+== 후원 ♥
 
 Config Files
-== 
+== 수정 파일
 
 TClient Settings
-== 
+== TClient 설정
 
 Profiles
-== 
+== 프로필
 
 TClient Developers
-== 
+== TClient 개발자
 
 Hide Settings Tabs
-== 
+== 설정 탭 숨기기
 
 Integration
 == 
@@ -799,55 +799,55 @@ Enable Discord Integration
 == 
 
 Name: %s
-== 
+== 이름: %s
 
 Clan: %s
-== 
+== 클랜: %s
 
 Skin: %s
-== 
+== 스킨: %s
 
 Your profile
-== 
+== 당신의 프로필
 
 After Load
 == 
 
 Save/Load Skin
-== 
+== 저장/불러오기 스킨
 
 Save/Load Colors
-== 
+== 저장/불러오기 색상
 
 Save/Load Emote
-== 
+== 저장/불러오기 이모트
 
 Save/Load Name
-== 
+== 저장/불러오기 이름
 
 Save/Load Clan
-== 
+== 저장/불러오기 클랜
 
 Save/Load Flag
-== 
+== 저장/불러오기 깃발
 
 Load
-== 
+== 불러오기
 
 Save
-== 
+== 저장
 
 Delete
-== 
+== 제거
 
 Override
-== 
+== 덮어쓰기
 
 Dummy
-== 
+== 더미
 
 Custom colors
-== 
+== 사용자 지정 색상
 
 Overwrite clan even if empty
 == 
@@ -867,7 +867,7 @@ Changing name to %s near finish
 
 [translate]
 %s translating to %s
-== 
+== %s 를(을) 사용해 %s로 번역
 
 [translate]
 %s to %s failed: %s
