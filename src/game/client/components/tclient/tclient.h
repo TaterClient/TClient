@@ -3,8 +3,8 @@
 
 #include <engine/client/enums.h>
 #include <engine/external/regex.h>
-#include <engine/shared/console.h>
 #include <engine/http.h>
+#include <engine/shared/console.h>
 
 #include <game/client/component.h>
 

@@ -1,8 +1,8 @@
 #ifndef GAME_CLIENT_COMPONENTS_TCLIENT_CUSTOM_COMMUNITIES_H
 #define GAME_CLIENT_COMPONENTS_TCLIENT_CUSTOM_COMMUNITIES_H
 
-#include <engine/shared/console.h>
 #include <engine/http.h>
+#include <engine/shared/console.h>
 
 #include <game/client/component.h>
 

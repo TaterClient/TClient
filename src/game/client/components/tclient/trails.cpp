@@ -1,4 +1,5 @@
 #include "trails.h"
+
 #include <base/dbg.h>
 
 #include <engine/graphics.h>
