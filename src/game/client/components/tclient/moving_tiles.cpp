@@ -180,6 +180,7 @@ void CMovingTiles::OnRender()
 	};
 
 	constexpr float ColorConv = 1.0f / 255.0f;
+	Graphics()->BlendNormal();
 
 	size_t QuadStart = 0;
 	while(QuadStart < m_vQuads.size())

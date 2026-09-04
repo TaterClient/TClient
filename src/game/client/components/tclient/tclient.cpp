@@ -210,8 +210,8 @@ void CTClient::OnMessage(int MsgType, void *pRawMsg)
 			char aReason[VOTE_REASON_LENGTH];
 			str_copy(aDescription, pMsg->m_pDescription);
 			str_copy(aReason, pMsg->m_pReason);
-			bool KickVote = str_startswith(aDescription, "Kick ") != 0 ? true : false;
-			bool SpecVote = str_startswith(aDescription, "Pause ") != 0 ? true : false;
+			bool KickVote = str_startswith(aDescription, "Kick ") != nullptr ? true : false;
+			bool SpecVote = str_startswith(aDescription, "Pause ") != nullptr ? true : false;
 			bool SettingVote = !KickVote && !SpecVote;
 			bool RandomMapVote = SettingVote && str_find_nocase(aDescription, "random");
 			bool MapCoolDown = SettingVote && (str_find_nocase(aDescription, "change map") || str_find_nocase(aDescription, "no not change map"));
@@ -570,7 +570,7 @@ void CTClient::ResetTClientInfoTask()
 	if(m_pTClientInfoTask)
 	{
 		m_pTClientInfoTask->Abort();
-		m_pTClientInfoTask = NULL;
+		m_pTClientInfoTask = nullptr;
 	}
 }
 
@@ -600,7 +600,7 @@ static TVersion ToTCVersion(char *pStr)
 			return gs_InvalidTCVersion;
 
 		aVersion[i] = str_toint(p);
-		p = strtok(NULL, ".");
+		p = strtok(nullptr, ".");
 	}
 
 	if(p)

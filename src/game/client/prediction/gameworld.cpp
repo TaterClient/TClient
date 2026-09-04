@@ -684,8 +684,8 @@ void CGameWorld::CopyWorldClean(CGameWorld *pFrom)
 	Clear();
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		m_apCharacters[i] = 0;
-		m_Core.m_apCharacters[i] = 0;
+		m_apCharacters[i] = nullptr;
+		m_Core.m_apCharacters[i] = nullptr;
 	}
 	// copy and add the new entities
 	for(int Type = 0; Type < NUM_ENTTYPES; Type++)

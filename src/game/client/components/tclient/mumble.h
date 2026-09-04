@@ -15,7 +15,7 @@ private:
 	int m_LastClientId = -1;
 	int m_LastTeam = 0;
 	NETADDR m_LastAddr = {};
-	MumbleContext *m_pContext = NULL;
+	MumbleContext *m_pContext = nullptr;
 
 public:
 	void MakeContext();

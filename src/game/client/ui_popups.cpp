@@ -8,6 +8,7 @@
 #include <base/str.h>
 
 #include <engine/graphics.h>
+#include <engine/shared/config.h>
 
 #include <game/localization.h>
 
@@ -270,6 +271,10 @@ CUi::EPopupMenuFunctionResult CUi::PopupSelection(void *pContext, CUIRect View, 
 	size_t Index = 0;
 	for(const auto &Entry : pSelectionPopup->m_vEntries)
 	{
+		// TClient: preview every font name using that font.
+		if(pSelectionPopup->m_SpecialFontRenderMode)
+			pUI->TextRender()->SetCustomFace(Entry.c_str());
+
 		if(pSelectionPopup->m_aMessage[0] != '\0' || Index != 0)
 			View.HSplitTop(pSelectionPopup->m_EntrySpacing, nullptr, &View);
 		View.HSplitTop(pSelectionPopup->m_EntryHeight, &Slot, &View);
@@ -283,6 +288,8 @@ CUi::EPopupMenuFunctionResult CUi::PopupSelection(void *pContext, CUIRect View, 
 		}
 		++Index;
 	}
+	if(pSelectionPopup->m_SpecialFontRenderMode)
+		pUI->TextRender()->SetCustomFace(g_Config.m_TcCustomFont);
 
 	pScrollRegion->End();
 

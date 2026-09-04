@@ -3060,15 +3060,15 @@ void CGameClient::OnPredict()
 
 		// Nightmare: in order to get 100% accurate comparison to detect mispredictions we must
 		// tick the PREVIOUS predicted world with our CURRENT predicted inputs
-		CCharacter *pSmoothDummyChar = 0;
-		CCharacter *pPredDummyChar = 0;
+		CCharacter *pSmoothDummyChar = nullptr;
+		CCharacter *pPredDummyChar = nullptr;
 		if(PredictDummy())
 		{
 			pSmoothDummyChar = m_PredSmoothingWorld.GetCharacterById(m_aLocalIds[!g_Config.m_ClDummy]);
 			pPredDummyChar = m_PredictedWorld.GetCharacterById(m_aLocalIds[!g_Config.m_ClDummy]);
 		}
 		CNetObj_PlayerInput *pInputData = m_PredictedWorld.GetCharacterById(m_Snap.m_LocalClientId)->LatestInput();
-		CNetObj_PlayerInput *pDummyInputData = !pPredDummyChar ? 0 : m_PredictedWorld.GetCharacterById(m_aLocalIds[!g_Config.m_ClDummy])->LatestInput();
+		CNetObj_PlayerInput *pDummyInputData = !pPredDummyChar ? nullptr : m_PredictedWorld.GetCharacterById(m_aLocalIds[!g_Config.m_ClDummy])->LatestInput();
 		bool DummyFirst = pSmoothLocalChar && pSmoothDummyChar && pSmoothDummyChar->GetCid() < pSmoothLocalChar->GetCid();
 
 		if(DummyFirst && pSmoothDummyChar && pDummyInputData)

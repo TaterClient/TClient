@@ -597,16 +597,38 @@ void CPlayers::RenderPlayer(
 	const CNetObj_Character *pPlayerChar,
 	const CTeeRenderInfo *pRenderInfo,
 	int ClientId,
-	float Intra)
+	float Intra,
+	bool RenderGhost)
 {
 	CNetObj_Character Prev;
 	CNetObj_Character Player;
 	Prev = *pPrevChar;
 	Player = *pPlayerChar;
 
+	const bool Local = GameClient()->m_Snap.m_LocalClientId == ClientId;
+	const bool OtherTeam = GameClient()->IsOtherTeam(ClientId);
+	const bool Spec = GameClient()->m_Snap.m_SpecInfo.m_Active;
+	const bool FrozenSwappingHide = ClientId >= 0 && GameClient()->m_aClients[ClientId].m_FreezeEnd > 0 && g_Config.m_TcHideFrozenGhosts && g_Config.m_TcSwapGhosts;
+
 	vec2 Position;
 	if(in_range(ClientId, MAX_CLIENTS - 1))
-		Position = GameClient()->m_aClients[ClientId].m_RenderPos;
+	{
+		if(RenderGhost && g_Config.m_TcSwapGhosts)
+		{
+			Position = GameClient()->GetSmoothPos(ClientId);
+		}
+		else if(RenderGhost)
+		{
+			Position = mix(
+				vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y),
+				vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
+				Client()->IntraGameTick(g_Config.m_ClDummy));
+		}
+		else
+		{
+			Position = GameClient()->m_aClients[ClientId].m_RenderPos;
+		}
+	}
 	else
 		Position = mix(vec2(Prev.m_X, Prev.m_Y), vec2(Player.m_X, Player.m_Y), Intra);
 
@@ -616,16 +638,15 @@ void CPlayers::RenderPlayer(
 	CTeeRenderInfo RenderInfo = *pRenderInfo;
 
 	const bool Paused = GameClient()->IsWorldPaused() || GameClient()->IsDemoPlaybackPaused();
-	bool Local = GameClient()->m_Snap.m_LocalClientId == ClientId;
-	bool OtherTeam = GameClient()->IsOtherTeam(ClientId);
 	// float Alpha = (OtherTeam || ClientId < 0) ? g_Config.m_ClShowOthersAlpha / 100.0f : 1.0f;
-	bool Spec = GameClient()->m_Snap.m_SpecInfo.m_Active;
 
 	float Alpha = 1.0f;
 	if(OtherTeam || ClientId < 0)
 		Alpha = g_Config.m_ClShowOthersAlpha / 100.0f;
+	else if(RenderGhost)
+		Alpha = FrozenSwappingHide ? 1.0f : g_Config.m_TcUnpredGhostsAlpha / 100.0f;
 	else if(g_Config.m_TcShowOthersGhosts && !Local && !Spec)
-		Alpha = (g_Config.m_TcSwapGhosts ? g_Config.m_TcUnpredGhostsAlpha : g_Config.m_TcPredGhostsAlpha) / 100.0f;
+		Alpha = g_Config.m_TcPredGhostsAlpha / 100.0f;
 
 	if(!OtherTeam && g_Config.m_TcShowOthersGhosts && !Local && g_Config.m_TcUnpredOthersInFreeze && Client()->m_IsLocalFrozen && !Spec)
 		Alpha = 1.0f;
@@ -665,15 +686,8 @@ void CPlayers::RenderPlayer(
 	vec2 Direction = direction(Angle);
 	vec2 Vel = mix(vec2(Prev.m_VelX / 256.0f, Prev.m_VelY / 256.0f), vec2(Player.m_VelX / 256.0f, Player.m_VelY / 256.0f), Intra);
 
-	// TClient
-	if(g_Config.m_TcSwapGhosts && g_Config.m_TcShowOthersGhosts && !Local && Client()->State() != IClient::STATE_DEMOPLAYBACK && ClientId >= 0)
-		Position = mix(
-			vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Prev.m_Y),
-			vec2(GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_X, GameClient()->m_Snap.m_aCharacters[ClientId].m_Cur.m_Y),
-			Client()->IntraGameTick(g_Config.m_ClDummy));
-
 	// TClient: render the ghost as a circle instead of a tee
-	if(g_Config.m_TcShowOthersGhosts && !Local && !Spec && g_Config.m_TcRenderGhostAsCircle)
+	if(RenderGhost && g_Config.m_TcRenderGhostAsCircle && !FrozenSwappingHide)
 	{
 		Graphics()->TextureClear();
 		Graphics()->QuadsBegin();
@@ -686,7 +700,7 @@ void CPlayers::RenderPlayer(
 	GameClient()->m_Flow.Add(Position, Vel * 100.0f, 10.0f);
 
 	// TClient
-	if(ClientId >= 0 && GameClient()->m_aClients[ClientId].m_IsVolleyBall)
+	if(!RenderGhost && ClientId >= 0 && GameClient()->m_aClients[ClientId].m_IsVolleyBall)
 	{
 		// Update
 		const float Delta = Client()->IntraGameTickSincePrev(g_Config.m_ClDummy);
@@ -719,7 +733,7 @@ void CPlayers::RenderPlayer(
 	}
 
 	// TClient
-	if(g_Config.m_TcFakeCtfFlags > 0)
+	if(!RenderGhost && g_Config.m_TcFakeCtfFlags > 0)
 		GameClient()->m_TClient.RenderCtfFlag(Position, Alpha);
 
 	RenderInfo.m_GotAirJump = Player.m_Jumped & 2 ? false : true;
@@ -1012,7 +1026,7 @@ void CPlayers::RenderPlayer(
 	}
 
 	// render the "shadow" tee
-	if(g_Config.m_ClUnpredictedShadow == 3 || (Local && g_Config.m_ClUnpredictedShadow == 1) || (!Local && g_Config.m_ClUnpredictedShadow == 2))
+	if(!RenderGhost && (g_Config.m_ClUnpredictedShadow == 3 || (Local && g_Config.m_ClUnpredictedShadow == 1) || (!Local && g_Config.m_ClUnpredictedShadow == 2)))
 	{
 		vec2 ShadowPosition = Position;
 		if(ClientId >= 0)
@@ -1241,6 +1255,14 @@ void CPlayers::OnRender()
 		}
 
 		RenderHookCollLine(ScreenRect, &GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, ClientId);
+
+		const bool Frozen = GameClient()->m_aClients[ClientId].m_FreezeEnd > 0;
+		const bool HideGhost = (g_Config.m_TcHideFrozenGhosts && Frozen && !g_Config.m_TcSwapGhosts) ||
+				       (g_Config.m_TcUnpredOthersInFreeze && Client()->m_IsLocalFrozen);
+		if(g_Config.m_TcShowOthersGhosts && !HideGhost && !GameClient()->m_Snap.m_SpecInfo.m_Active && Client()->State() != IClient::STATE_DEMOPLAYBACK)
+		{
+			RenderPlayer(ScreenRect, &GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, &aRenderInfo[ClientId], ClientId, 0.0f, true);
+		}
 		RenderPlayer(ScreenRect, &GameClient()->m_aClients[ClientId].m_RenderPrev, &GameClient()->m_aClients[ClientId].m_RenderCur, &aRenderInfo[ClientId], ClientId);
 	}
 	if(RenderLastId != -1 && IsPlayerInfoAvailable(RenderLastId))

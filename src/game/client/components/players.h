@@ -21,7 +21,8 @@ class CPlayers : public CComponent
 		const CNetObj_Character *pPlayerChar,
 		const CTeeRenderInfo *pRenderInfo,
 		int ClientId,
-		float Intra = 0.f);
+		float Intra = 0.f,
+		bool RenderGhost = false);
 
 	void RenderHook(
 		const CScreenRect &ScreenRect,
