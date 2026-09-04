@@ -155,6 +155,7 @@ tags
 *.user
 *.vcxproj
 *.zip
-
-!steam_api.dll
 # tidy-alphabetical-end
+
+# TClient
+!steam_api.dll
