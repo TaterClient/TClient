@@ -714,9 +714,9 @@ public:
 		SETTINGS_SOUND,
 		SETTINGS_DDNET,
 		SETTINGS_ASSETS,
-		SETTINGS_TCLIENT, // TCLient
-		SETTINGS_PROFILES, // TCLient
-		SETTINGS_CONFIGS, // TCLient
+		SETTINGS_TCLIENT, // TClient
+		SETTINGS_PROFILES, // TClient
+		SETTINGS_CONFIGS, // TClient
 		SETTINGS_CREDITS,
 		SETTINGS_LENGTH,
 	};
@@ -875,7 +875,7 @@ private:
 	void RenderSettingsTClientConfigs(CUIRect MainView);
 	void RenderTeeCute(const CAnimState *pAnim, const CTeeRenderInfo *pInfo, int Emote, vec2 Dir, vec2 Pos, bool CuteEyes, float Alpha = 1.0f);
 
-	// TCLient
+	// TClient
 	const CWarType *m_pRemoveWarType = nullptr;
 	void PopupConfirmRemoveWarType();
 	void RenderDevSkin(vec2 RenderPos, float Size, const char *pSkinName, const char *pBackupSkin, bool CustomColors, int FeetColor, int BodyColor, int Emote, bool Rainbow, bool Cute,

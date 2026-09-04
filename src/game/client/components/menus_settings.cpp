@@ -118,17 +118,17 @@ void CMenus::RenderSettings(CUIRect MainView)
 		GameClient()->m_MenuBackground.ChangePosition(CMenuBackground::POS_SETTINGS_ASSETS);
 		RenderSettingsAssets(MainView);
 	}
-	else if(g_Config.m_UiSettingsPage == SETTINGS_TCLIENT) // TCLient
+	else if(g_Config.m_UiSettingsPage == SETTINGS_TCLIENT) // TClient
 	{
 		GameClient()->m_MenuBackground.ChangePosition(CMenuBackground::POS_SETTINGS_LANGUAGE);
 		RenderSettingsTClient(MainView);
 	}
-	else if(g_Config.m_UiSettingsPage == SETTINGS_PROFILES) // TCLient
+	else if(g_Config.m_UiSettingsPage == SETTINGS_PROFILES) // TClient
 	{
 		GameClient()->m_MenuBackground.ChangePosition(CMenuBackground::POS_SETTINGS_GENERAL);
 		RenderSettingsTClientProfiles(MainView);
 	}
-	else if(g_Config.m_UiSettingsPage == SETTINGS_CONFIGS) // TCLient
+	else if(g_Config.m_UiSettingsPage == SETTINGS_CONFIGS) // TClient
 	{
 		GameClient()->m_MenuBackground.ChangePosition(CMenuBackground::POS_SETTINGS_PLAYER);
 		RenderSettingsTClientConfigs(MainView);
