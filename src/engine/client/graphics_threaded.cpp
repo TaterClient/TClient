@@ -330,8 +330,10 @@ IGraphics::CTextureHandle CGraphics_Threaded::LoadSpriteTexture(const CImageInfo
 	// check for invisible texture, maybe due to outdated game assets
 	if(FallbackImageInfo.has_value() && IsImageSubFullyTransparent(FromImageInfo, x, y, w, h))
 	{
-		log_warn("graphics", "Asset '%s' appears to be invisible, falling back to default", pSprite->m_pName);
-		return LoadSpriteTexture(FallbackImageInfo.value(), std::nullopt, pSprite);
+		// TClient: Do not fall back to default: players intentionally use transparent custom assets (e.g. hooks/cursors).
+		log_warn("graphics", "Asset '%s' appears to be invisible", pSprite->m_pName);
+		// log_warn("graphics", "Asset '%s' appears to be invisible, falling back to default", pSprite->m_pName);
+		// return LoadSpriteTexture(FallbackImageInfo.value(), std::nullopt, pSprite);
 	}
 
 	CImageInfo SpriteInfo;
