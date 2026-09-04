@@ -1,7 +1,9 @@
+#!/usr/bin/env python3
+
+from collections import OrderedDict
 import functools
 import os
 import re
-from collections import OrderedDict
 
 
 class LanguageDecodeError(Exception):

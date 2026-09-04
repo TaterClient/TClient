@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
+
 import os
+
 from copy_fix_tclient import copy_fix
 import twlang_tclient as twlang
 
