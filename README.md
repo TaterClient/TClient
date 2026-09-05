@@ -1,8 +1,6 @@
 [![DDraceNetwork](docs/assets/TClient_Logo_Horizontal.svg)](https://tclient.app) 
 
-[![Build status](https://github.com/TaterClient/TClient/workflows/Build/badge.svg)](https://github.com/TaterClient/TClient/actions/workflows/build.yaml)
-<!-- [![Code coverage](https://github.com/TaterClient/TClient/branch/master/graph/badge.svg)](https://codecov.io/gh/TaterClient/TClient/branch/master) -->
-<!-- [![Translation status](https://hosted.weblate.org/widget/ddnet/ddnet/svg-badge.svg)](https://hosted.weblate.org/engage/ddnet/) -->
+[![Build status](https://github.com/TaterClient/TClient/workflows/Build/badge.svg)](https://github.com/TaterClient/TClient/actions/workflows/build.yml)
 
 ### Taters custom ddnet client with some modifications
 
@@ -181,7 +179,7 @@ print(re.replace(re.compile("\\d"), "h3ll0", true, fun[](str, match, group) { //
 
 ![image](https://user-images.githubusercontent.com/22122579/182528700-4c8238c3-836e-49c3-9996-68025e7f5d58.png)
 
-### Features
+### Config List
 
 ```
 tc_allow_any_res
