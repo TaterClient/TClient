@@ -274,3 +274,7 @@ tc_color_freeze_feet
 tc_spec_menu_ID
 tc_limit_mouse_to_screen
 ```
+
+## Precompiled Headers
+
+By default precompiled headers are used for common system includes, see `src/pch.h`. In CI the Ubuntu 22.04 build disables precompiled headers to ensure we don't break compilation by forgetting includes. You might want to disable precompiled headers locally instead, at the cost of slower compile times, by setting `-DPRECOMPILE_HEADERS=OFF` in `cmake`.

@@ -13,12 +13,20 @@
 #include <engine/shared/config.h>
 #include <engine/shared/localization.h>
 
+#if defined(CONF_PLATFORM_IOS)
+#include <ios/ios_main.h>
+#endif
+
 #include <SDL.h>
 #include <SDL_messagebox.h>
 #include <SDL_vulkan.h>
 
 #if defined(CONF_VIDEORECORDER)
 #include <engine/shared/video.h>
+#endif
+
+#if defined(CONF_PLATFORM_MACOS)
+#include <CoreFoundation/CFRunLoop.h>
 #endif
 
 #include "backend_sdl.h"
@@ -44,6 +52,7 @@
 #include <engine/graphics.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 
 class IStorage;
@@ -68,7 +77,9 @@ void CGraphicsBackend_Threaded::ThreadFunc(void *pUser)
 #if defined(CONF_PLATFORM_MACOS) || defined(CONF_PLATFORM_IOS)
 			CAutoreleasePool AutoreleasePool;
 #endif
+			Lock.unlock();
 			pSelf->m_pProcessor->RunBuffer(pSelf->m_pBuffer);
+			Lock.lock();
 
 			pSelf->m_pBuffer = nullptr;
 			pSelf->m_BufferInProcess.store(false, std::memory_order_relaxed);
@@ -175,7 +186,16 @@ void CGraphicsBackend_Threaded::WaitForIdle()
 {
 #if !defined(CONF_PLATFORM_EMSCRIPTEN)
 	std::unique_lock<std::mutex> Lock(m_BufferSwapMutex);
+#if defined(CONF_PLATFORM_MACOS)
+	while(!m_BufferSwapCond.wait_for(Lock, std::chrono::milliseconds(1), [this]() { return m_pBuffer == nullptr; }))
+	{
+		Lock.unlock();
+		CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0, true);
+		Lock.lock();
+	}
+#else
 	m_BufferSwapCond.wait(Lock, [this]() { return m_pBuffer == nullptr; });
+#endif
 #endif
 }
 
@@ -1782,6 +1802,16 @@ void CGraphicsBackend_SDL_GL::GetViewportSize(int &w, int &h)
 		SDL_GL_GetDrawableSize(m_pWindow, &w, &h);
 	else
 		SDL_Vulkan_GetDrawableSize(m_pWindow, &w, &h);
+}
+
+void CGraphicsBackend_SDL_GL::GetDisplayCutoutInsets(int &Left, int &Right)
+{
+#if defined(CONF_PLATFORM_IOS)
+	IosDisplayCutoutInsets(m_pWindow, &Left, &Right);
+#else
+	Left = 0;
+	Right = 0;
+#endif
 }
 
 void CGraphicsBackend_SDL_GL::NotifyWindow()

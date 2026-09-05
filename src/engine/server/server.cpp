@@ -238,6 +238,7 @@ void CServer::CClient::Reset()
 	m_NumPreInputs = 0;
 	m_Flags = 0;
 	m_RedirectDropTime = 0;
+	m_Rejoining = false;
 
 	std::fill(std::begin(m_aIdMap), std::end(m_aIdMap), -1);
 	std::fill(std::begin(m_aReverseIdMap), std::end(m_aReverseIdMap), -1);
@@ -1115,8 +1116,8 @@ void CServer::DoSnapshot()
 
 			// create delta
 			CSnapshotDelta *const pSnapshotDelta = IsSixup(i) ? &m_SnapshotDeltaSixup : &m_SnapshotDelta;
-			char aDeltaData[CSnapshot::MAX_SIZE];
-			int DeltaSize = pSnapshotDelta->CreateDelta(pDeltashot, Data.AsSnapshot(), aDeltaData);
+			CSnapshotDeltaBuffer DeltaData;
+			int DeltaSize = pSnapshotDelta->CreateDelta(pDeltashot, Data.AsSnapshot(), &DeltaData);
 
 			if(DeltaSize)
 			{
@@ -1124,8 +1125,14 @@ void CServer::DoSnapshot()
 				const int MaxSize = MAX_SNAPSHOT_PACKSIZE;
 
 				char aCompData[CSnapshot::MAX_SIZE];
-				SnapshotSize = CVariableInt::Compress(aDeltaData, DeltaSize, aCompData, sizeof(aCompData));
-				int NumPackets = (SnapshotSize + MaxSize - 1) / MaxSize;
+				SnapshotSize = CVariableInt::Compress(DeltaData.m_aData, DeltaSize, aCompData, sizeof(aCompData));
+				const int NumPackets = (SnapshotSize + MaxSize - 1) / MaxSize;
+				if(SnapshotSize < 0 || NumPackets > CSnapshot::MAX_PARTS)
+				{
+					// the client cannot receive this snapshot, it will keep acking the old one
+					log_error("server", "snapshot for client %d is too large to send, delta_size=%d packed_size=%d", i, DeltaSize, SnapshotSize);
+					continue;
+				}
 
 				for(int n = 0, Left = SnapshotSize; Left > 0; n++)
 				{
@@ -1819,6 +1826,10 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			if(Unpacker.Error())
 			{
 				return;
+			}
+			if(Chunk == 0)
+			{
+				m_aClients[ClientId].m_NextMapChunk = 0;
 			}
 			if(Chunk != m_aClients[ClientId].m_NextMapChunk || !Config()->m_SvFastDownload)
 			{

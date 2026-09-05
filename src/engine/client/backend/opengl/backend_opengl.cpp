@@ -50,6 +50,7 @@ void CCommandProcessorFragment_OpenGL::Cmd_Update_Viewport(const CCommandBuffer:
 	{
 		m_CanvasWidth = (uint32_t)pCommand->m_Width;
 		m_CanvasHeight = (uint32_t)pCommand->m_Height;
+		m_HasDisplayCutout = pCommand->m_Width != pCommand->m_DrawableWidth;
 	}
 	glViewport(m_ViewportX, m_ViewportY, pCommand->m_Width, pCommand->m_Height);
 }
@@ -959,11 +960,22 @@ void CCommandProcessorFragment_OpenGL::Cmd_Clear(const CCommandBuffer::SCommand_
 	{
 		glDisable(GL_SCISSOR_TEST);
 	}
+	if(m_HasDisplayCutout)
+	{
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glScissor(m_ViewportX, m_ViewportY, m_CanvasWidth, m_CanvasHeight);
+		glEnable(GL_SCISSOR_TEST);
+	}
 	glClearColor(pCommand->m_Color.r, pCommand->m_Color.g, pCommand->m_Color.b, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	if(ClipWasEnabled)
 	{
 		glEnable(GL_SCISSOR_TEST);
+	}
+	else if(m_HasDisplayCutout)
+	{
+		glDisable(GL_SCISSOR_TEST);
 	}
 }
 
@@ -1581,6 +1593,8 @@ bool CCommandProcessorFragment_OpenGL2::Cmd_Init(const SCommand_Init *pCommand)
 
 	m_pTileProgram = nullptr;
 	m_pTileProgramTextured = nullptr;
+	m_pBorderTileProgram = nullptr;
+	m_pBorderTileProgramTextured = nullptr;
 	m_pPrimitive3DProgram = nullptr;
 	m_pPrimitive3DProgramTextured = nullptr;
 
@@ -1801,21 +1815,21 @@ void CCommandProcessorFragment_OpenGL2::Cmd_Shutdown(const SCommand_Shutdown *pC
 	if(m_HasShaders)
 	{
 		glUseProgram(0);
+
+		m_pTileProgram->DeleteProgram();
+		m_pTileProgramTextured->DeleteProgram();
+		m_pBorderTileProgram->DeleteProgram();
+		m_pBorderTileProgramTextured->DeleteProgram();
+		m_pPrimitive3DProgram->DeleteProgram();
+		m_pPrimitive3DProgramTextured->DeleteProgram();
+
+		delete m_pTileProgram;
+		delete m_pTileProgramTextured;
+		delete m_pBorderTileProgram;
+		delete m_pBorderTileProgramTextured;
+		delete m_pPrimitive3DProgram;
+		delete m_pPrimitive3DProgramTextured;
 	}
-
-	m_pTileProgram->DeleteProgram();
-	m_pTileProgramTextured->DeleteProgram();
-	m_pBorderTileProgram->DeleteProgram();
-	m_pBorderTileProgramTextured->DeleteProgram();
-	m_pPrimitive3DProgram->DeleteProgram();
-	m_pPrimitive3DProgramTextured->DeleteProgram();
-
-	delete m_pTileProgram;
-	delete m_pTileProgramTextured;
-	delete m_pBorderTileProgram;
-	delete m_pBorderTileProgramTextured;
-	delete m_pPrimitive3DProgram;
-	delete m_pPrimitive3DProgramTextured;
 
 	for(int i = 0; i < (int)m_vTextures.size(); ++i)
 	{

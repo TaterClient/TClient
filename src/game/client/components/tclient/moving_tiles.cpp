@@ -238,12 +238,11 @@ void CMovingTiles::OnRender()
 			const vec2 Offset(Position.r, Position.g);
 			const float Rotation = Position.b / 180.0f * pi + QuadData.m_Angle;
 
-			IGraphics::CColorVertex aColors[4] = {
-				IGraphics::CColorVertex(0, pQuad->m_aColors[0].r * ColorConv * Color.r, pQuad->m_aColors[0].g * ColorConv * Color.g, pQuad->m_aColors[0].b * ColorConv * Color.b, pQuad->m_aColors[0].a * ColorConv * Color.a),
-				IGraphics::CColorVertex(1, pQuad->m_aColors[1].r * ColorConv * Color.r, pQuad->m_aColors[1].g * ColorConv * Color.g, pQuad->m_aColors[1].b * ColorConv * Color.b, pQuad->m_aColors[1].a * ColorConv * Color.a),
-				IGraphics::CColorVertex(2, pQuad->m_aColors[2].r * ColorConv * Color.r, pQuad->m_aColors[2].g * ColorConv * Color.g, pQuad->m_aColors[2].b * ColorConv * Color.b, pQuad->m_aColors[2].a * ColorConv * Color.a),
-				IGraphics::CColorVertex(3, pQuad->m_aColors[3].r * ColorConv * Color.r, pQuad->m_aColors[3].g * ColorConv * Color.g, pQuad->m_aColors[3].b * ColorConv * Color.b, pQuad->m_aColors[3].a * ColorConv * Color.a)};
-			Graphics()->SetColorVertex(aColors, std::size(aColors));
+			Graphics()->SetColor4(
+				ColorRGBA(pQuad->m_aColors[0].r, pQuad->m_aColors[0].g, pQuad->m_aColors[0].b, pQuad->m_aColors[0].a).Multiply(Color).Multiply(ColorConv),
+				ColorRGBA(pQuad->m_aColors[1].r, pQuad->m_aColors[1].g, pQuad->m_aColors[1].b, pQuad->m_aColors[1].a).Multiply(Color).Multiply(ColorConv),
+				ColorRGBA(pQuad->m_aColors[3].r, pQuad->m_aColors[3].g, pQuad->m_aColors[3].b, pQuad->m_aColors[3].a).Multiply(Color).Multiply(ColorConv),
+				ColorRGBA(pQuad->m_aColors[2].r, pQuad->m_aColors[2].g, pQuad->m_aColors[2].b, pQuad->m_aColors[2].a).Multiply(Color).Multiply(ColorConv));
 
 			vec2 aPoints[4] = {
 				QuadData.m_Pos[0],

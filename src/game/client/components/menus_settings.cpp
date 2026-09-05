@@ -201,12 +201,11 @@ bool CMenus::RenderHslaScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alp
 
 		// red to yellow
 		{
-			IGraphics::CColorVertex aColorVertices[] = {
-				IGraphics::CColorVertex(0, 1, 0, 0, 1),
-				IGraphics::CColorVertex(1, 1, 1, 0, 1),
-				IGraphics::CColorVertex(2, 1, 0, 0, 1),
-				IGraphics::CColorVertex(3, 1, 1, 0, 1)};
-			Graphics()->SetColorVertex(aColorVertices, std::size(aColorVertices));
+			Graphics()->SetColor4(
+				ColorRGBA(1, 0, 0, 1),
+				ColorRGBA(1, 1, 0, 1),
+				ColorRGBA(1, 1, 0, 1),
+				ColorRGBA(1, 0, 0, 1));
 
 			IGraphics::CFreeformItem Freeform(
 				CurXOff, pColorRect->y,
@@ -219,12 +218,11 @@ bool CMenus::RenderHslaScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alp
 		// yellow to green
 		CurXOff += SizeColor;
 		{
-			IGraphics::CColorVertex aColorVertices[] = {
-				IGraphics::CColorVertex(0, 1, 1, 0, 1),
-				IGraphics::CColorVertex(1, 0, 1, 0, 1),
-				IGraphics::CColorVertex(2, 1, 1, 0, 1),
-				IGraphics::CColorVertex(3, 0, 1, 0, 1)};
-			Graphics()->SetColorVertex(aColorVertices, std::size(aColorVertices));
+			Graphics()->SetColor4(
+				ColorRGBA(1, 1, 0, 1),
+				ColorRGBA(0, 1, 0, 1),
+				ColorRGBA(0, 1, 0, 1),
+				ColorRGBA(1, 1, 0, 1));
 
 			IGraphics::CFreeformItem Freeform(
 				CurXOff, pColorRect->y,
@@ -237,12 +235,11 @@ bool CMenus::RenderHslaScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alp
 		CurXOff += SizeColor;
 		// green to turquoise
 		{
-			IGraphics::CColorVertex aColorVertices[] = {
-				IGraphics::CColorVertex(0, 0, 1, 0, 1),
-				IGraphics::CColorVertex(1, 0, 1, 1, 1),
-				IGraphics::CColorVertex(2, 0, 1, 0, 1),
-				IGraphics::CColorVertex(3, 0, 1, 1, 1)};
-			Graphics()->SetColorVertex(aColorVertices, std::size(aColorVertices));
+			Graphics()->SetColor4(
+				ColorRGBA(0, 1, 0, 1),
+				ColorRGBA(0, 1, 1, 1),
+				ColorRGBA(0, 1, 1, 1),
+				ColorRGBA(0, 1, 0, 1));
 
 			IGraphics::CFreeformItem Freeform(
 				CurXOff, pColorRect->y,
@@ -255,12 +252,11 @@ bool CMenus::RenderHslaScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alp
 		CurXOff += SizeColor;
 		// turquoise to blue
 		{
-			IGraphics::CColorVertex aColorVertices[] = {
-				IGraphics::CColorVertex(0, 0, 1, 1, 1),
-				IGraphics::CColorVertex(1, 0, 0, 1, 1),
-				IGraphics::CColorVertex(2, 0, 1, 1, 1),
-				IGraphics::CColorVertex(3, 0, 0, 1, 1)};
-			Graphics()->SetColorVertex(aColorVertices, std::size(aColorVertices));
+			Graphics()->SetColor4(
+				ColorRGBA(0, 1, 1, 1),
+				ColorRGBA(0, 0, 1, 1),
+				ColorRGBA(0, 0, 1, 1),
+				ColorRGBA(0, 1, 1, 1));
 
 			IGraphics::CFreeformItem Freeform(
 				CurXOff, pColorRect->y,
@@ -273,12 +269,11 @@ bool CMenus::RenderHslaScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alp
 		CurXOff += SizeColor;
 		// blue to purple
 		{
-			IGraphics::CColorVertex aColorVertices[] = {
-				IGraphics::CColorVertex(0, 0, 0, 1, 1),
-				IGraphics::CColorVertex(1, 1, 0, 1, 1),
-				IGraphics::CColorVertex(2, 0, 0, 1, 1),
-				IGraphics::CColorVertex(3, 1, 0, 1, 1)};
-			Graphics()->SetColorVertex(aColorVertices, std::size(aColorVertices));
+			Graphics()->SetColor4(
+				ColorRGBA(0, 0, 1, 1),
+				ColorRGBA(1, 0, 1, 1),
+				ColorRGBA(1, 0, 1, 1),
+				ColorRGBA(0, 0, 1, 1));
 
 			IGraphics::CFreeformItem Freeform(
 				CurXOff, pColorRect->y,
@@ -291,12 +286,11 @@ bool CMenus::RenderHslaScrollbars(CUIRect *pRect, unsigned int *pColor, bool Alp
 		CurXOff += SizeColor;
 		// purple to red
 		{
-			IGraphics::CColorVertex aColorVertices[] = {
-				IGraphics::CColorVertex(0, 1, 0, 1, 1),
-				IGraphics::CColorVertex(1, 1, 0, 0, 1),
-				IGraphics::CColorVertex(2, 1, 0, 1, 1),
-				IGraphics::CColorVertex(3, 1, 0, 0, 1)};
-			Graphics()->SetColorVertex(aColorVertices, std::size(aColorVertices));
+			Graphics()->SetColor4(
+				ColorRGBA(1, 0, 1, 1),
+				ColorRGBA(1, 0, 0, 1),
+				ColorRGBA(1, 0, 0, 1),
+				ColorRGBA(1, 0, 1, 1));
 
 			IGraphics::CFreeformItem Freeform(
 				CurXOff, pColorRect->y,

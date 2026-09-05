@@ -165,6 +165,7 @@ option(VULKAN "Enable the vulkan backend" ${AUTO_VULKAN_BACKEND})
 
 option(EXCEPTION_HANDLING "Enable crashdumps (only works with Windows)" OFF)
 option(IPO "Enable interprocedural optimizations" OFF)
+option(PRECOMPILE_HEADERS "Precompile commonly used headers to speed up compilation (requires CMake 3.16)" ON)
 set(FUSE_LD OFF CACHE STRING "Linker to use")
 option(SECURITY_COMPILER_FLAGS "Whether to set security-relevant compiler flags like -D_FORTIFY_SOURCE=2 and -fstack-protector-strong" ON)
 option(MACOS_CODESIGN "Whether to sign code when building the DMG on macOS" OFF)
@@ -337,7 +338,9 @@ if(NOT MSVC AND NOT HAIKU)
             endif()
           endif()
         endif()
-      else()
+      elseif(NOT TARGET_OS STREQUAL "windows")
+        # Windows: only the default linker handles GCC+LTO, gold can't produce
+        # PE binaries and lld ignores GCC's LTO plugin, leaving all objects empty.
         add_linker_flag_if_supported(OUR_FLAGS_LINK -fuse-ld=gold)
         if(FLAG_SUPPORTED_fuse_ld_gold)
           message(STATUS "Using gold linker")
@@ -381,7 +384,11 @@ if(NOT MSVC AND NOT HAIKU)
   add_cxx_compiler_flag_if_supported(OUR_FLAGS -fsigned-char)
 
   # Support more sections in object files, because the limit is exceeded for some files in debug mode.
-  add_cxx_compiler_flag_if_supported(OUR_FLAGS -Wa,-mbig-obj)
+  # Not with IPO, because GCC's LTO plugin cannot read big-obj COFF files, making
+  # the linker treat all LTO objects as empty. Stays far below the limit with LTO anyway.
+  if(NOT ENABLE_IPO)
+    add_cxx_compiler_flag_if_supported(OUR_FLAGS -Wa,-mbig-obj)
+  endif()
 
   # Don't insert timestamps into PEs to keep the build reproducible.
   if(TARGET_OS STREQUAL "windows")
@@ -831,6 +838,16 @@ if(TARGET_OS STREQUAL "windows")
   list(APPEND PLATFORM_LIBS ntdll.lib) # https://github.com/ddnet/ddnet/issues/6725
   list(APPEND PLATFORM_LIBS uuid.lib) # FOLDERID_RoamingAppData
 elseif(TARGET_OS STREQUAL "mac")
+  if(NOT CMAKE_VERSION VERSION_LESS 3.16)
+    if(NOT CMAKE_OBJCXX_COMPILER)
+      set(CMAKE_OBJCXX_COMPILER "${CMAKE_CXX_COMPILER}")
+    endif()
+    if(NOT CMAKE_OBJCXX_COMPILER_LAUNCHER)
+      set(CMAKE_OBJCXX_COMPILER_LAUNCHER "${CMAKE_CXX_COMPILER_LAUNCHER}")
+    endif()
+    enable_language(OBJCXX)
+    set(CMAKE_OBJCXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_OBJCXX_FLAGS}")
+  endif()
   find_library(CARBON Carbon)
   find_library(COCOA Cocoa)
   find_library(OPENGL OpenGL)
@@ -860,7 +877,7 @@ elseif(TARGET_OS STREQUAL "ios")
   find_library(SECURITY Security)
   find_library(SYSTEMCONFIGURATION SystemConfiguration)
   set(PLATFORM_CLIENT
-    src/ios/ios_main.cpp
+    src/ios/ios_main.mm
   )
   set(PLATFORM_CLIENT_LIBS
     # tidy-alphabetical-start
@@ -3693,6 +3710,14 @@ if((GTEST_FOUND OR DOWNLOAD_GTEST) AND SERVER)
   endif()
 endif()
 
+if(ENABLE_IPO AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  foreach(target engine-gfx engine-shared game-shared rust-bridge-shared json md5 zlib)
+    if(TARGET ${target})
+      target_compile_options(${target} PRIVATE -ffat-lto-objects)
+    endif()
+  endforeach()
+endif()
+
 add_library(rust_test STATIC EXCLUDE_FROM_ALL
   # tidy-alphabetical-start
   $<TARGET_OBJECTS:engine-gfx>
@@ -4306,10 +4331,24 @@ foreach(target ${TARGETS_LINK})
   endif()
 endforeach()
 
+if(PRECOMPILE_HEADERS AND NOT CMAKE_VERSION VERSION_LESS 3.16)
+  foreach(target engine-shared game-client game-server-without-main game-shared testrunner)
+    if(TARGET ${target})
+      target_precompile_headers(${target} PRIVATE src/pch.h)
+    endif()
+  endforeach()
+  if(TARGET testrunner)
+    target_precompile_headers(testrunner PRIVATE <gtest/gtest.h>)
+  endif()
+endif()
+
 foreach(target ${TARGETS_OWN})
   set_property(TARGET ${target} PROPERTY CXX_STANDARD 20)
   set_property(TARGET ${target} PROPERTY CXX_STANDARD_REQUIRED ON)
   set_property(TARGET ${target} PROPERTY CXX_EXTENSIONS OFF)
+  set_property(TARGET ${target} PROPERTY OBJCXX_STANDARD 20)
+  set_property(TARGET ${target} PROPERTY OBJCXX_STANDARD_REQUIRED ON)
+  set_property(TARGET ${target} PROPERTY OBJCXX_EXTENSIONS OFF)
 
   if(MSVC)
     # tidy-alphabetical-start
