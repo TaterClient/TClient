@@ -541,7 +541,11 @@ bool CControls::CheckNewInput()
 		if(m_aFastInput[Dummy].m_WantedWeapon != TestInput.m_WantedWeapon)
 			NewInput[Dummy] = true;
 
-		bool SetMousePos = false;
+		// When sub tick aiming is disabled on the first tick of a hook it's viable to update the fast input
+		// prediction on every mouse movement before the hook+direction input is sent and finalized.
+		const bool RefreshHookAim = g_Config.m_TcFastInputLiveHook && !g_Config.m_ClSubTickAiming &&
+					    Dummy == g_Config.m_ClDummy && TestInput.m_Hook && !m_aLastData[Dummy].m_Hook;
+		bool SetMousePos = RefreshHookAim;
 		// We need to be careful about how we manage the mouse position to avoid mispredicted hooks and fires
 		// on the first tick that they activate before we know what mouse position we actually sent to the server
 		if(Dummy == g_Config.m_ClDummy)
@@ -566,6 +570,8 @@ bool CControls::CheckNewInput()
 		{
 			TestInput.m_TargetX = (int)m_aMousePos[Dummy].x;
 			TestInput.m_TargetY = (int)m_aMousePos[Dummy].y;
+			if(RefreshHookAim && (TestInput.m_TargetX != m_aFastInput[Dummy].m_TargetX || TestInput.m_TargetY != m_aFastInput[Dummy].m_TargetY))
+				NewInput[Dummy] = true;
 		}
 		else
 		{
