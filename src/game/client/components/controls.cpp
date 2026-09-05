@@ -543,7 +543,7 @@ bool CControls::CheckNewInput()
 
 		// When sub tick aiming is disabled on the first tick of a hook it's viable to update the fast input
 		// prediction on every mouse movement before the hook+direction input is sent and finalized.
-		const bool RefreshHookAim = g_Config.m_TcFastInputLiveHook && !g_Config.m_ClSubTickAiming &&
+		const bool RefreshHookAim = g_Config.m_TcFastInputRepredictHook && !g_Config.m_ClSubTickAiming &&
 					    Dummy == g_Config.m_ClDummy && TestInput.m_Hook && !m_aLastData[Dummy].m_Hook;
 		bool SetMousePos = RefreshHookAim;
 		// We need to be careful about how we manage the mouse position to avoid mispredicted hooks and fires

@@ -367,9 +367,8 @@ if(NOT MSVC AND NOT HAIKU)
     endif()
   endif()
 
-  # Disable exceptions as DDNet does not use them.
-  # Haha, but we need them -Tater
-  # add_cxx_compiler_flag_if_supported(OUR_FLAGS -fno-exceptions)
+  # TClient needs exceptions for ChaiScript and regex.
+  add_cxx_compiler_flag_if_supported(OUR_FLAGS_SERVER -fno-exceptions)
 
   # Inaccurate floating point numbers cause problems on mingw-w64-gcc when
   # compiling for x86, might cause problems elsewhere. So don't store floats
@@ -4463,6 +4462,12 @@ foreach(target ${TARGETS_DEP})
   endif()
   if(OUR_FLAGS_DEP)
     target_compile_options(${target} PRIVATE ${OUR_FLAGS_DEP})
+  endif()
+endforeach()
+
+foreach(target game-server game-server-without-main)
+  if(TARGET ${target} AND OUR_FLAGS_SERVER)
+    target_compile_options(${target} PRIVATE ${OUR_FLAGS_SERVER})
   endif()
 endforeach()
 
