@@ -468,6 +468,10 @@ bool CConfigManager::Save()
 				log_error("config", "ERROR: renaming %s to %s failed", aaConfigFileTmp[ConfigDomain], s_aConfigDomains[ConfigDomain].m_aConfigPath);
 				aFailedError[ConfigDomain] = m_aFailed[ConfigDomain] = true;
 			}
+			else
+			{
+				log_info("config", "saved to %s", s_aConfigDomains[ConfigDomain].m_aConfigPath);
+			}
 		}
 	}
 
