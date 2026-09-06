@@ -3568,7 +3568,7 @@ void CClient::Run()
 			if(RefreshRate)
 			{
 				WakeTime = NextUpdateTime;
-				if(IsRenderActive && GfxRefreshRate)
+				if(IsRenderActive && GfxRefreshRate && NextRenderTime > Now)
 					WakeTime = std::min(WakeTime, NextRenderTime);
 				if(State() == IClient::STATE_ONLINE && m_aPredTick[g_Config.m_ClDummy] > 0 && !Inactive)
 					WakeTime = std::min(WakeTime, Now + (m_aPredTick[g_Config.m_ClDummy] * time_freq() / GameTickSpeed() - m_PredictedTime.Get(Now)));
