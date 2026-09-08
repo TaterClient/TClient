@@ -59,7 +59,7 @@ void CMenus::RenderSettings(CUIRect MainView)
 
 	for(int i = 0; i < SETTINGS_LENGTH; i++)
 	{
-		TabBar.HSplitTop(10.0f, nullptr, &TabBar);
+		TabBar.HSplitTop(9.0f, nullptr, &TabBar); // TClient: 10.0f -> 9.0f to fit all tabs
 		TabBar.HSplitTop(26.0f, &Button, &TabBar);
 		if(DoButton_MenuTab(&s_aTabButtons[i], apTabs[i], g_Config.m_UiSettingsPage == i, &Button, IGraphics::CORNER_R, &m_aAnimatorsSettingsTab[i]))
 			g_Config.m_UiSettingsPage = i;
