@@ -12,6 +12,8 @@
 #include <engine/shared/linereader.h>
 #include <engine/storage.h>
 
+#include <algorithm>
+
 const char *Localize(const char *pStr, const char *pContext)
 {
 	const char *pNewStr = g_Localization.FindString(str_quickhash(pStr), str_quickhash(pContext));
@@ -253,8 +255,21 @@ bool CLocalizationDatabase::Load(const char *pFilename, IStorage *pStorage, ICon
 
 void CLocalizationDatabase::AddString(const char *pOrgStr, const char *pNewStr, const char *pContext)
 {
-	if(!FindString(str_quickhash(pOrgStr), str_quickhash(pContext)))
-		m_vStrings.emplace_back(str_quickhash(pOrgStr), str_quickhash(pContext), m_StringsHeap.StoreString(*pNewStr ? pNewStr : pOrgStr));
+	const unsigned Hash = str_quickhash(pOrgStr);
+	const unsigned ContextHash = str_quickhash(pContext);
+
+	// AddString is called while a language file is being loaded, i.e. before
+	// m_vStrings is sorted at the end of Load. Calling FindString here would run
+	// std::equal_range on an unsorted range, which is undefined behaviour and
+	// aborts when the libstdc++ debug mode (enabled in Debug builds) checks that
+	// the range is partitioned. Insert in sorted position instead, so the range
+	// stays partitioned and duplicates (e.g. when loading another language file
+	// on top of an existing one) are skipped. AddString must only be used while
+	// loading.
+	const CString String(Hash, ContextHash, nullptr);
+	auto It = std::lower_bound(m_vStrings.begin(), m_vStrings.end(), String);
+	if(It == m_vStrings.end() || !(*It == String))
+		m_vStrings.insert(It, CString(Hash, ContextHash, m_StringsHeap.StoreString(*pNewStr ? pNewStr : pOrgStr)));
 }
 
 const char *CLocalizationDatabase::FindString(unsigned Hash, unsigned ContextHash) const
